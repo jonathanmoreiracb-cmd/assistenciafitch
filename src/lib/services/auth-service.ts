@@ -10,8 +10,19 @@ export const GERENTE_DEFAULT: Usuario = {
   percentual_comissao: 0,
 };
 
+export const JAKSON_DEFAULT: Usuario = {
+  id: '55555555-5555-5555-5555-555555555555',
+  nome: 'Jakson Marques',
+  email: 'jakson.cp777@gmail.com',
+  senha: '123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
 export const INITIAL_USUARIOS: Usuario[] = [
   GERENTE_DEFAULT,
+  JAKSON_DEFAULT,
   {
     id: '22222222-2222-2222-2222-222222222222',
     nome: 'Pedro Vendedor',
@@ -44,14 +55,25 @@ export const INITIAL_USUARIOS: Usuario[] = [
 let usuariosStore: Usuario[] = [...INITIAL_USUARIOS];
 let currentUser: Usuario | null = null;
 
-function syncGerenteUser() {
-  const existingGerente = usuariosStore.find((u) => u.cargo === 'gerente' || u.email === 'jonathan@fitch.com');
+function syncEssentialUsers() {
+  // Sync Jonathan Moreira
+  const existingGerente = usuariosStore.find(
+    (u) => u.cargo === 'gerente' || u.email.toLowerCase().includes('jonathan')
+  );
   if (existingGerente) {
     existingGerente.nome = 'Jonathan Moreira';
     existingGerente.email = 'jonathan@fitch.com';
     existingGerente.senha = 'tcjk7788';
   } else {
     usuariosStore.unshift(GERENTE_DEFAULT);
+  }
+
+  // Sync Jakson Marques
+  const existingJakson = usuariosStore.find(
+    (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
+  );
+  if (!existingJakson) {
+    usuariosStore.push(JAKSON_DEFAULT);
   }
 }
 
@@ -61,7 +83,7 @@ if (typeof window !== 'undefined') {
     if (savedList) {
       usuariosStore = JSON.parse(savedList);
     }
-    syncGerenteUser();
+    syncEssentialUsers();
 
     const savedUser = localStorage.getItem('fitch_active_user');
     if (savedUser) currentUser = JSON.parse(savedUser);
@@ -103,12 +125,17 @@ export const AuthService = {
   },
 
   login(emailOrUser: string, senhaDigitada: string): { success: boolean; user?: Usuario; message?: string } {
-    syncGerenteUser();
-    const clean = emailOrUser.toLowerCase().trim();
+    syncEssentialUsers();
+    const cleanInput = (emailOrUser || '').toLowerCase().trim();
+    const cleanPassword = (senhaDigitada || '').trim();
+
+    if (!cleanInput) {
+      return { success: false, message: 'Informe o usuário ou e-mail.' };
+    }
 
     // Check Jonathan Moreira explicitly
-    if (clean.includes('jonathan') || clean === 'jonathan@fitch.com' || clean === 'gerente@fitch.com') {
-      if (senhaDigitada === 'tcjk7788') {
+    if (cleanInput.includes('jonathan') || cleanInput === 'jonathan@fitch.com' || cleanInput === 'gerente@fitch.com') {
+      if (cleanPassword === 'tcjk7788') {
         const gerente = usuariosStore.find((u) => u.cargo === 'gerente') || GERENTE_DEFAULT;
         gerente.nome = 'Jonathan Moreira';
         gerente.email = 'jonathan@fitch.com';
@@ -121,18 +148,37 @@ export const AuthService = {
       }
     }
 
+    // Check Jakson Marques explicitly if typing email or name
+    if (cleanInput.includes('jakson') || cleanInput === 'jakson.cp777@gmail.com') {
+      const jakson = usuariosStore.find(
+        (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
+      ) || JAKSON_DEFAULT;
+
+      // Allow either custom saved password or default password '123'
+      if (!jakson.senha || jakson.senha.trim() === cleanPassword || cleanPassword === '123') {
+        if (cleanPassword) jakson.senha = cleanPassword;
+        currentUser = jakson;
+        persistState();
+        return { success: true, user: jakson };
+      } else {
+        return { success: false, message: 'Senha incorreta para Jakson Marques.' };
+      }
+    }
+
     // Check general user store
     const user = usuariosStore.find(
       (u) =>
-        u.email.toLowerCase() === clean ||
-        u.nome.toLowerCase().includes(clean)
+        u.email.toLowerCase().trim() === cleanInput ||
+        u.nome.toLowerCase().trim().includes(cleanInput) ||
+        cleanInput.includes(u.nome.toLowerCase().trim().split(' ')[0])
     );
 
     if (!user) {
       return { success: false, message: 'Usuário não encontrado.' };
     }
 
-    if (user.senha && user.senha !== senhaDigitada) {
+    const expectedSenha = (user.senha || '').trim();
+    if (expectedSenha && expectedSenha !== cleanPassword) {
       return { success: false, message: 'Senha incorreta.' };
     }
 
@@ -147,27 +193,39 @@ export const AuthService = {
   },
 
   getUsuarios(): Usuario[] {
-    syncGerenteUser();
+    syncEssentialUsers();
     return usuariosStore;
   },
 
   getVendedores(): Usuario[] {
-    syncGerenteUser();
+    syncEssentialUsers();
     return usuariosStore.filter((u) => u.cargo === 'vendedor');
   },
 
   getTecnicos(): Usuario[] {
-    syncGerenteUser();
+    syncEssentialUsers();
     return usuariosStore.filter((u) => u.cargo === 'tecnico');
   },
 
   cadastrarUsuario(novo: Omit<Usuario, 'id' | 'created_at'>): Usuario {
     const usuario: Usuario = {
       id: `usr-${Date.now()}`,
-      ...novo,
+      nome: novo.nome.trim(),
+      email: novo.email.toLowerCase().trim(),
+      senha: (novo.senha || '123').trim(),
+      cargo: novo.cargo,
+      meta_mensal_os: novo.meta_mensal_os || 15,
       created_at: new Date().toISOString(),
     };
-    usuariosStore.push(usuario);
+
+    // Replace if exists, or append
+    const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === usuario.email);
+    if (idx !== -1) {
+      usuariosStore[idx] = usuario;
+    } else {
+      usuariosStore.push(usuario);
+    }
+
     persistState();
     return usuario;
   },
@@ -175,7 +233,12 @@ export const AuthService = {
   atualizarUsuario(id: string, dados: Partial<Usuario>): Usuario | null {
     const user = usuariosStore.find((u) => u.id === id);
     if (user) {
-      Object.assign(user, dados);
+      if (dados.nome) user.nome = dados.nome.trim();
+      if (dados.email) user.email = dados.email.toLowerCase().trim();
+      if (dados.senha) user.senha = dados.senha.trim();
+      if (dados.cargo) user.cargo = dados.cargo;
+      if (dados.meta_mensal_os !== undefined) user.meta_mensal_os = dados.meta_mensal_os;
+
       if (currentUser && currentUser.id === id) {
         currentUser = { ...user };
       }

@@ -1,3 +1,4 @@
+import { createClient } from '@/lib/supabase/client';
 import { Usuario } from '@/types';
 
 export const GERENTE_DEFAULT: Usuario = {
@@ -56,7 +57,6 @@ let usuariosStore: Usuario[] = [...INITIAL_USUARIOS];
 let currentUser: Usuario | null = null;
 
 function syncEssentialUsers() {
-  // Sync Jonathan Moreira
   const existingGerente = usuariosStore.find(
     (u) => u.cargo === 'gerente' || u.email.toLowerCase().includes('jonathan')
   );
@@ -68,7 +68,6 @@ function syncEssentialUsers() {
     usuariosStore.unshift(GERENTE_DEFAULT);
   }
 
-  // Sync Jakson Marques
   const existingJakson = usuariosStore.find(
     (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
   );
@@ -124,6 +123,49 @@ export const AuthService = {
     persistState();
   },
 
+  async loginAsync(
+    emailOrUser: string,
+    senhaDigitada: string
+  ): Promise<{ success: boolean; user?: Usuario; message?: string }> {
+    const cleanInput = (emailOrUser || '').toLowerCase().trim();
+    const cleanPassword = (senhaDigitada || '').trim();
+
+    if (!cleanInput) {
+      return { success: false, message: 'Informe o usuário ou e-mail.' };
+    }
+
+    // Attempt Supabase Fetch
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from('usuarios')
+          .select('*')
+          .or(`email.ilike.%${cleanInput}%,nome.ilike.%${cleanInput}%`);
+
+        if (data && data.length > 0) {
+          const matched = data.find(
+            (u: any) =>
+              (u.senha || '').trim() === cleanPassword ||
+              (cleanInput.includes('jonathan') && cleanPassword === 'tcjk7788') ||
+              (cleanInput.includes('jakson') && cleanPassword === '123')
+          );
+
+          if (matched) {
+            currentUser = matched as Usuario;
+            persistState();
+            return { success: true, user: matched as Usuario };
+          }
+        }
+      } catch (e) {
+        console.error('Supabase auth error:', e);
+      }
+    }
+
+    // Fallback synchronous check
+    return this.login(emailOrUser, senhaDigitada);
+  },
+
   login(emailOrUser: string, senhaDigitada: string): { success: boolean; user?: Usuario; message?: string } {
     syncEssentialUsers();
     const cleanInput = (emailOrUser || '').toLowerCase().trim();
@@ -133,7 +175,7 @@ export const AuthService = {
       return { success: false, message: 'Informe o usuário ou e-mail.' };
     }
 
-    // Check Jonathan Moreira explicitly
+    // Jonathan Moreira
     if (cleanInput.includes('jonathan') || cleanInput === 'jonathan@fitch.com' || cleanInput === 'gerente@fitch.com') {
       if (cleanPassword === 'tcjk7788') {
         const gerente = usuariosStore.find((u) => u.cargo === 'gerente') || GERENTE_DEFAULT;
@@ -148,13 +190,13 @@ export const AuthService = {
       }
     }
 
-    // Check Jakson Marques explicitly if typing email or name
+    // Jakson Marques
     if (cleanInput.includes('jakson') || cleanInput === 'jakson.cp777@gmail.com') {
-      const jakson = usuariosStore.find(
-        (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
-      ) || JAKSON_DEFAULT;
+      const jakson =
+        usuariosStore.find(
+          (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
+        ) || JAKSON_DEFAULT;
 
-      // Allow either custom saved password or default password '123'
       if (!jakson.senha || jakson.senha.trim() === cleanPassword || cleanPassword === '123') {
         if (cleanPassword) jakson.senha = cleanPassword;
         currentUser = jakson;
@@ -165,7 +207,7 @@ export const AuthService = {
       }
     }
 
-    // Check general user store
+    // General store
     const user = usuariosStore.find(
       (u) =>
         u.email.toLowerCase().trim() === cleanInput ||
@@ -207,7 +249,7 @@ export const AuthService = {
     return usuariosStore.filter((u) => u.cargo === 'tecnico');
   },
 
-  cadastrarUsuario(novo: Omit<Usuario, 'id' | 'created_at'>): Usuario {
+  async cadastrarUsuario(novo: Omit<Usuario, 'id' | 'created_at'>): Promise<Usuario> {
     const usuario: Usuario = {
       id: `usr-${Date.now()}`,
       nome: novo.nome.trim(),
@@ -218,19 +260,54 @@ export const AuthService = {
       created_at: new Date().toISOString(),
     };
 
-    // Replace if exists, or append
-    const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === usuario.email);
-    if (idx !== -1) {
-      usuariosStore[idx] = usuario;
-    } else {
-      usuariosStore.push(usuario);
+    // Save to Supabase if connected
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('usuarios').insert([usuario]).select().single();
+        if (!error && data) {
+          const saved = data as Usuario;
+          const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === saved.email.toLowerCase());
+          if (idx !== -1) usuariosStore[idx] = saved;
+          else usuariosStore.push(saved);
+          persistState();
+          return saved;
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
+
+    const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === usuario.email);
+    if (idx !== -1) usuariosStore[idx] = usuario;
+    else usuariosStore.push(usuario);
 
     persistState();
     return usuario;
   },
 
-  atualizarUsuario(id: string, dados: Partial<Usuario>): Usuario | null {
+  async atualizarUsuario(id: string, dados: Partial<Usuario>): Promise<Usuario | null> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const payload: any = { ...dados };
+        if (dados.nome) payload.nome = dados.nome.trim();
+        if (dados.email) payload.email = dados.email.toLowerCase().trim();
+        if (dados.senha) payload.senha = dados.senha.trim();
+
+        const { data } = await supabase.from('usuarios').update(payload).eq('id', id).select().single();
+        if (data) {
+          const updated = data as Usuario;
+          const userIndex = usuariosStore.findIndex((u) => u.id === id);
+          if (userIndex !== -1) usuariosStore[userIndex] = updated;
+          persistState();
+          return updated;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     const user = usuariosStore.find((u) => u.id === id);
     if (user) {
       if (dados.nome) user.nome = dados.nome.trim();
@@ -248,8 +325,16 @@ export const AuthService = {
     return null;
   },
 
-  deletarUsuario(id: string): boolean {
+  async deletarUsuario(id: string): Promise<boolean> {
     if (usuariosStore.length <= 1) return false;
+
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        await supabase.from('usuarios').delete().eq('id', id);
+      } catch (e) {}
+    }
+
     usuariosStore = usuariosStore.filter((u) => u.id !== id);
     if (currentUser && currentUser.id === id) {
       currentUser = usuariosStore[0];

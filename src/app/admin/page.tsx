@@ -16,7 +16,6 @@ import {
   Save,
   Plus,
   RotateCcw,
-  AlertTriangle,
 } from 'lucide-react';
 import { AuthService } from '@/lib/services/auth-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -112,7 +111,7 @@ export default function AdminPage() {
   };
 
   // --- USUARIOS HANDLERS ---
-  const handleSaveUsuario = (e: React.FormEvent) => {
+  const handleSaveUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formUser.nome || !formUser.email) {
       toast.error('Preencha nome e e-mail.');
@@ -120,7 +119,7 @@ export default function AdminPage() {
     }
 
     if (editUser) {
-      AuthService.atualizarUsuario(editUser.id, {
+      await AuthService.atualizarUsuario(editUser.id, {
         nome: formUser.nome,
         email: formUser.email,
         senha: formUser.senha,
@@ -129,14 +128,14 @@ export default function AdminPage() {
       });
       toast.success('Usuário atualizado!');
     } else {
-      AuthService.cadastrarUsuario({
+      await AuthService.cadastrarUsuario({
         nome: formUser.nome,
         email: formUser.email,
         senha: formUser.senha,
         cargo: formUser.cargo,
         meta_mensal_os: formUser.meta_mensal_os,
       });
-      toast.success('Novo colaborador cadastrado!');
+      toast.success('Novo colaborador cadastrado com sucesso!');
     }
 
     setShowUserModal(false);
@@ -156,9 +155,9 @@ export default function AdminPage() {
     setShowUserModal(true);
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     if (confirm('Deseja excluir este usuário?')) {
-      const ok = AuthService.deletarUsuario(id);
+      const ok = await AuthService.deletarUsuario(id);
       if (ok) {
         toast.success('Usuário removido.');
         loadAllData();

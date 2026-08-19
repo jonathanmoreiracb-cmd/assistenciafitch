@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [senhaInput, setSenhaInput] = useState('tcjk7788');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput || !senhaInput) {
       toast.error('Informe o nome/e-mail e a senha.');
@@ -29,23 +29,33 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const res = AuthService.login(emailInput, senhaInput);
-    if (res.success && res.user) {
-      toast.success(`Bem-vindo(a), ${res.user.nome}! (${res.user.cargo.toUpperCase()})`);
-      router.push('/dashboard');
-    } else {
-      toast.error(res.message || 'Erro ao realizar login.');
+    try {
+      const res = await AuthService.loginAsync(emailInput, senhaInput);
+      if (res.success && res.user) {
+        toast.success(`Bem-vindo(a), ${res.user.nome}! (${res.user.cargo.toUpperCase()})`);
+        router.push('/dashboard');
+      } else {
+        toast.error(res.message || 'Erro ao realizar login.');
+      }
+    } catch (e) {
+      toast.error('Erro na autenticação.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleQuickLogin = (email: string, senha: string) => {
-    const res = AuthService.login(email, senha);
-    if (res.success && res.user) {
-      toast.success(`Acesso liberado: ${res.user.nome}`);
-      router.push('/dashboard');
-    } else {
-      toast.error('Erro na autenticação.');
+  const handleQuickLogin = async (email: string, senha: string) => {
+    setLoading(true);
+    try {
+      const res = await AuthService.loginAsync(email, senha);
+      if (res.success && res.user) {
+        toast.success(`Acesso liberado: ${res.user.nome}`);
+        router.push('/dashboard');
+      } else {
+        toast.error('Erro na autenticação.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

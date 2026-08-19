@@ -15,6 +15,8 @@ import {
   Wrench,
   Save,
   Plus,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { AuthService } from '@/lib/services/auth-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -100,6 +102,14 @@ export default function AdminPage() {
     }
     loadAllData();
   }, []);
+
+  const handleZerarOSteste = () => {
+    if (confirm('Tem certeza que deseja apagar TODAS as Ordens de Serviço de teste e zerar o sistema?')) {
+      OSService.zerarDadosDeTeste();
+      toast.success('Todas as Ordens de Serviço de teste foram apagadas. Sistema pronto!');
+      loadAllData();
+    }
+  };
 
   // --- USUARIOS HANDLERS ---
   const handleSaveUsuario = (e: React.FormEvent) => {
@@ -279,6 +289,15 @@ export default function AdminPage() {
             Logado como <strong className="text-slate-900">{currentUser?.nome || 'Jonathan Moreira'}</strong> (Gerente Principal)
           </p>
         </div>
+
+        {/* Zerar Dados de Teste Button */}
+        <button
+          onClick={handleZerarOSteste}
+          className="px-4 py-2 bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 rounded-full font-bold text-xs flex items-center gap-2 transition-all self-start"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Zerar O.S. de Teste</span>
+        </button>
       </div>
 
       {/* CONSOLIDATED ADMIN TABS */}
@@ -469,6 +488,13 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 ))}
+                {pecas.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
+                      Nenhuma peça cadastrada. Clique em "+ Nova Peça" para cadastrar.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

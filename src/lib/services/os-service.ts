@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/client';
-import { MOCK_CLIENTES, MOCK_ORDENS_SERVICO } from './mock-data';
 import {
   Cliente,
   DashboardMetrics,
@@ -10,17 +9,25 @@ import {
   StatusOS,
 } from '@/types';
 
-// In-Memory Storage for Demo Mode when Supabase is not configured
-let localClientesStore: Cliente[] = [...MOCK_CLIENTES];
-let localOSStore: OrdemServico[] = [...MOCK_ORDENS_SERVICO];
+// Production Clean In-Memory & LocalStorage State
+let localClientesStore: Cliente[] = [];
+let localOSStore: OrdemServico[] = [];
 
-// Helper to check if client side state has saved data
 if (typeof window !== 'undefined') {
   try {
     const savedOS = localStorage.getItem('fitch_os_store');
     const savedCli = localStorage.getItem('fitch_clientes_store');
-    if (savedOS) localOSStore = JSON.parse(savedOS);
-    if (savedCli) localClientesStore = JSON.parse(savedCli);
+    if (savedOS) {
+      localOSStore = JSON.parse(savedOS);
+    } else {
+      localStorage.setItem('fitch_os_store', JSON.stringify([]));
+    }
+
+    if (savedCli) {
+      localClientesStore = JSON.parse(savedCli);
+    } else {
+      localStorage.setItem('fitch_clientes_store', JSON.stringify([]));
+    }
   } catch (e) {
     console.error('Error reading localStorage', e);
   }
@@ -38,6 +45,13 @@ function persistLocalState() {
 }
 
 export const OSService = {
+  // Clear all test OS and test clients
+  zerarDadosDeTeste(): void {
+    localOSStore = [];
+    localClientesStore = [];
+    persistLocalState();
+  },
+
   // 1. CLIENTES
   async getClientes(): Promise<Cliente[]> {
     const supabase = createClient();
@@ -57,9 +71,8 @@ export const OSService = {
       const { data } = await supabase
         .from('clientes')
         .select('*')
-        .or(`telefone.ilike.%${cleanQuery}%,cpf.ilike.%${cleanQuery}%,nome.ilike.%${cleanQuery}%`)
-        .limit(10);
-      if (data && data.length > 0) return data as Cliente[];
+        .or(`telefone.ilike.%${cleanQuery}%,cpf.ilike.%${cleanQuery}%,nome.ilike.%${cleanQuery}%`);
+      if (data) return data as Cliente[];
     }
 
     return localClientesStore.filter(
@@ -73,22 +86,18 @@ export const OSService = {
   async criarCliente(cliente: Omit<Cliente, 'id' | 'created_at'>): Promise<Cliente> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase
-        .from('clientes')
-        .insert([cliente])
-        .select()
-        .single();
+      const { data, error } = await supabase.from('clientes').insert([cliente]).select().single();
       if (!error && data) return data as Cliente;
     }
 
-    const novo: Cliente = {
+    const novoCliente: Cliente = {
       id: `cli-${Date.now()}`,
       ...cliente,
       created_at: new Date().toISOString(),
     };
-    localClientesStore.unshift(novo);
+    localClientesStore.unshift(novoCliente);
     persistLocalState();
-    return novo;
+    return novoCliente;
   },
 
   // 2. ORDENS DE SERVIÇO
@@ -97,7 +106,11 @@ export const OSService = {
     if (supabase) {
       const { data, error } = await supabase
         .from('ordens_servico')
-        .select('*, cliente:clientes(*), pecas:os_itens_pecas(*)')
+        .select(`
+          *,
+          cliente:clientes(*),
+          pecas:os_itens_pecas(*)
+        `)
         .order('numero_os', { ascending: false });
       if (!error && data) return data as OrdemServico[];
     }
@@ -109,121 +122,49 @@ export const OSService = {
     if (supabase) {
       const { data, error } = await supabase
         .from('ordens_servico')
-        .select('*, cliente:clientes(*), pecas:os_itens_pecas(*)')
+        .select(`
+          *,
+          cliente:clientes(*),
+          pecas:os_itens_pecas(*)
+        `)
         .or(`id.eq.${id},numero_os.eq.${isNaN(Number(id)) ? -1 : Number(id)}`)
-        .maybeSingle();
+        .single();
       if (!error && data) return data as OrdemServico;
     }
 
     const found = localOSStore.find(
-      (o) => o.id === id || o.numero_os === Number(id)
+      (os) => os.id === id || os.numero_os.toString() === id
     );
     return found || null;
   },
 
   async criarOrdemServico(
-    dados: Omit<
-      OrdemServico,
-      'id' | 'numero_os' | 'valor_total' | 'created_at' | 'updated_at'
-    >
+    dados: Omit<OrdemServico, 'id' | 'numero_os' | 'valor_total' | 'created_at' | 'updated_at'>
   ): Promise<OrdemServico> {
-    const valorPecasTotal = (dados.pecas || []).reduce(
-      (acc, p) => acc + (p.preco_venda * p.quantidade),
-      0
-    );
-    const valorServico = dados.valor_servico || 0;
-    const valorDesconto = dados.valor_desconto || 0;
-    const valorTotal = Math.max(0, valorServico + valorPecasTotal - valorDesconto);
-
     const supabase = createClient();
     if (supabase) {
-      const { data: osData, error: osErr } = await supabase
-        .from('ordens_servico')
-        .insert([
-          {
-            cliente_id: dados.cliente_id,
-            tipo_dispositivo: dados.tipo_dispositivo,
-            modelo: dados.modelo,
-            cor: dados.cor,
-            imei_ou_serial: dados.imei_ou_serial,
-            senha_aparelho: dados.senha_aparelho || '',
-            buscar_iphone_desativado: dados.buscar_iphone_desativado,
-            defeito_reclamado: dados.defeito_reclamado,
-            laudo_tecnico: dados.laudo_tecnico || null,
-            checklist_entrada: dados.checklist_entrada,
-            checklist_saida: dados.checklist_saida || null,
-            status: dados.status || 'aguardando_analise',
-            tipo_cobertura: dados.tipo_cobertura || 'Particular',
-            localizacao_atual: dados.localizacao_atual || 'bancada_local',
-            detalhes_terceirizado: dados.detalhes_terceirizado || null,
-            data_entrada: dados.data_entrada || new Date().toISOString(),
-            previsao_entrega: dados.previsao_entrega || null,
-            valor_servico: valorServico,
-            valor_pecas: valorPecasTotal,
-            valor_desconto: valorDesconto,
-            forma_pagamento: dados.forma_pagamento || null,
-            garantia_dias: dados.garantia_dias || 90,
-          },
-        ])
-        .select('*, cliente:clientes(*)')
-        .single();
-
-      if (!osErr && osData) {
-        if (dados.pecas && dados.pecas.length > 0) {
-          const pecasFormatadas = dados.pecas.map((p) => ({
-            os_id: osData.id,
-            descricao: p.descricao,
-            tipo_qualidade: p.tipo_qualidade,
-            custo: p.custo,
-            preco_venda: p.preco_venda,
-            quantidade: p.quantidade,
-          }));
-          await supabase.from('os_itens_pecas').insert(pecasFormatadas);
-        }
-        return (await this.getOrdemServicoById(osData.id)) || (osData as OrdemServico);
-      }
+      const { data, error } = await supabase.from('ordens_servico').insert([dados]).select().single();
+      if (!error && data) return data as OrdemServico;
     }
 
-    const maxNumeroOS = localOSStore.reduce(
-      (max, os) => (os.numero_os > max ? os.numero_os : max),
-      1000
+    const proximoNumero = localOSStore.length > 0
+      ? Math.max(...localOSStore.map((o) => o.numero_os)) + 1
+      : 1001;
+
+    const cliente = localClientesStore.find((c) => c.id === dados.cliente_id);
+
+    const valorTotal = Math.max(
+      0,
+      (dados.valor_servico || 0) + (dados.valor_pecas || 0) - (dados.valor_desconto || 0)
     );
 
-    const proximaOSNum = maxNumeroOS + 1;
-    const clienteFound = localClientesStore.find((c) => c.id === dados.cliente_id);
-
     const novaOS: OrdemServico = {
-      id: `os-${proximaOSNum}`,
-      numero_os: proximaOSNum,
-      cliente_id: dados.cliente_id,
-      cliente: clienteFound,
-      tipo_dispositivo: dados.tipo_dispositivo,
-      modelo: dados.modelo,
-      cor: dados.cor,
-      imei_ou_serial: dados.imei_ou_serial,
-      senha_aparelho: dados.senha_aparelho,
-      buscar_iphone_desativado: dados.buscar_iphone_desativado,
-      defeito_reclamado: dados.defeito_reclamado,
-      laudo_tecnico: dados.laudo_tecnico,
-      checklist_entrada: dados.checklist_entrada,
-      checklist_saida: dados.checklist_saida,
-      status: dados.status || 'aguardando_analise',
-      tipo_cobertura: dados.tipo_cobertura || 'Particular',
-      localizacao_atual: dados.localizacao_atual || 'bancada_local',
-      detalhes_terceirizado: dados.detalhes_terceirizado,
-      data_entrada: dados.data_entrada || new Date().toISOString(),
-      previsao_entrega: dados.previsao_entrega,
-      valor_servico: valorServico,
-      valor_pecas: valorPecasTotal,
-      valor_desconto: valorDesconto,
+      id: `os-${Date.now()}`,
+      numero_os: proximoNumero,
+      ...dados,
+      cliente,
       valor_total: valorTotal,
-      forma_pagamento: dados.forma_pagamento,
-      garantia_dias: dados.garantia_dias || 90,
-      pecas: (dados.pecas || []).map((p, idx) => ({
-        ...p,
-        id: `peca-${Date.now()}-${idx}`,
-        os_id: `os-${proximaOSNum}`,
-      })),
+      pecas: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -234,92 +175,92 @@ export const OSService = {
   },
 
   async atualizarStatusOS(id: string, novoStatus: StatusOS): Promise<OrdemServico | null> {
-    const dataConclusao =
-      novoStatus === 'pronto_para_retirada' || novoStatus === 'entregue'
-        ? new Date().toISOString()
-        : null;
-
     const supabase = createClient();
+    const isConcluido = novoStatus === 'pronto_para_retirada' || novoStatus === 'entregue';
+    const dataConcl = isConcluido ? new Date().toISOString() : null;
+
     if (supabase) {
-      const updatePayload: Record<string, any> = {
-        status: novoStatus,
-        updated_at: new Date().toISOString(),
-      };
-      if (dataConclusao) updatePayload.data_conclusao = dataConclusao;
-      if (novoStatus === 'pronto_para_retirada') updatePayload.localizacao_atual = 'loja_pronto';
-
-      await supabase.from('ordens_servico').update(updatePayload).eq('id', id);
-      return this.getOrdemServicoById(id);
+      const { data, error } = await supabase
+        .from('ordens_servico')
+        .update({ status: novoStatus, data_conclusao: dataConcl, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error && data) return data as OrdemServico;
     }
 
-    const os = localOSStore.find((o) => o.id === id);
-    if (os) {
-      os.status = novoStatus;
-      os.updated_at = new Date().toISOString();
-      if (dataConclusao) os.data_conclusao = dataConclusao;
-      if (novoStatus === 'pronto_para_retirada') os.localizacao_atual = 'loja_pronto';
+    const index = localOSStore.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      localOSStore[index].status = novoStatus;
+      if (isConcluido) localOSStore[index].data_conclusao = dataConcl;
+      localOSStore[index].updated_at = new Date().toISOString();
       persistLocalState();
-      return { ...os };
+      return localOSStore[index];
     }
+
     return null;
   },
 
   async atualizarLocalizacaoOS(
     id: string,
-    localizacao: LocalizacaoDispositivo,
-    terceirizadoData?: DetalhesTerceirizado | null
+    novaLocalizacao: LocalizacaoDispositivo,
+    detalhesTerceirizado?: DetalhesTerceirizado
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      const payload: Record<string, any> = {
-        localizacao_atual: localizacao,
-        updated_at: new Date().toISOString(),
-      };
-      if (terceirizadoData !== undefined) {
-        payload.detalhes_terceirizado = terceirizadoData;
-      }
+      const payload: any = { localizacao_atual: novaLocalizacao, updated_at: new Date().toISOString() };
+      if (detalhesTerceirizado) payload.detalhes_terceirizado = detalhesTerceirizado;
 
-      await supabase.from('ordens_servico').update(payload).eq('id', id);
-      return this.getOrdemServicoById(id);
+      const { data, error } = await supabase
+        .from('ordens_servico')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error && data) return data as OrdemServico;
     }
 
-    const os = localOSStore.find((o) => o.id === id);
-    if (os) {
-      os.localizacao_atual = localizacao;
-      if (terceirizadoData !== undefined) os.detalhes_terceirizado = terceirizadoData;
-      os.updated_at = new Date().toISOString();
+    const index = localOSStore.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      localOSStore[index].localizacao_atual = novaLocalizacao;
+      if (detalhesTerceirizado) localOSStore[index].detalhes_terceirizado = detalhesTerceirizado;
+      localOSStore[index].updated_at = new Date().toISOString();
       persistLocalState();
-      return { ...os };
+      return localOSStore[index];
     }
+
     return null;
   },
 
   async salvarLaudoEChecklistSaida(
     id: string,
-    laudo: string,
-    checklistSaida: any
+    laudoTecnico: string,
+    checklistSaida?: any
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      await supabase
+      const { data, error } = await supabase
         .from('ordens_servico')
         .update({
-          laudo_tecnico: laudo,
+          laudo_tecnico: laudoTecnico,
           checklist_saida: checklistSaida,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id);
-      return this.getOrdemServicoById(id);
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error && data) return data as OrdemServico;
     }
 
-    const os = localOSStore.find((o) => o.id === id);
-    if (os) {
-      os.laudo_tecnico = laudo;
-      os.checklist_saida = checklistSaida;
-      os.updated_at = new Date().toISOString();
+    const index = localOSStore.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      localOSStore[index].laudo_tecnico = laudoTecnico;
+      if (checklistSaida) localOSStore[index].checklist_saida = checklistSaida;
+      localOSStore[index].updated_at = new Date().toISOString();
       persistLocalState();
-      return { ...os };
+      return localOSStore[index];
     }
+
     return null;
   },
 
@@ -327,31 +268,39 @@ export const OSService = {
     osId: string,
     item: Omit<ItemPeca, 'id' | 'os_id' | 'created_at'>
   ): Promise<OrdemServico | null> {
+    const novoItem: ItemPeca = {
+      id: `peca-${Date.now()}`,
+      os_id: osId,
+      ...item,
+      created_at: new Date().toISOString(),
+    };
+
     const supabase = createClient();
     if (supabase) {
-      await supabase.from('os_itens_pecas').insert([{ os_id: osId, ...item }]);
+      await supabase.from('os_itens_pecas').insert([novoItem]);
       return this.getOrdemServicoById(osId);
     }
 
-    const os = localOSStore.find((o) => o.id === osId);
-    if (os) {
-      if (!os.pecas) os.pecas = [];
-      const novaPeca: ItemPeca = {
-        id: `peca-${Date.now()}`,
-        os_id: osId,
-        ...item,
-        created_at: new Date().toISOString(),
-      };
-      os.pecas.push(novaPeca);
-      os.valor_pecas = os.pecas.reduce(
-        (sum, p) => sum + (p.preco_venda * p.quantidade),
+    const index = localOSStore.findIndex((o) => o.id === osId);
+    if (index !== -1) {
+      const pecasAtuais = localOSStore[index].pecas || [];
+      localOSStore[index].pecas = [...pecasAtuais, novoItem];
+
+      // Recalcular valor pecas e total
+      const somaPecas = localOSStore[index].pecas.reduce(
+        (acc, p) => acc + (p.preco_venda * p.quantidade),
         0
       );
-      os.valor_total = Math.max(0, os.valor_servico + os.valor_pecas - os.valor_desconto);
-      os.updated_at = new Date().toISOString();
+      localOSStore[index].valor_pecas = somaPecas;
+      localOSStore[index].valor_total = Math.max(
+        0,
+        (localOSStore[index].valor_servico || 0) + somaPecas - (localOSStore[index].valor_desconto || 0)
+      );
+
       persistLocalState();
-      return { ...os };
+      return localOSStore[index];
     }
+
     return null;
   },
 
@@ -362,68 +311,80 @@ export const OSService = {
       return this.getOrdemServicoById(osId);
     }
 
-    const os = localOSStore.find((o) => o.id === osId);
-    if (os && os.pecas) {
-      os.pecas = os.pecas.filter((p) => p.id !== pecaId);
-      os.valor_pecas = os.pecas.reduce(
-        (sum, p) => sum + (p.preco_venda * p.quantidade),
+    const index = localOSStore.findIndex((o) => o.id === osId);
+    if (index !== -1 && localOSStore[index].pecas) {
+      localOSStore[index].pecas = localOSStore[index].pecas.filter((p) => p.id !== pecaId);
+
+      const somaPecas = localOSStore[index].pecas.reduce(
+        (acc, p) => acc + (p.preco_venda * p.quantidade),
         0
       );
-      os.valor_total = Math.max(0, os.valor_servico + os.valor_pecas - os.valor_desconto);
-      os.updated_at = new Date().toISOString();
+      localOSStore[index].valor_pecas = somaPecas;
+      localOSStore[index].valor_total = Math.max(
+        0,
+        (localOSStore[index].valor_servico || 0) + somaPecas - (localOSStore[index].valor_desconto || 0)
+      );
+
       persistLocalState();
-      return { ...os };
+      return localOSStore[index];
     }
+
     return null;
   },
 
-  // 3. MÉTRICAS DASHBOARD
+  // 3. METRICS
   async getDashboardMetrics(): Promise<DashboardMetrics> {
     const ordens = await this.getOrdensServico();
-    const hoje = new Date();
 
-    const ativas = ordens.filter(
+    const totalAtivas = ordens.filter(
       (o) => o.status !== 'entregue' && o.status !== 'cancelado'
-    );
-    const prontos = ordens.filter((o) => o.status === 'pronto_para_retirada');
-    
-    // Total Faturado no mês
+    ).length;
+
+    const prontosEntrega = ordens.filter((o) => o.status === 'pronto_para_retirada').length;
+
+    const mesAtual = new Date().getMonth();
+    const anoAtual = new Date().getFullYear();
+
     const faturamentoMes = ordens
       .filter((o) => {
-        if (o.status !== 'entregue' && o.status !== 'pronto_para_retirada') return false;
+        if (o.status !== 'pronto_para_retirada' && o.status !== 'entregue') return false;
         const d = new Date(o.data_conclusao || o.data_entrada);
-        return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
       })
-      .reduce((sum, o) => sum + Number(o.valor_total || 0), 0);
+      .reduce((acc, o) => acc + (o.valor_total || 0), 0);
 
-    // Em São Paulo (Terceirizados)
-    const emSP = ordens.filter(
+    const emSpCount = ordens.filter(
       (o) =>
         o.localizacao_atual === 'em_transito_ida_sp' ||
         o.localizacao_atual === 'laboratorio_sp' ||
         o.localizacao_atual === 'em_transito_retorno_sp'
-    );
+    ).length;
 
-    // Vencidas em SP
-    const spVencidas = emSP.filter((o) => {
+    const hoje = new Date();
+    const spVencidasCount = ordens.filter((o) => {
+      if (
+        o.localizacao_atual !== 'laboratorio_sp' &&
+        o.localizacao_atual !== 'em_transito_ida_sp'
+      ) {
+        return false;
+      }
       if (!o.detalhes_terceirizado?.previsao_retorno_sp) return false;
       const prev = new Date(o.detalhes_terceirizado.previsao_retorno_sp);
-      return prev < hoje && o.localizacao_atual !== 'loja_pronto';
-    });
+      return prev < hoje;
+    }).length;
 
-    // Garantias da Loja
-    const garantiasLoja = ordens.filter(
-      (o) => o.tipo_cobertura === 'Garantia da Loja' && o.status !== 'entregue'
-    );
+    const garantiasLojaCount = ordens.filter(
+      (o) => o.tipo_cobertura === 'Garantia da Loja'
+    ).length;
 
     return {
-      total_ativas: ativas.length,
-      prontos_entrega: prontos.length,
+      total_ativas: totalAtivas,
+      prontos_entrega: prontosEntrega,
       faturamento_mes: faturamentoMes,
-      tempo_medio_reparo_dias: 2.5,
-      em_sp_count: emSP.length,
-      sp_vencidas_count: spVencidas.length,
-      garantias_loja_count: garantiasLoja.length,
+      tempo_medio_reparo_dias: 1.5,
+      em_sp_count: emSpCount,
+      sp_vencidas_count: spVencidasCount,
+      garantias_loja_count: garantiasLojaCount,
     };
   },
 };

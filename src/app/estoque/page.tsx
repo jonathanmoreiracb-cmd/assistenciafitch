@@ -10,13 +10,15 @@ import {
   PackageCheck,
 } from 'lucide-react';
 import { EstoqueService } from '@/lib/services/estoque-service';
-import { PecaEstoque, TipoQualidadePeca } from '@/types';
+import { AuthService } from '@/lib/services/auth-service';
+import { PecaEstoque, TipoQualidadePeca, Usuario } from '@/types';
 import { toast } from 'sonner';
 
 export default function EstoquePage() {
   const [pecas, setPecas] = useState<PecaEstoque[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentUser, setCurrentUser] = useState<Usuario | null>(() => AuthService.getCurrentUser());
 
   // New Part Modal State
   const [showNewModal, setShowNewModal] = useState(false);
@@ -48,6 +50,9 @@ export default function EstoquePage() {
 
   useEffect(() => {
     loadData();
+    const handleAuth = () => setCurrentUser(AuthService.getCurrentUser());
+    window.addEventListener('fitch_auth_changed', handleAuth);
+    return () => window.removeEventListener('fitch_auth_changed', handleAuth);
   }, []);
 
   const handleCadastrarPeca = async (e: React.FormEvent) => {
@@ -131,30 +136,34 @@ export default function EstoquePage() {
       </div>
 
       {/* METRIC CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 max-w-sm'}`}>
         <div className="apple-card p-5">
           <span className="text-xs font-semibold text-slate-500">Saldo em Estoque</span>
           <p className="text-3xl font-bold text-[#1d1d1f] mt-1">{totalItens} un</p>
-          <span className="text-[10px] text-slate-400">{pecas.length} itens cadastrados</span>
+          <span className="text-[10px] text-slate-400">{pecas.length} tipos de peças cadastrados</span>
         </div>
 
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Investimento (Custo)</span>
-          <p className="text-2xl font-bold text-slate-700 mt-1 font-mono">
-            R$ {valorTotalCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <span className="text-[10px] text-slate-400">Total acumulado em custo</span>
-        </div>
+        {currentUser?.cargo === 'gerente' && (
+          <>
+            <div className="apple-card p-5">
+              <span className="text-xs font-semibold text-slate-500">Investimento (Custo)</span>
+              <p className="text-2xl font-bold text-slate-700 mt-1 font-mono">
+                R$ {valorTotalCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <span className="text-[10px] text-slate-400">Total acumulado em custo</span>
+            </div>
 
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Venda Total Projetada</span>
-          <p className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
-            R$ {valorTotalVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <span className="text-[10px] text-emerald-600 font-semibold">
-            Lucro projetado R$ {(valorTotalVenda - valorTotalCusto).toFixed(2)}
-          </span>
-        </div>
+            <div className="apple-card p-5">
+              <span className="text-xs font-semibold text-slate-500">Venda Total Projetada</span>
+              <p className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
+                R$ {valorTotalVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <span className="text-[10px] text-emerald-600 font-semibold">
+                Lucro projetado R$ {(valorTotalVenda - valorTotalCusto).toFixed(2)}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* TABLE */}

@@ -12,6 +12,7 @@ import {
   UserCheck,
   Wrench,
   Shield,
+  Boxes,
 } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { AuthService } from '@/lib/services/auth-service';
@@ -83,7 +84,7 @@ export const Navbar: React.FC = () => {
             />
           </form>
 
-          {/* Minimal Navigation Bar (Dashboard & Nova OS only) */}
+          {/* Minimal Navigation Bar */}
           <nav className="flex items-center gap-2">
             <Link
               href="/dashboard"
@@ -95,6 +96,21 @@ export const Navbar: React.FC = () => {
             >
               Dashboard
             </Link>
+
+            {/* Estoque Link (Para Gerente e Técnico) */}
+            {(currentUser?.cargo === 'gerente' || currentUser?.cargo === 'tecnico') && (
+              <Link
+                href="/estoque"
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  pathname === '/estoque'
+                    ? 'bg-[#1d1d1f] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Boxes className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Estoque</span>
+              </Link>
+            )}
 
             <Link
               href="/os/nova"

@@ -12,7 +12,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
   const publicUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/consulta/${os.numero_os}`
-      : `https://fitch-tecnologia.app/consulta/${os.numero_os}`;
+      : `https://assistenciafitch.vercel.app/consulta/${os.numero_os}`;
 
   const dataEntradaFormatted = new Date(os.data_entrada).toLocaleDateString('pt-BR', {
     day: '2-digit',

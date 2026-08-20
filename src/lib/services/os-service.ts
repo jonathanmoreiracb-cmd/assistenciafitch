@@ -199,31 +199,47 @@ export const OSService = {
   },
 
   async getOrdemServicoById(id: string): Promise<OrdemServico | null> {
+    const cleanId = (id || '').trim();
+    if (!cleanId) return null;
+
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const validUuid = sanitizeUuid(cleanId);
+        let query = supabase
           .from('ordens_servico')
           .select(`
             *,
             cliente:clientes(*),
             pecas:os_itens_pecas(*)
-          `)
-          .or(`id.eq.${id},numero_os.eq.${isNaN(Number(id)) ? -1 : Number(id)}`)
-          .single();
+          `);
 
-        if (error) {
-          console.error('Supabase getOrdemServicoById error:', error);
-        } else if (data) {
+        if (validUuid) {
+          query = query.eq('id', validUuid);
+        } else {
+          const num = Number(cleanId);
+          if (!isNaN(num) && num > 0) {
+            query = query.eq('numero_os', num);
+          } else {
+            query = query.eq('id', cleanId);
+          }
+        }
+
+        const { data, error } = await query.maybeSingle();
+
+        if (!error && data) {
           return data as OrdemServico;
         }
+        if (error) {
+          console.error('Supabase getOrdemServicoById error:', error);
+        }
       } catch (e) {
-        console.error(e);
+        console.error('Error fetching OS by ID from Supabase:', e);
       }
     }
 
     const found = localOSStore.find(
-      (os) => os.id === id || os.numero_os.toString() === id
+      (os) => os.id === cleanId || os.numero_os.toString() === cleanId
     );
     return found || null;
   },

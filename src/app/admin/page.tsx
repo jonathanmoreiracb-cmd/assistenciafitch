@@ -383,10 +383,10 @@ export default function AdminPage() {
       </div>
 
       {/* CONSOLIDATED ADMIN TABS */}
-      <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 overflow-x-auto self-start">
+      <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full self-start">
         <button
           onClick={() => setActiveTab('usuarios')}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
             activeTab === 'usuarios'
               ? 'bg-[#1d1d1f] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -398,7 +398,7 @@ export default function AdminPage() {
 
         <button
           onClick={() => setActiveTab('estoque')}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
             activeTab === 'estoque'
               ? 'bg-[#1d1d1f] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -410,7 +410,7 @@ export default function AdminPage() {
 
         <button
           onClick={() => setActiveTab('relatorios')}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
             activeTab === 'relatorios'
               ? 'bg-[#1d1d1f] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -422,14 +422,14 @@ export default function AdminPage() {
 
         <button
           onClick={() => setActiveTab('loja')}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
             activeTab === 'loja'
               ? 'bg-[#1d1d1f] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Building2 className="w-3.5 h-3.5" />
-          <span>Dados da Loja</span>
+          <Building2 className="w-3.5 h-3.5 text-amber-500" />
+          <span>Configurações Loja</span>
         </button>
       </div>
 

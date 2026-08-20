@@ -197,15 +197,15 @@ export default function NovaOSPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 font-sans">
+    <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6 font-sans">
       {/* Header & Seller Selection */}
-      <div className="apple-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="apple-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#1d1d1f] tracking-tight">Nova Ordem de Serviço</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-[#1d1d1f] tracking-tight">Nova Ordem de Serviço</h1>
           <p className="text-xs text-slate-500 mt-0.5">Assistente de Abertura Fitch Tecnologia</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <span className="text-xs font-semibold text-slate-500">Vendedor:</span>
           <select
             value={vendedorSelecionado.id}
@@ -225,10 +225,10 @@ export default function NovaOSPage() {
       </div>
 
       {/* APPLE SETUP ASSISTANT STEPPER */}
-      <div className="apple-card p-3 flex items-center justify-between gap-2">
+      <div className="apple-card p-2 sm:p-3 flex items-center justify-between gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setStep(1)}
-          className={`flex-1 py-2 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 1 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -237,7 +237,7 @@ export default function NovaOSPage() {
 
         <button
           onClick={() => (selectedCliente || isNovoCliente ? setStep(2) : null)}
-          className={`flex-1 py-2 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 2 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -246,7 +246,7 @@ export default function NovaOSPage() {
 
         <button
           onClick={() => (selectedCliente || isNovoCliente ? setStep(3) : null)}
-          className={`flex-1 py-2 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 3 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -255,7 +255,7 @@ export default function NovaOSPage() {
 
         <button
           onClick={() => (selectedCliente || isNovoCliente ? setStep(4) : null)}
-          className={`flex-1 py-2 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 4 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
         >
@@ -265,7 +265,7 @@ export default function NovaOSPage() {
 
       {/* STEP 1: CLIENTE */}
       {step === 1 && (
-        <div className="apple-card p-6 space-y-6">
+        <div className="apple-card p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 1: Cliente</h3>
             <button
@@ -461,7 +461,7 @@ export default function NovaOSPage() {
 
       {/* STEP 2: APARELHO & COBERTURA */}
       {step === 2 && (
-        <div className="apple-card p-6 space-y-6">
+        <div className="apple-card p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 2: Dispositivo & Cobertura</h3>
           </div>
@@ -685,7 +685,7 @@ export default function NovaOSPage() {
 
       {/* STEP 3: CHECKLIST & PHOTOS */}
       {step === 3 && (
-        <div className="apple-card p-6 space-y-6">
+        <div className="apple-card p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 3: Checklist & Fotos</h3>
           </div>
@@ -749,7 +749,7 @@ export default function NovaOSPage() {
 
       {/* STEP 4: DEFEITO & VALOR */}
       {step === 4 && (
-        <div className="apple-card p-6 space-y-6">
+        <div className="apple-card p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 4: Problema & Tabela de Preços</h3>
           </div>

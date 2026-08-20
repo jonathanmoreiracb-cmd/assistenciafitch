@@ -327,36 +327,37 @@ export default function OSDetalhesPage() {
   return (
     <div className="space-y-6 font-sans">
       {/* Top Header Card */}
-      <div className="apple-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* Top Header Card */}
+      <div className="apple-card p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3 sm:gap-4">
           <Link
             href="/dashboard"
-            className="p-2 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900"
+            className="p-2 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 shrink-0 mt-1 sm:mt-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-extrabold text-[#1d1d1f] font-mono">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-lg sm:text-xl font-extrabold text-[#1d1d1f] font-mono">
                 O.S. #{os.numero_os}
               </span>
-              <span className="text-xs font-semibold bg-[#0071e3]/10 text-[#0071e3] px-3 py-0.5 rounded-full">
+              <span className="text-[11px] sm:text-xs font-semibold bg-[#0071e3]/10 text-[#0071e3] px-2.5 sm:px-3 py-0.5 rounded-full">
                 {os.tipo_dispositivo} {os.modelo}
               </span>
 
               {/* Tipo de Serviço Badge */}
               {os.tipo_cobertura === 'Particular' && (
-                <span className="text-xs font-semibold bg-blue-50 text-[#0071e3] border border-blue-200 px-3 py-0.5 rounded-full">
+                <span className="text-[11px] sm:text-xs font-semibold bg-blue-50 text-[#0071e3] border border-blue-200 px-2.5 sm:px-3 py-0.5 rounded-full">
                   🛠️ Assistência Particular (Pago)
                 </span>
               )}
               {os.tipo_cobertura === 'Garantia da Loja' && (
-                <span className="text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 px-3 py-0.5 rounded-full">
+                <span className="text-[11px] sm:text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 px-2.5 sm:px-3 py-0.5 rounded-full">
                   🛡️ Garantia de Seminovo (180 Dias - R$ 0,00)
                 </span>
               )}
               {os.tipo_cobertura === 'Revisão / Upgrade' && (
-                <span className="text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-300 px-3 py-0.5 rounded-full">
+                <span className="text-[11px] sm:text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-300 px-2.5 sm:px-3 py-0.5 rounded-full">
                   🔄 Revisão / Trade-in (Aparelho da Loja)
                 </span>
               )}
@@ -366,7 +367,7 @@ export default function OSDetalhesPage() {
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-1">
               Cliente: <strong className="text-slate-900">{os.cliente?.nome}</strong> ({os.cliente?.telefone}) • Entrada:{' '}
               {new Date(os.data_entrada).toLocaleDateString('pt-BR')}
             </p>
@@ -374,10 +375,10 @@ export default function OSDetalhesPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
           <button
             onClick={() => setShowExitChecklistModal(true)}
-            className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
           >
             <CheckSquare className="w-3.5 h-3.5 text-[#0071e3]" />
             Checklist Saída
@@ -385,7 +386,7 @@ export default function OSDetalhesPage() {
 
           <button
             onClick={() => setShowThermalPrint(true)}
-            className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
           >
             <Printer className="w-3.5 h-3.5 text-[#0071e3]" />
             Etiqueta (80x50mm)
@@ -393,7 +394,7 @@ export default function OSDetalhesPage() {
 
           <button
             onClick={() => setShowWarrantyPrint(true)}
-            className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
           >
             <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
             Termo A4
@@ -403,15 +404,15 @@ export default function OSDetalhesPage() {
             href={geratLinkWhatsApp()}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+            className="px-3 py-2 sm:py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Enviar WhatsApp
+            WhatsApp
           </a>
 
           <button
             onClick={handleDeletarOS}
-            className="px-3.5 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="col-span-2 sm:col-span-1 px-3 py-2 sm:py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
             title="Excluir Ordem de Serviço permanentemente"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -425,13 +426,13 @@ export default function OSDetalhesPage() {
         {/* Left Column (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Status 1-Click Transition Buttons */}
-          <div className="apple-card p-5 space-y-3">
-            <div className="flex items-center justify-between">
+          <div className="apple-card p-4 sm:p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                 <Wrench className="w-4 h-4 text-[#0071e3]" />
                 Status da Manutenção
               </h3>
-              <span className="text-xs font-bold text-[#0071e3] bg-blue-50 px-3 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-[#0071e3] bg-blue-50 px-3 py-0.5 rounded-full self-start sm:self-auto">
                 Status Atual: {formatStatusName(os.status)}
               </span>
             </div>
@@ -448,18 +449,18 @@ export default function OSDetalhesPage() {
           </div>
 
           {/* Location Switcher */}
-          <div className="apple-card p-5 space-y-3">
-            <div className="flex items-center justify-between">
+          <div className="apple-card p-4 sm:p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-purple-600" />
                 Localização do Aparelho
               </h3>
-              <span className="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full self-start sm:self-auto">
                 {formatLocationName(os.localizacao_atual)}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleLocationChange('bancada_local')}

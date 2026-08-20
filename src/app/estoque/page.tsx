@@ -210,26 +210,26 @@ export default function EstoquePage() {
       </div>
 
       {/* METRIC CARDS */}
-      <div className={`grid gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 max-w-sm'}`}>
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Saldo em Estoque</span>
-          <p className="text-3xl font-bold text-[#1d1d1f] mt-1">{totalItens} un</p>
+      <div className={`grid gap-3 sm:gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 max-w-sm'}`}>
+        <div className="apple-card p-4 sm:p-5">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Saldo em Estoque</span>
+          <p className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] mt-1">{totalItens} un</p>
           <span className="text-[10px] text-slate-400">{pecas.length} tipos de peças cadastrados</span>
         </div>
 
         {currentUser?.cargo === 'gerente' && (
           <>
-            <div className="apple-card p-5">
-              <span className="text-xs font-semibold text-slate-500">Investimento (Custo)</span>
-              <p className="text-2xl font-bold text-slate-700 mt-1 font-mono">
+            <div className="apple-card p-4 sm:p-5">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Investimento (Custo)</span>
+              <p className="text-xl sm:text-2xl font-bold text-slate-700 mt-1 font-mono truncate">
                 R$ {valorTotalCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
               <span className="text-[10px] text-slate-400">Total acumulado em custo</span>
             </div>
 
-            <div className="apple-card p-5">
-              <span className="text-xs font-semibold text-slate-500">Venda Total Projetada</span>
-              <p className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
+            <div className="apple-card p-4 sm:p-5">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Venda Total Projetada</span>
+              <p className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1 font-mono truncate">
                 R$ {valorTotalVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
               <span className="text-[10px] text-emerald-600 font-semibold">
@@ -240,10 +240,10 @@ export default function EstoquePage() {
         )}
       </div>
 
-      {/* TABLE */}
-      <div className="apple-card p-5 space-y-4">
+      {/* TABLE & MOBILE CARDS */}
+      <div className="apple-card p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-100">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-full sm:max-w-md">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -255,7 +255,63 @@ export default function EstoquePage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* MOBILE CARDS LIST */}
+        <div className="block md:hidden space-y-3">
+          {pecasFiltradas.length === 0 ? (
+            <p className="py-8 text-center text-slate-400 text-xs">Nenhuma peça encontrada.</p>
+          ) : (
+            pecasFiltradas.map((p) => {
+              const isLow = p.quantidade_estoque <= 3;
+              return (
+                <div key={p.id} className="bg-slate-50/90 border border-slate-200/80 p-3.5 rounded-2xl space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-mono font-bold text-xs text-[#0071e3] block">{p.codigo_sku || 'SEM SKU'}</span>
+                      <h4 className="font-bold text-slate-900 text-xs mt-0.5">{p.descricao}</h4>
+                      <p className="text-[11px] text-slate-500">{p.modelo_compativel} • {p.tipo_qualidade}</p>
+                    </div>
+                    <span className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] shrink-0 ${isLow ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'}`}>
+                      {p.quantidade_estoque} un
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Preço de Venda</span>
+                      <span className="font-mono font-bold text-slate-900 text-sm">R$ {Number(p.preco_venda).toFixed(2)}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenRestockModal(p)}
+                        className="px-2.5 py-1 bg-[#0071e3] text-white rounded-full font-semibold text-[10px] inline-flex items-center gap-1 shadow-2xs"
+                      >
+                        <Plus className="w-3 h-3" /> Entrada
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditModal(p)}
+                        className="p-1.5 rounded-full bg-white text-slate-600 border border-slate-200"
+                        title="Editar peça"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeletarPeca(p.id, p.descricao)}
+                        className="p-1.5 rounded-full bg-red-50 text-red-600 border border-red-200"
+                        title="Excluir peça"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP TABLE */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px]">

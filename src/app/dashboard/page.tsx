@@ -193,70 +193,70 @@ export default function DashboardPage() {
       )}
 
       {/* ESSENTIAL METRIC CARDS */}
-      <div className={`grid gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
-        <div className="apple-card apple-card-hover p-5">
+      <div className={`grid gap-3 sm:gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
+        <div className="apple-card apple-card-hover p-4 sm:p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">O.S. Ativas</span>
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Wrench className="w-4 h-4" />
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500">O.S. Ativas</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+              <Wrench className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-[#1d1d1f] mt-2">
+          <p className="text-2xl sm:text-3xl font-bold text-[#1d1d1f] mt-1.5">
             {metrics?.total_ativas ?? '-'}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Em andamento na loja</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Em andamento na loja</span>
         </div>
 
-        <div className="apple-card apple-card-hover p-5">
+        <div className="apple-card apple-card-hover p-4 sm:p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Prontos p/ Retirada</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Prontos p/ Retirada</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-emerald-600 mt-2">
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1.5">
             {metrics?.prontos_entrega ?? '-'}
           </p>
-          <span className="text-[10px] text-emerald-700/80 mt-1 block">Aguardando cliente</span>
+          <span className="text-[10px] text-emerald-700/80 mt-0.5 block">Aguardando cliente</span>
         </div>
 
         {currentUser?.cargo === 'gerente' && (
-          <div className="apple-card apple-card-hover p-5">
+          <div className="apple-card apple-card-hover p-4 sm:p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Faturamento Mês</span>
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0071e3] flex items-center justify-center">
-                <DollarSign className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Faturamento Mês</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-50 text-[#0071e3] flex items-center justify-center">
+                <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-[#1d1d1f] mt-2 truncate font-mono">
+            <p className="text-xl sm:text-2xl font-bold text-[#1d1d1f] mt-1.5 truncate font-mono">
               R$ {metrics?.faturamento_mes.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) ?? '0,00'}
             </p>
-            <span className="text-[10px] text-slate-400 mt-1 block">Concluídos este mês</span>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Concluídos este mês</span>
           </div>
         )}
 
-        <div className="apple-card apple-card-hover p-5">
+        <div className="apple-card apple-card-hover p-4 sm:p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Em São Paulo (SP)</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Building2 className="w-4 h-4" />
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Em São Paulo (SP)</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-purple-600 mt-2">
+          <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-1.5">
             {metrics?.em_sp_count ?? '-'}
           </p>
-          <span className="text-[10px] text-purple-700/80 mt-1 block">Laboratório parceiro</span>
+          <span className="text-[10px] text-purple-700/80 mt-0.5 block">Laboratório parceiro</span>
         </div>
       </div>
 
       {/* SEARCH AND SEGMENTED TABS */}
-      <div className="apple-card p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100">
-          {/* Segmented Control Filter Tabs */}
-          <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 self-start">
+      <div className="apple-card p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          {/* Segmented Control Filter Tabs (Scrollable on Mobile) */}
+          <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 self-start max-w-full overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('todas')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'todas'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -267,7 +267,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setActiveTab('bancada')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'bancada'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -278,7 +278,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setActiveTab('sp')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'sp'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -289,7 +289,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setActiveTab('garantia')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'garantia'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -300,7 +300,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Search Input */}
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative flex-1 max-w-full sm:max-w-xs">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -312,8 +312,113 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* DATA TABLE */}
-        <div className="overflow-x-auto">
+        {/* MOBILE CARD LIST (VISIBLE ONLY ON MOBILE) */}
+        <div className="block md:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              Carregando Ordens de Serviço...
+            </div>
+          ) : ordensFiltradas.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              Nenhuma Ordem de Serviço encontrada.
+            </div>
+          ) : (
+            ordensFiltradas.map((os) => (
+              <div
+                key={os.id}
+                className="bg-slate-50/90 border border-slate-200/80 p-3.5 rounded-2xl space-y-3 transition-all active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/os/${os.id}`}
+                      className="font-bold text-sm text-[#0071e3] font-mono hover:underline"
+                    >
+                      #{os.numero_os}
+                    </Link>
+                    <span className="text-[11px] font-semibold text-slate-800 bg-white px-2 py-0.5 rounded-full border border-slate-200">
+                      {os.tipo_dispositivo} {os.modelo}
+                    </span>
+                  </div>
+                  {renderAppleStatusBadge(os.status)}
+                </div>
+
+                <div className="flex justify-between items-start text-xs pt-1 border-t border-slate-200/60">
+                  <div>
+                    <p className="font-bold text-slate-900">{os.cliente?.nome || 'Cliente'}</p>
+                    <p className="text-[11px] text-slate-500">{os.cliente?.telefone}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-slate-900 font-mono">
+                      {os.tipo_cobertura === 'Garantia da Loja' ? (
+                        <span className="text-amber-600 text-[11px]">R$ 0,00 (Garantia)</span>
+                      ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
+                        <span className="text-indigo-600 text-[11px]">R$ 0,00 (Loja)</span>
+                      ) : (
+                        <span>R$ {Number(os.valor_total).toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5">{renderAppleLocationBadge(os.localizacao_atual)}</div>
+                  </div>
+                </div>
+
+                {/* Mobile Quick Action Buttons */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                  <span className="text-[10px] text-slate-400">
+                    Vendedor: {os.vendedor_nome || 'Loja'}
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={`/os/${os.id}`}
+                      className="p-1.5 rounded-full bg-white text-[#0071e3] border border-slate-200 shadow-2xs"
+                      title="Ver O.S."
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
+
+                    <button
+                      onClick={() => setPrintThermalOS(os)}
+                      className="p-1.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs"
+                      title="Etiqueta"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => setPrintWarrantyOS(os)}
+                      className="p-1.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs"
+                      title="Termo A4"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+
+                    <a
+                      href={geratLinkWhatsApp(os)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs"
+                      title="WhatsApp"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </a>
+
+                    <button
+                      onClick={() => handleDeletarOS(os)}
+                      className="p-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 shadow-2xs"
+                      title="Excluir O.S."
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* DESKTOP DATA TABLE (HIDDEN ON MOBILE) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -434,6 +539,7 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+
 
       {/* THERMAL LABEL MODAL */}
       {printThermalOS && (

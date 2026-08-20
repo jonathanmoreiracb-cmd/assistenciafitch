@@ -137,10 +137,10 @@ export default function RelatoriosPage() {
         </div>
 
         {/* Apple Segmented Control */}
-        <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 self-start">
+        <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 self-start max-w-full overflow-x-auto no-scrollbar">
           <button
             onClick={() => setPeriodo('hoje')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               periodo === 'hoje'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -150,7 +150,7 @@ export default function RelatoriosPage() {
           </button>
           <button
             onClick={() => setPeriodo('semana')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               periodo === 'semana'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -160,7 +160,7 @@ export default function RelatoriosPage() {
           </button>
           <button
             onClick={() => setPeriodo('mes')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               periodo === 'mes'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -170,7 +170,7 @@ export default function RelatoriosPage() {
           </button>
           <button
             onClick={() => setPeriodo('todos')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               periodo === 'todos'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -182,35 +182,35 @@ export default function RelatoriosPage() {
       </div>
 
       {/* CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Aparelhos Arrumados</span>
-          <p className="text-3xl font-bold text-emerald-600 mt-2">{arrumados.length} un</p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Concluídos no período</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="apple-card p-4 sm:p-5">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Aparelhos Arrumados</span>
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1.5">{arrumados.length} un</p>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Concluídos no período</span>
         </div>
 
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Faturamento Total</span>
-          <p className="text-2xl font-bold text-[#1d1d1f] mt-2 font-mono">
+        <div className="apple-card p-4 sm:p-5">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Faturamento Total</span>
+          <p className="text-xl sm:text-2xl font-bold text-[#1d1d1f] mt-1.5 font-mono truncate">
             R$ {faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Receita total da loja</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Receita total da loja</span>
         </div>
 
-        <div className="apple-card p-5">
-          <span className="text-xs font-semibold text-slate-500">Custo Operacional Total</span>
-          <p className="text-2xl font-bold text-red-600 mt-2 font-mono">
+        <div className="apple-card p-4 sm:p-5">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Custo Operacional Total</span>
+          <p className="text-xl sm:text-2xl font-bold text-red-600 mt-1.5 font-mono truncate">
             R$ {custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Peças + Laboratórios SP</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Peças + Laboratórios SP</span>
         </div>
 
-        <div className="apple-card p-5 bg-gradient-to-b from-white to-emerald-50/30 border-emerald-200/80">
-          <span className="text-xs font-semibold text-slate-500">Lucro Líquido Real</span>
-          <p className="text-3xl font-bold text-emerald-700 mt-2 font-mono">
+        <div className="apple-card p-4 sm:p-5 bg-gradient-to-b from-white to-emerald-50/30 border-emerald-200/80">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Lucro Líquido Real</span>
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-700 mt-1.5 font-mono truncate">
             R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <span className="text-[10px] text-emerald-700 font-semibold mt-1 block">
+          <span className="text-[10px] text-emerald-700 font-semibold mt-0.5 block">
             Margem: {margemLucro.toFixed(1)}%
           </span>
         </div>

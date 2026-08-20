@@ -38,6 +38,8 @@ export default function EstoquePage() {
   // Restock Modal State
   const [restockItem, setRestockItem] = useState<PecaEstoque | null>(null);
   const [restockQtd, setRestockQtd] = useState('5');
+  const [restockCustoNovo, setRestockCustoNovo] = useState('100.00');
+  const [restockPrecoVenda, setRestockPrecoVenda] = useState('250.00');
 
   const loadData = async () => {
     setLoading(true);
@@ -84,6 +86,13 @@ export default function EstoquePage() {
       preco_venda: p.preco_venda.toString(),
     });
     setShowNewModal(true);
+  };
+
+  const handleOpenRestockModal = (p: PecaEstoque) => {
+    setRestockItem(p);
+    setRestockQtd('5');
+    setRestockCustoNovo(p.custo_unitario.toString());
+    setRestockPrecoVenda(p.preco_venda.toString());
   };
 
   const handleCadastrarOuEditarPeca = async (e: React.FormEvent) => {
@@ -145,9 +154,17 @@ export default function EstoquePage() {
       return;
     }
 
+    const custoNovo = Number(restockCustoNovo);
+    const precoVenda = Number(restockPrecoVenda);
+
     try {
-      await EstoqueService.darEntradaEstoque(restockItem.id, qtd);
-      toast.success(`Entrada de +${qtd} unidades registrada.`);
+      await EstoqueService.darEntradaEstoque(
+        restockItem.id,
+        qtd,
+        isNaN(custoNovo) ? undefined : custoNovo,
+        isNaN(precoVenda) ? undefined : precoVenda
+      );
+      toast.success(`Entrada de +${qtd} unidades registrada! Custo médio recalculado.`);
       setRestockItem(null);
       loadData();
     } catch (e) {
@@ -275,7 +292,7 @@ export default function EstoquePage() {
                     <td className="py-3.5 px-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => setRestockItem(p)}
+                          onClick={() => handleOpenRestockModal(p)}
                           className="px-2.5 py-1 bg-[#0071e3]/10 hover:bg-[#0071e3]/20 text-[#0071e3] rounded-full font-semibold text-[10px] inline-flex items-center gap-1 transition-colors"
                           title="Dar entrada no estoque"
                         >
@@ -438,52 +455,112 @@ export default function EstoquePage() {
         </div>
       )}
 
-      {/* RESTOCK MODAL */}
-      {restockItem && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="apple-card bg-white p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900">Dar Entrada no Estoque</h3>
-              <button onClick={() => setRestockItem(null)} className="text-slate-400">
-                ✕
-              </button>
-            </div>
+      {/* RESTOCK MODAL (Custo Médio Ponderado) */}
+      {restockItem && (() => {
+        const qtdAtual = restockItem.quantidade_estoque || 0;
+        const custoAtual = restockItem.custo_unitario || 0;
+        const qtdNova = Number(restockQtd) || 0;
+        const custoNova = Number(restockCustoNovo) || 0;
+        const qtdFinal = qtdAtual + qtdNova;
+        const custoMedioCalculado = qtdFinal > 0
+          ? ((qtdAtual * custoAtual) + (qtdNova * custoNova)) / qtdFinal
+          : custoNova;
 
-            <div className="space-y-2 text-xs">
-              <p className="font-bold text-slate-900">{restockItem.descricao}</p>
-              <p className="text-slate-500 font-mono">SKU: {restockItem.codigo_sku}</p>
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="apple-card bg-white p-6 max-w-md w-full space-y-4 shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Dar Entrada no Estoque</h3>
+                  <p className="text-[11px] text-slate-500">Recálculo automático do Custo Médio Ponderado</p>
+                </div>
+                <button onClick={() => setRestockItem(null)} className="text-slate-400 hover:text-slate-900">
+                  ✕
+                </button>
+              </div>
 
-              <div className="pt-2">
-                <label className="block text-slate-700 font-semibold mb-1">
-                  Quantidade a Adicionar:
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={restockQtd}
-                  onChange={(e) => setRestockQtd(e.target.value)}
-                  className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 font-mono text-sm"
-                />
+              <div className="space-y-3 text-xs">
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">{restockItem.descricao}</p>
+                  <p className="text-slate-500 font-mono text-[11px]">SKU: {restockItem.codigo_sku || '-'} | Modelo: {restockItem.modelo_compativel}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Qtd a Adicionar *
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={restockQtd}
+                      onChange={(e) => setRestockQtd(e.target.value)}
+                      className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-1.5 text-slate-900 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Custo Nova Compra (R$) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={restockCustoNovo}
+                      onChange={(e) => setRestockCustoNovo(e.target.value)}
+                      className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-1.5 text-slate-900 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Novo Preço de Venda (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={restockPrecoVenda}
+                    onChange={(e) => setRestockPrecoVenda(e.target.value)}
+                    className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-1.5 text-slate-900 font-mono"
+                  />
+                </div>
+
+                {/* LIVE CUSTO MÉDIO PREVIEW */}
+                <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 space-y-1 text-[11px] text-indigo-900">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Estoque atual:</span>
+                    <span className="font-semibold">{qtdAtual} un @ R$ {custoAtual.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Nova compra:</span>
+                    <span className="font-semibold">+{qtdNova} un @ R$ {custoNova.toFixed(2)}</span>
+                  </div>
+                  <div className="pt-1.5 mt-1 border-t border-indigo-200/60 flex justify-between font-bold text-indigo-950">
+                    <span>➡️ Novo Custo Médio Ponderado:</span>
+                    <span className="text-xs text-indigo-700 font-mono">R$ {custoMedioCalculado.toFixed(2)} / un</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  onClick={() => setRestockItem(null)}
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDarEntrada}
+                  className="px-4 py-1.5 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
+                >
+                  Confirmar Entrada
+                </button>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                onClick={() => setRestockItem(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDarEntrada}
-                className="px-4 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
-              >
-                Confirmar Entrada
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

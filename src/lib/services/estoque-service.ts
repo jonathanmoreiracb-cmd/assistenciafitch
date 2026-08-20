@@ -72,33 +72,79 @@ export const EstoqueService = {
     return nova;
   },
 
-  async darEntradaEstoque(id: string, quantidadeAdicional: number): Promise<PecaEstoque | null> {
-    const peca = localEstoque.find((p) => p.id === id);
-    const novaQtd = (peca?.quantidade_estoque || 0) + quantidadeAdicional;
+  async darEntradaEstoque(
+    id: string,
+    quantidadeAdicional: number,
+    custoNovaCompra?: number,
+    novoPrecoVenda?: number
+  ): Promise<PecaEstoque | null> {
+    let currentItem = localEstoque.find((p) => p.id === id);
 
     const supabase = createClient();
     if (supabase) {
       try {
+        const { data: dbData } = await supabase.from('estoque_pecas').select('*').eq('id', id).single();
+        if (dbData) currentItem = dbData as PecaEstoque;
+      } catch (e) {}
+    }
+
+    if (!currentItem) return null;
+
+    const qtdAtual = Number(currentItem.quantidade_estoque) || 0;
+    const custoAtual = Number(currentItem.custo_unitario) || 0;
+    const precoVendaAtual = Number(currentItem.preco_venda) || 0;
+
+    const qtdNovaCompra = Number(quantidadeAdicional) || 0;
+    const custoNovoUnitario = custoNovaCompra !== undefined ? Number(custoNovaCompra) : custoAtual;
+    const precoVendaNovo = novoPrecoVenda !== undefined ? Number(novoPrecoVenda) : precoVendaAtual;
+
+    const qtdTotalFinal = qtdAtual + qtdNovaCompra;
+
+    // Cálculo do Custo Médio Ponderado
+    let novoCustoMedio = custoAtual;
+    if (qtdTotalFinal > 0) {
+      const valorEstoqueAtual = qtdAtual * custoAtual;
+      const valorNovaCompra = qtdNovaCompra * custoNovoUnitario;
+      novoCustoMedio = (valorEstoqueAtual + valorNovaCompra) / qtdTotalFinal;
+    } else {
+      novoCustoMedio = custoNovoUnitario;
+    }
+
+    // Arredondar para 2 casas decimais
+    novoCustoMedio = Math.round(novoCustoMedio * 100) / 100;
+
+    const payloadToUpdate = {
+      quantidade_estoque: qtdTotalFinal,
+      custo_unitario: novoCustoMedio,
+      preco_venda: precoVendaNovo,
+    };
+
+    if (supabase) {
+      try {
         const { data } = await supabase
           .from('estoque_pecas')
-          .update({ quantidade_estoque: novaQtd })
+          .update(payloadToUpdate)
           .eq('id', id)
           .select()
           .single();
         if (data) {
-          if (peca) peca.quantidade_estoque = novaQtd;
+          const updated = data as PecaEstoque;
+          const idx = localEstoque.findIndex((p) => p.id === id);
+          if (idx !== -1) localEstoque[idx] = updated;
           persistLocalEstoque();
-          return data as PecaEstoque;
+          return updated;
         }
       } catch (e) {
         console.error(e);
       }
     }
 
-    if (peca) {
-      peca.quantidade_estoque = novaQtd;
+    if (currentItem) {
+      currentItem.quantidade_estoque = qtdTotalFinal;
+      currentItem.custo_unitario = novoCustoMedio;
+      currentItem.preco_venda = precoVendaNovo;
       persistLocalEstoque();
-      return { ...peca };
+      return { ...currentItem };
     }
     return null;
   },

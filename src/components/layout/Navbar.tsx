@@ -63,19 +63,16 @@ export const Navbar: React.FC = () => {
       <header className="sticky top-0 z-40 w-full apple-glass border-b border-slate-200/80 bg-white/80 backdrop-blur-md no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-[#1d1d1f] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm sm:text-base tracking-tight text-[#1d1d1f]">
-                  Fitch Tech
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-semibold text-[#0071e3] bg-[#0071e3]/10 px-1.5 sm:px-2 py-0.5 rounded-full">
-                  Assistência
-                </span>
-              </div>
+          <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+            <div className="bg-[#1d1d1f] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-slate-800 shadow-xs flex items-center gap-2 group-hover:scale-[1.02] transition-transform duration-200">
+              <img
+                src="/logo.png"
+                alt="Fitch Tecnologia"
+                className="h-6 sm:h-7 w-auto object-contain"
+              />
+              <span className="text-[9px] sm:text-[10px] font-semibold text-[#0071e3] bg-[#0071e3]/20 px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:inline-block">
+                Assistência
+              </span>
             </div>
           </Link>
 

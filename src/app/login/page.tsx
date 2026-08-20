@@ -46,15 +46,19 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Apple ID Style Logo & Header */}
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-[#1d1d1f] text-white flex items-center justify-center mx-auto shadow-md">
-            <Smartphone className="w-8 h-8" />
+          <div className="bg-[#1d1d1f] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xl inline-block group hover:scale-105 transition-transform duration-200">
+            <img
+              src="/logo.png"
+              alt="Fitch Tecnologia"
+              className="h-12 sm:h-14 w-auto mx-auto object-contain drop-shadow-md"
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#1d1d1f]">
+            <h1 className="text-xl font-extrabold tracking-tight text-[#1d1d1f]">
               Fitch Tecnologia
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Identificação de Colaborador
+              Identificação de Colaborador • Assistência Técnica
             </p>
           </div>
         </div>

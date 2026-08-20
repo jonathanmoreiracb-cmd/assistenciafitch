@@ -26,19 +26,28 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
     <div className="a4-warranty-term bg-white text-black p-8 max-w-[210mm] mx-auto text-xs font-sans leading-relaxed border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-6 print:m-0">
       {/* Header */}
       <div className="flex items-start justify-between border-b-2 border-black pb-4 mb-5">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
-            FITCH TECNOLOGIA
-          </h1>
-          <p className="text-slate-700 font-bold text-xs">
-            Assistência Técnica Especializada Apple & Android
-          </p>
-          <p className="text-slate-500 text-[10px]">
-            Manutenção de iPhone, iPad, Apple Watch, MacBook e Smartphones Premium
-          </p>
-          <p className="text-slate-500 text-[10px]">
-            Contato: (11) 99999-8888 | financeiro@fitchtecnologia.com.br
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="bg-[#1d1d1f] p-2.5 rounded-xl flex items-center shrink-0">
+            <img
+              src="/logo.png"
+              alt="Fitch Tecnologia"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+              FITCH TECNOLOGIA
+            </h1>
+            <p className="text-slate-700 font-bold text-xs">
+              Assistência Técnica Especializada Apple & Android
+            </p>
+            <p className="text-slate-500 text-[10px]">
+              Manutenção de iPhone, iPad, Apple Watch, MacBook e Android Premium
+            </p>
+            <p className="text-slate-500 text-[10px]">
+              Contato: (11) 99999-8888 | financeiro@fitchtecnologia.com.br
+            </p>
+          </div>
         </div>
         <div className="text-right flex flex-col items-end">
           <span className="text-sm font-black uppercase bg-black text-white px-3 py-1 rounded-sm mb-1.5">

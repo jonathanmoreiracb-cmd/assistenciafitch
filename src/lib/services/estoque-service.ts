@@ -129,6 +129,51 @@ export const EstoqueService = {
     return null;
   },
 
+  async atualizarPeca(id: string, dados: Partial<PecaEstoque>): Promise<PecaEstoque | null> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from('estoque_pecas')
+          .update(dados)
+          .eq('id', id)
+          .select()
+          .single();
+        if (data) {
+          const idx = localEstoque.findIndex((p) => p.id === id);
+          if (idx !== -1) localEstoque[idx] = data as PecaEstoque;
+          persistLocalEstoque();
+          return data as PecaEstoque;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const peca = localEstoque.find((p) => p.id === id);
+    if (peca) {
+      Object.assign(peca, dados);
+      persistLocalEstoque();
+      return { ...peca };
+    }
+    return null;
+  },
+
+  async deletarPeca(id: string): Promise<boolean> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        await supabase.from('estoque_pecas').delete().eq('id', id);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    localEstoque = localEstoque.filter((p) => p.id !== id);
+    persistLocalEstoque();
+    return true;
+  },
+
   async buscarPecas(query: string): Promise<PecaEstoque[]> {
     const q = query.toLowerCase().trim();
     const pecas = await this.getPecas();

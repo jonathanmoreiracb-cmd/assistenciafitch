@@ -51,6 +51,7 @@ export default function AdminPage() {
   // --- ABA 2: ESTOQUE STATE ---
   const [pecas, setPecas] = useState<PecaEstoque[]>([]);
   const [showNewPecaModal, setShowNewPecaModal] = useState(false);
+  const [editPeca, setEditPeca] = useState<PecaEstoque | null>(null);
   const [formPeca, setFormPeca] = useState({
     descricao: '',
     codigo_sku: '',
@@ -170,7 +171,35 @@ export default function AdminPage() {
   };
 
   // --- ESTOQUE HANDLERS ---
-  const handleCadastrarPeca = async (e: React.FormEvent) => {
+  const handleOpenNewPecaModal = () => {
+    setEditPeca(null);
+    setFormPeca({
+      descricao: '',
+      codigo_sku: '',
+      tipo_qualidade: 'Original',
+      modelo_compativel: '',
+      quantidade_estoque: 5,
+      custo_unitario: '100.00',
+      preco_venda: '250.00',
+    });
+    setShowNewPecaModal(true);
+  };
+
+  const handleOpenEditPecaModal = (p: PecaEstoque) => {
+    setEditPeca(p);
+    setFormPeca({
+      descricao: p.descricao,
+      codigo_sku: p.codigo_sku || '',
+      tipo_qualidade: p.tipo_qualidade,
+      modelo_compativel: p.modelo_compativel,
+      quantidade_estoque: p.quantidade_estoque,
+      custo_unitario: p.custo_unitario.toString(),
+      preco_venda: p.preco_venda.toString(),
+    });
+    setShowNewPecaModal(true);
+  };
+
+  const handleCadastrarOuEditarPeca = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formPeca.descricao || !formPeca.modelo_compativel) {
       toast.error('Preencha os campos obrigatórios (Descrição e Modelo).');
@@ -178,17 +207,31 @@ export default function AdminPage() {
     }
 
     try {
-      await EstoqueService.cadastrarPeca({
-        descricao: formPeca.descricao,
-        codigo_sku: formPeca.codigo_sku ? formPeca.codigo_sku.toUpperCase() : '',
-        tipo_qualidade: formPeca.tipo_qualidade,
-        modelo_compativel: formPeca.modelo_compativel,
-        quantidade_estoque: Number(formPeca.quantidade_estoque) || 0,
-        custo_unitario: Number(formPeca.custo_unitario) || 0,
-        preco_venda: Number(formPeca.preco_venda) || 0,
-      });
-      toast.success('Peça cadastrada no estoque!');
+      if (editPeca) {
+        await EstoqueService.atualizarPeca(editPeca.id, {
+          descricao: formPeca.descricao,
+          codigo_sku: formPeca.codigo_sku ? formPeca.codigo_sku.toUpperCase() : editPeca.codigo_sku,
+          tipo_qualidade: formPeca.tipo_qualidade,
+          modelo_compativel: formPeca.modelo_compativel,
+          quantidade_estoque: Number(formPeca.quantidade_estoque) || 0,
+          custo_unitario: Number(formPeca.custo_unitario) || 0,
+          preco_venda: Number(formPeca.preco_venda) || 0,
+        });
+        toast.success('Peça atualizada no estoque!');
+      } else {
+        await EstoqueService.cadastrarPeca({
+          descricao: formPeca.descricao,
+          codigo_sku: formPeca.codigo_sku ? formPeca.codigo_sku.toUpperCase() : '',
+          tipo_qualidade: formPeca.tipo_qualidade,
+          modelo_compativel: formPeca.modelo_compativel,
+          quantidade_estoque: Number(formPeca.quantidade_estoque) || 0,
+          custo_unitario: Number(formPeca.custo_unitario) || 0,
+          preco_venda: Number(formPeca.preco_venda) || 0,
+        });
+        toast.success('Peça cadastrada no estoque!');
+      }
       setShowNewPecaModal(false);
+      setEditPeca(null);
       setFormPeca({
         descricao: '',
         codigo_sku: '',
@@ -200,7 +243,19 @@ export default function AdminPage() {
       });
       loadAllData();
     } catch (e) {
-      toast.error('Erro ao cadastrar peça.');
+      toast.error('Erro ao salvar peça.');
+    }
+  };
+
+  const handleDeletePeca = async (id: string, desc: string) => {
+    if (confirm(`Deseja realmente apagar a peça "${desc}" do estoque?`)) {
+      try {
+        await EstoqueService.deletarPeca(id);
+        toast.success('Peça excluída do estoque.');
+        loadAllData();
+      } catch (e) {
+        toast.error('Erro ao excluir peça.');
+      }
     }
   };
 
@@ -452,7 +507,7 @@ export default function AdminPage() {
               <p className="text-xs text-slate-500">Cadastre peças com custo de aquisição e preço de venda.</p>
             </div>
             <button
-              onClick={() => setShowNewPecaModal(true)}
+              onClick={handleOpenNewPecaModal}
               className="px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-xs rounded-full shadow-xs flex items-center gap-1.5"
             >
               <PlusCircle className="w-4 h-4" />
@@ -471,7 +526,7 @@ export default function AdminPage() {
                   <th className="py-3 px-3">Estoque</th>
                   <th className="py-3 px-3">Custo Unit.</th>
                   <th className="py-3 px-3">Venda Unit.</th>
-                  <th className="py-3 px-3 text-right">Ação</th>
+                  <th className="py-3 px-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -489,12 +544,29 @@ export default function AdminPage() {
                     <td className="py-3.5 px-3 font-mono text-slate-500">R$ {Number(p.custo_unitario).toFixed(2)}</td>
                     <td className="py-3.5 px-3 font-mono font-bold text-slate-900">R$ {Number(p.preco_venda).toFixed(2)}</td>
                     <td className="py-3.5 px-3 text-right">
-                      <button
-                        onClick={() => setRestockItem(p)}
-                        className="px-3 py-1 bg-[#0071e3]/10 hover:bg-[#0071e3]/20 text-[#0071e3] rounded-full font-semibold text-[10px] inline-flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3" /> Dar Entrada
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setRestockItem(p)}
+                          className="px-2.5 py-1 bg-[#0071e3]/10 hover:bg-[#0071e3]/20 text-[#0071e3] rounded-full font-semibold text-[10px] inline-flex items-center gap-1 transition-colors"
+                          title="Dar entrada no estoque"
+                        >
+                          <Plus className="w-3 h-3" /> Entrada
+                        </button>
+                        <button
+                          onClick={() => handleOpenEditPecaModal(p)}
+                          className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          title="Editar peça"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePeca(p.id, p.descricao)}
+                          className="p-1.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Excluir peça"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -709,15 +781,17 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* MODAIS: NOVA PEÇA */}
+      {/* MODAIS: NOVA / EDITAR PEÇA */}
       {showNewPecaModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <form
-            onSubmit={handleCadastrarPeca}
+            onSubmit={handleCadastrarOuEditarPeca}
             className="apple-card bg-white p-6 max-w-lg w-full space-y-4 shadow-2xl"
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900">Cadastrar Peça no Estoque</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                {editPeca ? 'Editar Peça no Estoque' : 'Cadastrar Peça no Estoque'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowNewPecaModal(false)}

@@ -11,6 +11,9 @@ export const UserRoleBar: React.FC = () => {
 
   useEffect(() => {
     setUsuariosList(AuthService.getUsuarios());
+    AuthService.getUsuariosAsync().then((list) => {
+      setUsuariosList([...list]);
+    });
     const handleAuthChange = () => {
       setCurrentUser(AuthService.getCurrentUser());
       setUsuariosList(AuthService.getUsuarios());

@@ -78,16 +78,18 @@ export default function AdminPage() {
   });
 
   const loadAllData = async () => {
-    setUsuarios(AuthService.getUsuarios());
     try {
-      const [est, ord] = await Promise.all([
+      const [uList, est, ord] = await Promise.all([
+        AuthService.getUsuariosAsync(),
         EstoqueService.getPecas(),
         OSService.getOrdensServico(),
       ]);
+      setUsuarios(uList);
       setPecas(est);
       setOrdens(ord);
     } catch (e) {
       console.error(e);
+      setUsuarios(AuthService.getUsuarios());
     }
   };
 

@@ -1,6 +1,17 @@
 import { createClient } from '@/lib/supabase/client';
 import { Usuario } from '@/types';
 
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export const GERENTE_DEFAULT: Usuario = {
   id: '11111111-1111-1111-1111-111111111111',
   nome: 'Jonathan Moreira',
@@ -123,46 +134,47 @@ export const AuthService = {
     persistState();
   },
 
+  async getUsuariosAsync(): Promise<Usuario[]> {
+    syncEssentialUsers();
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('usuarios').select('*').order('created_at', { ascending: true });
+        if (!error && data && data.length > 0) {
+          data.forEach((dbUser: any) => {
+            const idx = usuariosStore.findIndex(
+              (u) => u.id === dbUser.id || u.email.toLowerCase() === (dbUser.email || '').toLowerCase()
+            );
+            if (idx !== -1) {
+              usuariosStore[idx] = dbUser as Usuario;
+            } else {
+              usuariosStore.push(dbUser as Usuario);
+            }
+          });
+          syncEssentialUsers();
+          persistState();
+        }
+      } catch (e) {
+        console.error('Error loading usuarios from Supabase:', e);
+      }
+    }
+    return usuariosStore;
+  },
+
   async loginAsync(
     emailOrUser: string,
     senhaDigitada: string
   ): Promise<{ success: boolean; user?: Usuario; message?: string }> {
     const cleanInput = (emailOrUser || '').toLowerCase().trim();
-    const cleanPassword = (senhaDigitada || '').trim();
 
     if (!cleanInput) {
       return { success: false, message: 'Informe o usuário ou e-mail.' };
     }
 
-    // Attempt Supabase Fetch
-    const supabase = createClient();
-    if (supabase) {
-      try {
-        const { data } = await supabase
-          .from('usuarios')
-          .select('*')
-          .or(`email.ilike.%${cleanInput}%,nome.ilike.%${cleanInput}%`);
+    // Always fetch latest usuarios from Supabase first
+    await this.getUsuariosAsync();
 
-        if (data && data.length > 0) {
-          const matched = data.find(
-            (u: any) =>
-              (u.senha || '').trim() === cleanPassword ||
-              (cleanInput.includes('jonathan') && cleanPassword === 'tcjk7788') ||
-              (cleanInput.includes('jakson') && cleanPassword === '123')
-          );
-
-          if (matched) {
-            currentUser = matched as Usuario;
-            persistState();
-            return { success: true, user: matched as Usuario };
-          }
-        }
-      } catch (e) {
-        console.error('Supabase auth error:', e);
-      }
-    }
-
-    // Fallback synchronous check
+    // Fallback synchronous check against local memory/localStorage store
     return this.login(emailOrUser, senhaDigitada);
   },
 
@@ -211,6 +223,7 @@ export const AuthService = {
     const user = usuariosStore.find(
       (u) =>
         u.email.toLowerCase().trim() === cleanInput ||
+        u.nome.toLowerCase().trim() === cleanInput ||
         u.nome.toLowerCase().trim().includes(cleanInput) ||
         cleanInput.includes(u.nome.toLowerCase().trim().split(' ')[0])
     );
@@ -250,13 +263,18 @@ export const AuthService = {
   },
 
   async cadastrarUsuario(novo: Omit<Usuario, 'id' | 'created_at'>): Promise<Usuario> {
-    const usuario: Usuario = {
-      id: `usr-${Date.now()}`,
-      nome: novo.nome.trim(),
-      email: novo.email.toLowerCase().trim(),
-      senha: (novo.senha || '123').trim(),
+    const cleanEmail = novo.email.toLowerCase().trim();
+    const cleanNome = novo.nome.trim();
+    const cleanSenha = (novo.senha || '123').trim();
+
+    const usuarioPayload: Usuario = {
+      id: generateUUID(),
+      nome: cleanNome,
+      email: cleanEmail,
+      senha: cleanSenha,
       cargo: novo.cargo,
       meta_mensal_os: novo.meta_mensal_os || 15,
+      percentual_comissao: 5.0,
       created_at: new Date().toISOString(),
     };
 
@@ -264,8 +282,14 @@ export const AuthService = {
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('usuarios').insert([usuario]).select().single();
-        if (!error && data) {
+        const { data, error } = await supabase
+          .from('usuarios')
+          .upsert([usuarioPayload], { onConflict: 'email' })
+          .select()
+          .single();
+        if (error) {
+          console.error('Supabase cadastrarUsuario error:', error);
+        } else if (data) {
           const saved = data as Usuario;
           const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === saved.email.toLowerCase());
           if (idx !== -1) usuariosStore[idx] = saved;
@@ -274,16 +298,16 @@ export const AuthService = {
           return saved;
         }
       } catch (e) {
-        console.error(e);
+        console.error('Supabase cadastrarUsuario exception:', e);
       }
     }
 
-    const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === usuario.email);
-    if (idx !== -1) usuariosStore[idx] = usuario;
-    else usuariosStore.push(usuario);
+    const idx = usuariosStore.findIndex((u) => u.email.toLowerCase() === usuarioPayload.email);
+    if (idx !== -1) usuariosStore[idx] = usuarioPayload;
+    else usuariosStore.push(usuarioPayload);
 
     persistState();
-    return usuario;
+    return usuarioPayload;
   },
 
   async atualizarUsuario(id: string, dados: Partial<Usuario>): Promise<Usuario | null> {
@@ -295,8 +319,10 @@ export const AuthService = {
         if (dados.email) payload.email = dados.email.toLowerCase().trim();
         if (dados.senha) payload.senha = dados.senha.trim();
 
-        const { data } = await supabase.from('usuarios').update(payload).eq('id', id).select().single();
-        if (data) {
+        const { data, error } = await supabase.from('usuarios').update(payload).eq('id', id).select().single();
+        if (error) {
+          console.error('Supabase update usuario error:', error);
+        } else if (data) {
           const updated = data as Usuario;
           const userIndex = usuariosStore.findIndex((u) => u.id === id);
           if (userIndex !== -1) usuariosStore[userIndex] = updated;
@@ -331,8 +357,11 @@ export const AuthService = {
     const supabase = createClient();
     if (supabase) {
       try {
-        await supabase.from('usuarios').delete().eq('id', id);
-      } catch (e) {}
+        const { error } = await supabase.from('usuarios').delete().eq('id', id);
+        if (error) console.error('Supabase delete usuario error:', error);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     usuariosStore = usuariosStore.filter((u) => u.id !== id);
@@ -343,3 +372,4 @@ export const AuthService = {
     return true;
   },
 };
+

@@ -193,7 +193,7 @@ export default function DashboardPage() {
       )}
 
       {/* ESSENTIAL METRIC CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid gap-4 ${currentUser?.cargo === 'gerente' ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
         <div className="apple-card apple-card-hover p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">O.S. Ativas</span>
@@ -220,18 +220,20 @@ export default function DashboardPage() {
           <span className="text-[10px] text-emerald-700/80 mt-1 block">Aguardando cliente</span>
         </div>
 
-        <div className="apple-card apple-card-hover p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Faturamento Mês</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0071e3] flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
+        {currentUser?.cargo === 'gerente' && (
+          <div className="apple-card apple-card-hover p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Faturamento Mês</span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0071e3] flex items-center justify-center">
+                <DollarSign className="w-4 h-4" />
+              </div>
             </div>
+            <p className="text-2xl font-bold text-[#1d1d1f] mt-2 truncate font-mono">
+              R$ {metrics?.faturamento_mes.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) ?? '0,00'}
+            </p>
+            <span className="text-[10px] text-slate-400 mt-1 block">Concluídos este mês</span>
           </div>
-          <p className="text-2xl font-bold text-[#1d1d1f] mt-2 truncate font-mono">
-            R$ {metrics?.faturamento_mes.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) ?? '0,00'}
-          </p>
-          <span className="text-[10px] text-slate-400 mt-1 block">Concluídos este mês</span>
-        </div>
+        )}
 
         <div className="apple-card apple-card-hover p-5">
           <div className="flex items-center justify-between">

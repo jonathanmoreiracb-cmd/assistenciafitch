@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   DollarSign,
@@ -18,6 +19,7 @@ import { DesempenhoVendedor, OrdemServico } from '@/types';
 import { toast } from 'sonner';
 
 export default function RelatoriosPage() {
+  const router = useRouter();
   const [periodo, setPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'todos'>('mes');
   const [loading, setLoading] = useState(true);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
@@ -35,6 +37,12 @@ export default function RelatoriosPage() {
   };
 
   useEffect(() => {
+    const user = AuthService.getCurrentUser();
+    if (!user || user.cargo !== 'gerente') {
+      toast.error('Acesso exclusivo ao perfil de Gerente.');
+      router.push('/dashboard');
+      return;
+    }
     loadData();
   }, []);
 

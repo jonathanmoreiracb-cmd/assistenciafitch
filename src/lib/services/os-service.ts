@@ -15,6 +15,17 @@ function sanitizeUuid(id: any): string | null {
   return uuidRegex.test(id) ? id : null;
 }
 
+function generateUuid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // In-Memory Fallback State when Supabase is disconnected
 let localClientesStore: Cliente[] = [];
 let localOSStore: OrdemServico[] = [];
@@ -101,10 +112,18 @@ export const OSService = {
   },
 
   async criarCliente(cliente: Omit<Cliente, 'id' | 'created_at'>): Promise<Cliente> {
+    const validId = generateUuid();
+    const novoClienteObj = {
+      id: validId,
+      nome: cliente.nome.trim(),
+      telefone: cliente.telefone.trim(),
+      cpf: cliente.cpf ? cliente.cpf.trim() : null,
+    };
+
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('clientes').insert([cliente]).select().single();
+        const { data, error } = await supabase.from('clientes').insert([novoClienteObj]).select().single();
         if (error) {
           console.error('Supabase criarCliente error:', error);
         } else if (data) {
@@ -115,14 +134,13 @@ export const OSService = {
       }
     }
 
-    const novoCliente: Cliente = {
-      id: `cli-${Date.now()}`,
-      ...cliente,
+    const localCli: Cliente = {
+      ...novoClienteObj,
       created_at: new Date().toISOString(),
     };
-    localClientesStore.unshift(novoCliente);
+    localClientesStore.unshift(localCli);
     persistLocalState();
-    return novoCliente;
+    return localCli;
   },
 
   // 2. ORDENS DE SERVIÇO
@@ -186,33 +204,45 @@ export const OSService = {
   ): Promise<OrdemServico> {
     const supabase = createClient();
 
-    if (supabase) {
+    let validClienteId = sanitizeUuid(dados.cliente_id);
+
+    // If cliente_id is not a valid UUID (e.g. from local storage fallback), create customer in Supabase first
+    if (!validClienteId && dados.cliente) {
+      const cli = await this.criarCliente({
+        nome: dados.cliente.nome,
+        telefone: dados.cliente.telefone,
+        cpf: dados.cliente.cpf,
+      });
+      validClienteId = cli.id;
+    }
+
+    if (supabase && validClienteId) {
       try {
         const payload: any = {
-          cliente_id: dados.cliente_id,
+          cliente_id: validClienteId,
           vendedor_id: sanitizeUuid(dados.vendedor_id),
-          vendedor_nome: dados.vendedor_nome,
+          vendedor_nome: dados.vendedor_nome || 'Vendedor',
           tecnico_id: sanitizeUuid(dados.tecnico_id),
-          tecnico_nome: dados.tecnico_nome,
+          tecnico_nome: dados.tecnico_nome || null,
           tipo_dispositivo: dados.tipo_dispositivo,
           modelo: dados.modelo,
           cor: dados.cor,
           imei_ou_serial: dados.imei_ou_serial,
           senha_aparelho: dados.senha_aparelho || '',
-          buscar_iphone_desativado: dados.buscar_iphone_desativado || false,
+          buscar_iphone_desativado: Boolean(dados.buscar_iphone_desativado),
           defeito_reclamado: dados.defeito_reclamado,
           laudo_tecnico: dados.laudo_tecnico || null,
           checklist_entrada: dados.checklist_entrada,
-          fotos_entrada: dados.fotos_entrada || [],
+          fotos_entrada: (dados.fotos_entrada || []).filter((f) => Boolean(f) && typeof f === 'string' && f.trim() !== ''),
           status: dados.status || 'aguardando_analise',
           tipo_cobertura: dados.tipo_cobertura || 'Particular',
           localizacao_atual: dados.localizacao_atual || 'bancada_local',
           data_entrada: dados.data_entrada || new Date().toISOString(),
           previsao_entrega: dados.previsao_entrega || null,
-          valor_servico: dados.valor_servico || 0,
-          valor_pecas: dados.valor_pecas || 0,
-          valor_desconto: dados.valor_desconto || 0,
-          garantia_dias: dados.garantia_dias || 90,
+          valor_servico: Number(dados.valor_servico) || 0,
+          valor_pecas: Number(dados.valor_pecas) || 0,
+          valor_desconto: Number(dados.valor_desconto) || 0,
+          garantia_dias: Number(dados.garantia_dias) || 90,
         };
 
         const { data, error } = await supabase
@@ -226,16 +256,14 @@ export const OSService = {
           .single();
 
         if (error) {
-          console.error('CRITICAL Supabase criarOrdemServico Error:', error);
-          alert(`Erro ao salvar no Supabase: ${error.message} (${error.details || ''}). Verifique se rodou o script SQL no Supabase.`);
+          console.error('Supabase criarOrdemServico Error:', error);
+          alert(`Aviso do Supabase: ${error.message}. Por favor, certifique-se de executar o script SQL de atualização no Supabase.`);
         } else if (data) {
           return data as OrdemServico;
         }
       } catch (e) {
         console.error('Supabase exception:', e);
       }
-    } else {
-      console.warn('Supabase client is null (environment variables NEXT_PUBLIC_SUPABASE_URL not configured).');
     }
 
     // LocalStorage fallback only if Supabase not configured
@@ -243,7 +271,7 @@ export const OSService = {
       ? Math.max(...localOSStore.map((o) => o.numero_os)) + 1
       : 1001;
 
-    const cliente = localClientesStore.find((c) => c.id === dados.cliente_id);
+    const cliente = localClientesStore.find((c) => c.id === dados.cliente_id) || dados.cliente;
 
     const valorTotal = Math.max(
       0,
@@ -251,7 +279,7 @@ export const OSService = {
     );
 
     const novaOS: OrdemServico = {
-      id: `os-${Date.now()}`,
+      id: generateUuid(),
       numero_os: proximoNumero,
       ...dados,
       cliente,
@@ -271,7 +299,7 @@ export const OSService = {
     const isConcluido = novoStatus === 'pronto_para_retirada' || novoStatus === 'entregue';
     const dataConcl = isConcluido ? new Date().toISOString() : null;
 
-    if (supabase) {
+    if (supabase && sanitizeUuid(id)) {
       try {
         const { data, error } = await supabase
           .from('ordens_servico')
@@ -304,7 +332,7 @@ export const OSService = {
     detalhesTerceirizado?: DetalhesTerceirizado
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
-    if (supabase) {
+    if (supabase && sanitizeUuid(id)) {
       try {
         const payload: any = { localizacao_atual: novaLocalizacao, updated_at: new Date().toISOString() };
         if (detalhesTerceirizado) payload.detalhes_terceirizado = detalhesTerceirizado;
@@ -340,7 +368,7 @@ export const OSService = {
     checklistSaida?: any
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
-    if (supabase) {
+    if (supabase && sanitizeUuid(id)) {
       try {
         const { data, error } = await supabase
           .from('ordens_servico')
@@ -376,16 +404,19 @@ export const OSService = {
     item: Omit<ItemPeca, 'id' | 'os_id' | 'created_at'>
   ): Promise<OrdemServico | null> {
     const novoItem: ItemPeca = {
-      id: `peca-${Date.now()}`,
+      id: generateUuid(),
       os_id: osId,
       ...item,
       created_at: new Date().toISOString(),
     };
 
     const supabase = createClient();
-    if (supabase) {
+    if (supabase && sanitizeUuid(osId)) {
       try {
-        await supabase.from('os_itens_pecas').insert([novoItem]);
+        await supabase.from('os_itens_pecas').insert([{
+          ...novoItem,
+          peca_estoque_id: sanitizeUuid(item.peca_estoque_id),
+        }]);
         return this.getOrdemServicoById(osId);
       } catch (e) {
         console.error(e);
@@ -416,7 +447,7 @@ export const OSService = {
 
   async removerItemPeca(osId: string, pecaId: string): Promise<OrdemServico | null> {
     const supabase = createClient();
-    if (supabase) {
+    if (supabase && sanitizeUuid(osId)) {
       try {
         await supabase.from('os_itens_pecas').delete().eq('id', pecaId);
         return this.getOrdemServicoById(osId);

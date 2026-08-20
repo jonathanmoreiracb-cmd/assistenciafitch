@@ -64,6 +64,32 @@ export const OSService = {
     persistLocalState();
   },
 
+  async deletarOrdemServico(id: string): Promise<boolean> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const validUuid = sanitizeUuid(id);
+        if (validUuid) {
+          const { error } = await supabase.from('ordens_servico').delete().eq('id', validUuid);
+          if (error) console.error('Supabase deletarOrdemServico error:', error);
+        } else {
+          // If query passed numeric numero_os
+          const { error } = await supabase
+            .from('ordens_servico')
+            .delete()
+            .eq('numero_os', isNaN(Number(id)) ? -1 : Number(id));
+          if (error) console.error('Supabase deletarOrdemServico error:', error);
+        }
+      } catch (e) {
+        console.error('Error deleting OS from Supabase:', e);
+      }
+    }
+
+    localOSStore = localOSStore.filter((o) => o.id !== id && o.numero_os.toString() !== id);
+    persistLocalState();
+    return true;
+  },
+
   // 1. CLIENTES
   async getClientes(): Promise<Cliente[]> {
     const supabase = createClient();

@@ -265,6 +265,22 @@ export default function OSDetalhesPage() {
     window.print();
   };
 
+  const handleDeletarOS = async () => {
+    if (!os) return;
+    const confirmacao = confirm(
+      `Tem certeza que deseja excluir permanentemente a Ordem de Serviço #${os.numero_os} (${os.cliente?.nome || 'Cliente'})?`
+    );
+    if (!confirmacao) return;
+
+    try {
+      await OSService.deletarOrdemServico(os.id);
+      toast.success(`Ordem de Serviço #${os.numero_os} excluída com sucesso.`);
+      router.push('/dashboard');
+    } catch (e) {
+      toast.error('Erro ao excluir Ordem de Serviço.');
+    }
+  };
+
   const geratLinkWhatsApp = () => {
     if (!os) return '#';
     const nome = os.cliente?.nome.split(' ')[0] || 'Cliente';
@@ -375,6 +391,15 @@ export default function OSDetalhesPage() {
             <MessageSquare className="w-3.5 h-3.5" />
             Enviar WhatsApp
           </a>
+
+          <button
+            onClick={handleDeletarOS}
+            className="px-3.5 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            title="Excluir Ordem de Serviço permanentemente"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Excluir O.S.
+          </button>
         </div>
       </div>
 

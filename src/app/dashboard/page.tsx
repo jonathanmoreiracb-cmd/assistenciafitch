@@ -15,6 +15,7 @@ import {
   Eye,
   RefreshCw,
   Printer,
+  Trash2,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { AuthService } from '@/lib/services/auth-service';
@@ -114,6 +115,21 @@ export default function DashboardPage() {
 
     return matchQuery && matchTab && matchStatus;
   });
+
+  const handleDeletarOS = async (targetOs: OrdemServico) => {
+    const confirmacao = confirm(
+      `Tem certeza que deseja excluir a Ordem de Serviço #${targetOs.numero_os} (${targetOs.cliente?.nome || 'Cliente'})?`
+    );
+    if (!confirmacao) return;
+
+    try {
+      await OSService.deletarOrdemServico(targetOs.id);
+      toast.success(`Ordem de Serviço #${targetOs.numero_os} excluída.`);
+      loadData();
+    } catch (e) {
+      toast.error('Erro ao excluir Ordem de Serviço.');
+    }
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -396,6 +412,14 @@ export default function DashboardPage() {
                           >
                             <MessageSquare className="w-4 h-4" />
                           </a>
+
+                          <button
+                            onClick={() => handleDeletarOS(os)}
+                            className="p-1.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Excluir Ordem de Serviço (Aberta errada)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>

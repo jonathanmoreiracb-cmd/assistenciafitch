@@ -117,7 +117,10 @@ export const OSService = {
       id: validId,
       nome: cliente.nome.trim(),
       telefone: cliente.telefone.trim(),
-      cpf: cliente.cpf ? cliente.cpf.trim() : null,
+      telefone_secundario: cliente.telefone_secundario || null,
+      cpf: cliente.cpf ? cliente.cpf.trim() : '',
+      email: cliente.email || null,
+      instagram: cliente.instagram || null,
     };
 
     const supabase = createClient();

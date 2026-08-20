@@ -16,6 +16,7 @@ import {
   MinusCircle,
   Sparkles,
   DollarSign,
+  PowerOff,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { AuthService } from '@/lib/services/auth-service';
@@ -59,7 +60,10 @@ export default function NovaOSPage() {
   const [novoClienteForm, setNovoClienteForm] = useState({
     nome: '',
     telefone: '',
+    telefone_secundario: '',
     cpf: '',
+    email: '',
+    instagram: '',
   });
 
   // Step 2 State: Device
@@ -69,6 +73,7 @@ export default function NovaOSPage() {
   const [imeiOuSerial, setImeiOuSerial] = useState('');
   const [senhaAparelho, setSenhaAparelho] = useState('');
   const [buscarIphoneDesativado, setBuscarIphoneDesativado] = useState(false);
+  const [aparelhoNaoLiga, setAparelhoNaoLiga] = useState(false);
   const [tipoCobertura, setTipoCobertura] = useState<TipoCobertura>('Particular');
 
   // Step 3 State: Checklist & Photos
@@ -110,6 +115,23 @@ export default function NovaOSPage() {
     toast.success(`Cliente ${cli.nome} selecionado!`);
   };
 
+  const handleToggleAparelhoNaoLiga = (checked: boolean) => {
+    setAparelhoNaoLiga(checked);
+    if (checked) {
+      setChecklist((prev) => ({
+        ...prev,
+        face_id: 'nao_se_aplica',
+        true_tone: 'nao_se_aplica',
+        cameras: 'nao_se_aplica',
+        microfones: 'nao_se_aplica',
+        alto_falante: 'nao_se_aplica',
+        carregamento: 'nao_se_aplica',
+        detalhes_esteticos: prev.detalhes_esteticos || 'Aparelho não liga / desligado.',
+      }));
+      toast.info('Checklist definido como N/A (Aparelho Desligado).');
+    }
+  };
+
   const handleSalvarOS = async () => {
     if (!modelo || !imeiOuSerial || !defeitoReclamado) {
       toast.error('Preencha os campos obrigatórios do aparelho e defeito.');
@@ -121,8 +143,8 @@ export default function NovaOSPage() {
       let clienteId = selectedCliente?.id;
 
       if (isNovoCliente || !clienteId) {
-        if (!novoClienteForm.nome || !novoClienteForm.telefone) {
-          toast.error('Preencha nome e telefone do novo cliente.');
+        if (!novoClienteForm.nome || !novoClienteForm.telefone || !novoClienteForm.cpf) {
+          toast.error('Nome, Telefone e CPF do cliente são obrigatórios.');
           setLoading(false);
           setStep(1);
           return;
@@ -130,7 +152,10 @@ export default function NovaOSPage() {
         const novoCli = await OSService.criarCliente({
           nome: novoClienteForm.nome,
           telefone: novoClienteForm.telefone,
-          cpf: novoClienteForm.cpf || null,
+          telefone_secundario: novoClienteForm.telefone_secundario || null,
+          cpf: novoClienteForm.cpf,
+          email: novoClienteForm.email || null,
+          instagram: novoClienteForm.instagram || null,
         });
         clienteId = novoCli.id;
       }
@@ -145,6 +170,7 @@ export default function NovaOSPage() {
         imei_ou_serial: imeiOuSerial,
         senha_aparelho: senhaAparelho,
         buscar_iphone_desativado: buscarIphoneDesativado,
+        aparelho_nao_liga: aparelhoNaoLiga,
         defeito_reclamado: defeitoReclamado,
         laudo_tecnico: laudoTeorico || null,
         checklist_entrada: checklist,
@@ -191,7 +217,7 @@ export default function NovaOSPage() {
           >
             {vendedores.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.nome} (Comissão: {v.percentual_comissao}%)
+                {v.nome}
               </option>
             ))}
           </select>
@@ -279,6 +305,9 @@ export default function NovaOSPage() {
                     <p className="text-xs text-slate-600">
                       Tel: {selectedCliente.telefone} | CPF: {selectedCliente.cpf || 'Não cadastrado'}
                     </p>
+                    {selectedCliente.email && (
+                      <p className="text-[11px] text-slate-500">E-mail: {selectedCliente.email}</p>
+                    )}
                   </div>
                   <button
                     onClick={() => setSelectedCliente(null)}
@@ -297,7 +326,9 @@ export default function NovaOSPage() {
                     >
                       <div>
                         <p className="text-xs font-bold text-slate-900">{cli.nome}</p>
-                        <p className="text-[11px] text-slate-500">{cli.telefone}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {cli.telefone} • CPF: {cli.cpf}
+                        </p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-[#0071e3]" />
                     </div>
@@ -329,7 +360,7 @@ export default function NovaOSPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Telefone / WhatsApp *
+                  Telefone Principal (WhatsApp) *
                 </label>
                 <input
                   type="text"
@@ -344,7 +375,22 @@ export default function NovaOSPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  CPF (Opcional)
+                  Telefone Secundário
+                </label>
+                <input
+                  type="text"
+                  placeholder="(11) 97777-6666"
+                  value={novoClienteForm.telefone_secundario}
+                  onChange={(e) =>
+                    setNovoClienteForm({ ...novoClienteForm, telefone_secundario: e.target.value })
+                  }
+                  className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  CPF * (Obrigatório)
                 </label>
                 <input
                   type="text"
@@ -352,6 +398,36 @@ export default function NovaOSPage() {
                   value={novoClienteForm.cpf}
                   onChange={(e) =>
                     setNovoClienteForm({ ...novoClienteForm, cpf: e.target.value })
+                  }
+                  className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:bg-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  E-mail do Cliente
+                </label>
+                <input
+                  type="email"
+                  placeholder="cliente@email.com"
+                  value={novoClienteForm.email}
+                  onChange={(e) =>
+                    setNovoClienteForm({ ...novoClienteForm, email: e.target.value })
+                  }
+                  className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Instagram (@usuario)
+                </label>
+                <input
+                  type="text"
+                  placeholder="@cliente"
+                  value={novoClienteForm.instagram}
+                  onChange={(e) =>
+                    setNovoClienteForm({ ...novoClienteForm, instagram: e.target.value })
                   }
                   className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:bg-white"
                 />
@@ -362,8 +438,14 @@ export default function NovaOSPage() {
           <div className="flex justify-end pt-4 border-t border-slate-100">
             <button
               onClick={() => {
-                if (selectedCliente || (isNovoCliente && novoClienteForm.nome)) {
+                if (selectedCliente) {
                   setStep(2);
+                } else if (isNovoCliente) {
+                  if (!novoClienteForm.nome || !novoClienteForm.telefone || !novoClienteForm.cpf) {
+                    toast.error('Informe Nome, Telefone e CPF (obrigatório).');
+                  } else {
+                    setStep(2);
+                  }
                 } else {
                   toast.error('Selecione ou informe os dados do cliente primeiro.');
                 }
@@ -382,6 +464,31 @@ export default function NovaOSPage() {
         <div className="apple-card p-6 space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 2: Dispositivo & Cobertura</h3>
+          </div>
+
+          {/* Device Not Turning On Toggle */}
+          <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                <PowerOff className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-xs">Aparelho não liga / Desligado</h4>
+                <p className="text-[10px] text-slate-600 mt-0.5">
+                  Desativa o checklist de entrada automaticamente (todos ficam N/A por impossibilidade de teste).
+                </p>
+              </div>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aparelhoNaoLiga}
+                onChange={(e) => handleToggleAparelhoNaoLiga(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+            </label>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
@@ -536,13 +643,22 @@ export default function NovaOSPage() {
             <h3 className="text-base font-bold text-[#1d1d1f]">Passo 3: Checklist & Fotos</h3>
           </div>
 
+          {aparelhoNaoLiga && (
+            <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl flex items-center gap-2.5">
+              <PowerOff className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="text-xs font-bold text-amber-800">
+                Aparelho Desligado / Não Liga — Todos os testes de entrada foram definidos como 'Não se Aplica' (N/A).
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {renderAppleChecklistToggle('Face ID / Touch ID', 'face_id', checklist, setChecklist)}
-            {renderAppleChecklistToggle('True Tone', 'true_tone', checklist, setChecklist)}
-            {renderAppleChecklistToggle('Câmeras', 'cameras', checklist, setChecklist)}
-            {renderAppleChecklistToggle('Microfones', 'microfones', checklist, setChecklist)}
-            {renderAppleChecklistToggle('Alto-Falante', 'alto_falante', checklist, setChecklist)}
-            {renderAppleChecklistToggle('Carregamento', 'carregamento', checklist, setChecklist)}
+            {renderAppleChecklistToggle('Face ID / Touch ID', 'face_id', checklist, setChecklist, aparelhoNaoLiga)}
+            {renderAppleChecklistToggle('True Tone', 'true_tone', checklist, setChecklist, aparelhoNaoLiga)}
+            {renderAppleChecklistToggle('Câmeras', 'cameras', checklist, setChecklist, aparelhoNaoLiga)}
+            {renderAppleChecklistToggle('Microfones', 'microfones', checklist, setChecklist, aparelhoNaoLiga)}
+            {renderAppleChecklistToggle('Alto-Falante', 'alto_falante', checklist, setChecklist, aparelhoNaoLiga)}
+            {renderAppleChecklistToggle('Carregamento', 'carregamento', checklist, setChecklist, aparelhoNaoLiga)}
           </div>
 
           <div>
@@ -682,16 +798,18 @@ function renderAppleChecklistToggle(
   title: string,
   field: keyof ChecklistEntrada,
   checklist: ChecklistEntrada,
-  setChecklist: React.Dispatch<React.SetStateAction<ChecklistEntrada>>
+  setChecklist: React.Dispatch<React.SetStateAction<ChecklistEntrada>>,
+  disabled?: boolean
 ) {
   const current = checklist[field] as string;
 
   return (
-    <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
+    <div className={`p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2 ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <span className="text-xs font-semibold text-slate-700 block truncate">{title}</span>
       <div className="grid grid-cols-3 gap-1">
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setChecklist({ ...checklist, [field]: 'ok' })}
           className={`py-1 px-1 rounded-full text-[10px] font-bold transition-all ${
             current === 'ok' ? 'bg-emerald-600 text-white' : 'bg-slate-200/60 text-slate-600'
@@ -701,6 +819,7 @@ function renderAppleChecklistToggle(
         </button>
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setChecklist({ ...checklist, [field]: 'defeito' })}
           className={`py-1 px-1 rounded-full text-[10px] font-bold transition-all ${
             current === 'defeito' ? 'bg-red-600 text-white' : 'bg-slate-200/60 text-slate-600'
@@ -710,6 +829,7 @@ function renderAppleChecklistToggle(
         </button>
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setChecklist({ ...checklist, [field]: 'nao_se_aplica' })}
           className={`py-1 px-1 rounded-full text-[10px] font-bold transition-all ${
             current === 'nao_se_aplica' ? 'bg-slate-700 text-white' : 'bg-slate-200/60 text-slate-600'

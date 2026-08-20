@@ -30,8 +30,8 @@ export interface Usuario {
   senha?: string;
   cargo: CargoUsuario;
   meta_mensal_os: number;
-  percentual_comissao?: number; // Legacy or base tier reference
-  valor_base_comissao_os?: number; // Base R$ value per OS (default 20.00)
+  percentual_comissao?: number;
+  valor_base_comissao_os?: number;
   created_at?: string;
 }
 
@@ -85,7 +85,10 @@ export interface Cliente {
   id: string;
   nome: string;
   telefone: string;
-  cpf?: string | null;
+  telefone_secundario?: string | null;
+  cpf: string; // Obrigatório
+  email?: string | null;
+  instagram?: string | null;
   created_at?: string;
 }
 
@@ -116,6 +119,7 @@ export interface OrdemServico {
   imei_ou_serial: string;
   senha_aparelho?: string;
   buscar_iphone_desativado: boolean;
+  aparelho_nao_liga?: boolean; // Novo: Aparelho Desligado / Não Liga
   defeito_reclamado: string;
   laudo_tecnico?: string | null;
   checklist_entrada: ChecklistEntrada;
@@ -167,7 +171,7 @@ export interface DesempenhoVendedor {
   faturamento_gerado: number;
   meta_mensal: number;
   percentual_meta: number;
-  valor_comissao_por_os: number; // R$ per OS (e.g. R$ 20.00 to R$ 50.00)
+  valor_comissao_por_os: number;
   faixa_comissao_label: string;
   comissao_estimada: number;
 }

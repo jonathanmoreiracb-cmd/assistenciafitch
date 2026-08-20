@@ -46,14 +46,21 @@ INSERT INTO usuarios (id, nome, email, senha, cargo, meta_mensal_os, percentual_
   ('44444444-4444-4444-4444-444444444444', 'Marcos Técnico', 'marcos.tecnico@fitch.com', '123', 'tecnico', 0, 0.00)
 ON CONFLICT (email) DO NOTHING;
 
--- 3. TABELA CLIENTES
+-- 3. TABELA CLIENTES (Campos Obrigatórios: Nome, Telefone, CPF)
 CREATE TABLE IF NOT EXISTS clientes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome TEXT NOT NULL,
   telefone TEXT NOT NULL,
-  cpf TEXT NULL,
+  telefone_secundario TEXT NULL,
+  cpf TEXT NOT NULL,
+  email TEXT NULL,
+  instagram TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS telefone_secundario TEXT;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS instagram TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_clientes_telefone ON clientes(telefone);
 CREATE INDEX IF NOT EXISTS idx_clientes_cpf ON clientes(cpf);
@@ -86,6 +93,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
   imei_ou_serial TEXT NOT NULL,
   senha_aparelho TEXT NULL DEFAULT '',
   buscar_iphone_desativado BOOLEAN NOT NULL DEFAULT false,
+  aparelho_nao_liga BOOLEAN NOT NULL DEFAULT false,
   defeito_reclamado TEXT NOT NULL,
   laudo_tecnico TEXT NULL,
   
@@ -130,6 +138,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 -- Garantir novas colunas se a tabela já existia
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS vendedor_nome TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS tecnico_nome TEXT;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS aparelho_nao_liga BOOLEAN DEFAULT false;
 
 -- Index para buscas frequentes
 CREATE INDEX IF NOT EXISTS idx_os_numero ON ordens_servico(numero_os);

@@ -100,7 +100,11 @@ export const ThermalLabel: React.FC<ThermalLabelProps> = ({ os }) => {
         <span>Vend: {os.vendedor_nome || 'Loja'}</span>
         <span>Entrada: {formattedDate}</span>
         <span className="font-black bg-black text-white px-1 py-0.2 rounded-xs uppercase">
-          {os.tipo_cobertura === 'Garantia da Loja' ? 'GARANTIA LOJA' : 'PARTICULAR'}
+          {os.tipo_cobertura === 'Garantia da Loja'
+            ? 'GARANTIA SEMINOVO'
+            : os.tipo_cobertura === 'Revisão / Upgrade'
+            ? 'REVISÃO TRADE-IN'
+            : 'PARTICULAR'}
         </span>
       </div>
     </div>

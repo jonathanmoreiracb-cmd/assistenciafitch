@@ -105,7 +105,7 @@ export default function DashboardPage() {
         os.localizacao_atual === 'laboratorio_sp' ||
         os.localizacao_atual === 'em_transito_retorno_sp';
     } else if (activeTab === 'garantia') {
-      matchTab = os.tipo_cobertura === 'Garantia da Loja';
+      matchTab = os.tipo_cobertura === 'Garantia da Loja' || os.tipo_cobertura === 'Revisão / Upgrade';
     }
 
     let matchStatus = true;
@@ -374,6 +374,8 @@ export default function DashboardPage() {
                       <td className="py-3.5 px-3 font-semibold text-slate-900 font-mono">
                         {os.tipo_cobertura === 'Garantia da Loja' ? (
                           <span className="text-amber-600 font-bold">R$ 0,00 (Garantia)</span>
+                        ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
+                          <span className="text-indigo-600 font-bold">R$ 0,00 (Estoque Loja)</span>
                         ) : (
                           <span>R$ {Number(os.valor_total).toFixed(2)}</span>
                         )}

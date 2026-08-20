@@ -343,6 +343,23 @@ export default function OSDetalhesPage() {
               <span className="text-xs font-semibold bg-[#0071e3]/10 text-[#0071e3] px-3 py-0.5 rounded-full">
                 {os.tipo_dispositivo} {os.modelo}
               </span>
+
+              {/* Tipo de Serviço Badge */}
+              {os.tipo_cobertura === 'Particular' && (
+                <span className="text-xs font-semibold bg-blue-50 text-[#0071e3] border border-blue-200 px-3 py-0.5 rounded-full">
+                  🛠️ Assistência Particular (Pago)
+                </span>
+              )}
+              {os.tipo_cobertura === 'Garantia da Loja' && (
+                <span className="text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 px-3 py-0.5 rounded-full">
+                  🛡️ Garantia de Seminovo (180 Dias - R$ 0,00)
+                </span>
+              )}
+              {os.tipo_cobertura === 'Revisão / Upgrade' && (
+                <span className="text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-300 px-3 py-0.5 rounded-full">
+                  🔄 Revisão / Trade-in (Aparelho da Loja)
+                </span>
+              )}
               {os.vendedor_nome && (
                 <span className="text-xs text-slate-500 font-medium">
                   • Vendedor: {os.vendedor_nome}

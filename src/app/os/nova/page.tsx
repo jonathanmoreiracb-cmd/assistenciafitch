@@ -180,10 +180,10 @@ export default function NovaOSPage() {
         localizacao_atual: 'bancada_local',
         data_entrada: new Date().toISOString(),
         previsao_entrega: previsaoEntrega ? new Date(previsaoEntrega).toISOString() : null,
-        valor_servico: tipoCobertura === 'Garantia da Loja' ? 0 : Number(valorServico) || 0,
+        valor_servico: tipoCobertura === 'Particular' ? Number(valorServico) || 0 : 0,
         valor_pecas: 0,
-        valor_desconto: tipoCobertura === 'Garantia da Loja' ? 0 : Number(valorDesconto) || 0,
-        garantia_dias: 90,
+        valor_desconto: tipoCobertura === 'Particular' ? Number(valorDesconto) || 0 : 0,
+        garantia_dias: tipoCobertura === 'Garantia da Loja' ? 180 : 90,
       });
 
       toast.success(`Ordem de Serviço #${novaOS.numero_os} criada por ${vendedorSelecionado.nome}!`);
@@ -492,36 +492,83 @@ export default function NovaOSPage() {
           </div>
 
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Tipo de Cobertura
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Tipo de Serviço / Origem da Demanda *
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Option 1: Assistência Particular */}
               <button
                 type="button"
                 onClick={() => setTipoCobertura('Particular')}
-                className={`p-3 rounded-2xl border text-left transition-all ${
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Particular'
-                    ? 'bg-white border-[#0071e3] text-slate-900 shadow-sm'
-                    : 'bg-slate-100 border-slate-200 text-slate-600'
+                    ? 'bg-white border-[#0071e3] ring-2 ring-[#0071e3]/20 text-slate-900 shadow-sm'
+                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
                 }`}
               >
-                <span className="font-bold text-xs block">Particular</span>
-                <span className="text-[10px] text-slate-500">Comissão de Vendas Normal</span>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#0071e3]">
+                    🛠️ Assistência Particular
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3]">
+                    Pago
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Cliente não comprou na loja / fora da garantia. Cliente paga pelo serviço. Gera comissão.
+                </p>
               </button>
 
+              {/* Option 2: Garantia de Seminovo */}
               <button
                 type="button"
-                onClick={() => setTipoCobertura('Garantia da Loja')}
-                className={`p-3 rounded-2xl border text-left transition-all ${
+                onClick={() => {
+                  setTipoCobertura('Garantia da Loja');
+                  setValorServico('0.00');
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Garantia da Loja'
-                    ? 'bg-white border-amber-500 text-amber-900 shadow-sm'
-                    : 'bg-slate-100 border-slate-200 text-slate-600'
+                    ? 'bg-white border-amber-500 ring-2 ring-amber-500/20 text-amber-900 shadow-sm'
+                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
                 }`}
               >
-                <span className="font-bold text-xs text-amber-700 block flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Garantia da Loja
-                </span>
-                <span className="text-[10px] text-slate-500">Custo Interno Pós-Venda (R$ 0,00)</span>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-amber-700">
+                    🛡️ Garantia de Seminovo
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    R$ 0,00
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Garantia de 180 dias de cliente que comprou seminovo na loja. Pós-venda (R$ 0,00 pro cliente).
+                </p>
+              </button>
+
+              {/* Option 3: Revisão / Trade-in Upgrade */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoCobertura('Revisão / Upgrade');
+                  setValorServico('0.00');
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
+                  tipoCobertura === 'Revisão / Upgrade'
+                    ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 text-indigo-900 shadow-sm'
+                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-indigo-700">
+                    🔄 Revisão / Trade-in
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    Estoque Loja
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Aparelho pegado de upgrade/troca para trocar bateria ou peças antes de colocar à venda.
+                </p>
               </button>
             </div>
           </div>

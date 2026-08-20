@@ -77,7 +77,9 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
   numero_os SERIAL UNIQUE NOT NULL,
   cliente_id UUID NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
   vendedor_id UUID NULL REFERENCES usuarios(id),
+  vendedor_nome TEXT NULL,
   tecnico_id UUID NULL REFERENCES usuarios(id),
+  tecnico_nome TEXT NULL,
   tipo_dispositivo tipo_dispositivo_enum NOT NULL DEFAULT 'iPhone',
   modelo TEXT NOT NULL,
   cor TEXT NOT NULL DEFAULT 'Preto',
@@ -125,6 +127,10 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Garantir novas colunas se a tabela já existia
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS vendedor_nome TEXT;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS tecnico_nome TEXT;
+
 -- Index para buscas frequentes
 CREATE INDEX IF NOT EXISTS idx_os_numero ON ordens_servico(numero_os);
 CREATE INDEX IF NOT EXISTS idx_os_status ON ordens_servico(status);
@@ -166,19 +172,28 @@ CREATE OR REPLACE TRIGGER trigger_recalcular_pecas
 AFTER INSERT OR UPDATE OR DELETE ON os_itens_pecas
 FOR EACH ROW EXECUTE FUNCTION recalcular_valor_pecas_os();
 
--- 8. ROW LEVEL SECURITY (RLS)
+-- 8. ROW LEVEL SECURITY (RLS) POLICIES
 ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ordens_servico ENABLE ROW LEVEL SECURITY;
 ALTER TABLE os_itens_pecas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE estoque_pecas ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Permitir leitura usuarios" ON usuarios FOR SELECT USING (true);
-CREATE POLICY "Permitir leitura clientes" ON clientes FOR SELECT USING (true);
-CREATE POLICY "Permitir criacao clientes" ON clientes FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir leitura OS" ON ordens_servico FOR SELECT USING (true);
-CREATE POLICY "Permitir criacao OS" ON ordens_servico FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir edicao OS" ON ordens_servico FOR UPDATE USING (true);
-CREATE POLICY "Permitir leitura pecas" ON os_itens_pecas FOR SELECT USING (true);
-CREATE POLICY "Permitir criacao pecas" ON os_itens_pecas FOR ALL USING (true);
-CREATE POLICY "Permitir tudo estoque" ON estoque_pecas FOR ALL USING (true);
+DROP POLICY IF EXISTS "Permitir leitura usuarios" ON usuarios;
+DROP POLICY IF EXISTS "Permitir tudo usuarios" ON usuarios;
+CREATE POLICY "Permitir tudo usuarios" ON usuarios FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir leitura clientes" ON clientes;
+DROP POLICY IF EXISTS "Permitir tudo clientes" ON clientes;
+CREATE POLICY "Permitir tudo clientes" ON clientes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir leitura OS" ON ordens_servico;
+DROP POLICY IF EXISTS "Permitir tudo OS" ON ordens_servico;
+CREATE POLICY "Permitir tudo OS" ON ordens_servico FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir leitura pecas" ON os_itens_pecas;
+DROP POLICY IF EXISTS "Permitir tudo pecas" ON os_itens_pecas;
+CREATE POLICY "Permitir tudo pecas" ON os_itens_pecas FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir tudo estoque" ON estoque_pecas;
+CREATE POLICY "Permitir tudo estoque" ON estoque_pecas FOR ALL USING (true) WITH CHECK (true);

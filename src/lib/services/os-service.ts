@@ -9,7 +9,13 @@ import {
   StatusOS,
 } from '@/types';
 
-// Production Clean In-Memory & LocalStorage State
+function sanitizeUuid(id: any): string | null {
+  if (typeof id !== 'string') return null;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id) ? id : null;
+}
+
+// In-Memory Fallback State when Supabase is disconnected
 let localClientesStore: Cliente[] = [];
 let localOSStore: OrdemServico[] = [];
 
@@ -19,14 +25,9 @@ if (typeof window !== 'undefined') {
     const savedCli = localStorage.getItem('fitch_clientes_store');
     if (savedOS) {
       localOSStore = JSON.parse(savedOS);
-    } else {
-      localStorage.setItem('fitch_os_store', JSON.stringify([]));
     }
-
     if (savedCli) {
       localClientesStore = JSON.parse(savedCli);
-    } else {
-      localStorage.setItem('fitch_clientes_store', JSON.stringify([]));
     }
   } catch (e) {
     console.error('Error reading localStorage', e);
@@ -45,7 +46,7 @@ function persistLocalState() {
 }
 
 export const OSService = {
-  // Clear all test OS and test clients
+  // Clear test data
   zerarDadosDeTeste(): void {
     localOSStore = [];
     localClientesStore = [];
@@ -56,8 +57,16 @@ export const OSService = {
   async getClientes(): Promise<Cliente[]> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase.from('clientes').select('*').order('nome');
-      if (!error && data) return data as Cliente[];
+      try {
+        const { data, error } = await supabase.from('clientes').select('*').order('nome');
+        if (error) {
+          console.error('Supabase getClientes error:', error);
+        } else if (data) {
+          return data as Cliente[];
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
     return localClientesStore;
   },
@@ -68,11 +77,19 @@ export const OSService = {
 
     const supabase = createClient();
     if (supabase) {
-      const { data } = await supabase
-        .from('clientes')
-        .select('*')
-        .or(`telefone.ilike.%${cleanQuery}%,cpf.ilike.%${cleanQuery}%,nome.ilike.%${cleanQuery}%`);
-      if (data) return data as Cliente[];
+      try {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('*')
+          .or(`telefone.ilike.%${cleanQuery}%,cpf.ilike.%${cleanQuery}%,nome.ilike.%${cleanQuery}%`);
+        if (error) {
+          console.error('Supabase buscarCliente error:', error);
+        } else if (data) {
+          return data as Cliente[];
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     return localClientesStore.filter(
@@ -86,8 +103,16 @@ export const OSService = {
   async criarCliente(cliente: Omit<Cliente, 'id' | 'created_at'>): Promise<Cliente> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase.from('clientes').insert([cliente]).select().single();
-      if (!error && data) return data as Cliente;
+      try {
+        const { data, error } = await supabase.from('clientes').insert([cliente]).select().single();
+        if (error) {
+          console.error('Supabase criarCliente error:', error);
+        } else if (data) {
+          return data as Cliente;
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const novoCliente: Cliente = {
@@ -104,15 +129,24 @@ export const OSService = {
   async getOrdensServico(): Promise<OrdemServico[]> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase
-        .from('ordens_servico')
-        .select(`
-          *,
-          cliente:clientes(*),
-          pecas:os_itens_pecas(*)
-        `)
-        .order('numero_os', { ascending: false });
-      if (!error && data) return data as OrdemServico[];
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .order('numero_os', { ascending: false });
+
+        if (error) {
+          console.error('Supabase getOrdensServico error:', error);
+        } else if (data) {
+          return data as OrdemServico[];
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
     return localOSStore;
   },
@@ -120,16 +154,25 @@ export const OSService = {
   async getOrdemServicoById(id: string): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase
-        .from('ordens_servico')
-        .select(`
-          *,
-          cliente:clientes(*),
-          pecas:os_itens_pecas(*)
-        `)
-        .or(`id.eq.${id},numero_os.eq.${isNaN(Number(id)) ? -1 : Number(id)}`)
-        .single();
-      if (!error && data) return data as OrdemServico;
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .or(`id.eq.${id},numero_os.eq.${isNaN(Number(id)) ? -1 : Number(id)}`)
+          .single();
+
+        if (error) {
+          console.error('Supabase getOrdemServicoById error:', error);
+        } else if (data) {
+          return data as OrdemServico;
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const found = localOSStore.find(
@@ -142,11 +185,60 @@ export const OSService = {
     dados: Omit<OrdemServico, 'id' | 'numero_os' | 'valor_total' | 'created_at' | 'updated_at'>
   ): Promise<OrdemServico> {
     const supabase = createClient();
+
     if (supabase) {
-      const { data, error } = await supabase.from('ordens_servico').insert([dados]).select().single();
-      if (!error && data) return data as OrdemServico;
+      try {
+        const payload: any = {
+          cliente_id: dados.cliente_id,
+          vendedor_id: sanitizeUuid(dados.vendedor_id),
+          vendedor_nome: dados.vendedor_nome,
+          tecnico_id: sanitizeUuid(dados.tecnico_id),
+          tecnico_nome: dados.tecnico_nome,
+          tipo_dispositivo: dados.tipo_dispositivo,
+          modelo: dados.modelo,
+          cor: dados.cor,
+          imei_ou_serial: dados.imei_ou_serial,
+          senha_aparelho: dados.senha_aparelho || '',
+          buscar_iphone_desativado: dados.buscar_iphone_desativado || false,
+          defeito_reclamado: dados.defeito_reclamado,
+          laudo_tecnico: dados.laudo_tecnico || null,
+          checklist_entrada: dados.checklist_entrada,
+          fotos_entrada: dados.fotos_entrada || [],
+          status: dados.status || 'aguardando_analise',
+          tipo_cobertura: dados.tipo_cobertura || 'Particular',
+          localizacao_atual: dados.localizacao_atual || 'bancada_local',
+          data_entrada: dados.data_entrada || new Date().toISOString(),
+          previsao_entrega: dados.previsao_entrega || null,
+          valor_servico: dados.valor_servico || 0,
+          valor_pecas: dados.valor_pecas || 0,
+          valor_desconto: dados.valor_desconto || 0,
+          garantia_dias: dados.garantia_dias || 90,
+        };
+
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .insert([payload])
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .single();
+
+        if (error) {
+          console.error('CRITICAL Supabase criarOrdemServico Error:', error);
+          alert(`Erro ao salvar no Supabase: ${error.message} (${error.details || ''}). Verifique se rodou o script SQL no Supabase.`);
+        } else if (data) {
+          return data as OrdemServico;
+        }
+      } catch (e) {
+        console.error('Supabase exception:', e);
+      }
+    } else {
+      console.warn('Supabase client is null (environment variables NEXT_PUBLIC_SUPABASE_URL not configured).');
     }
 
+    // LocalStorage fallback only if Supabase not configured
     const proximoNumero = localOSStore.length > 0
       ? Math.max(...localOSStore.map((o) => o.numero_os)) + 1
       : 1001;
@@ -180,13 +272,18 @@ export const OSService = {
     const dataConcl = isConcluido ? new Date().toISOString() : null;
 
     if (supabase) {
-      const { data, error } = await supabase
-        .from('ordens_servico')
-        .update({ status: novoStatus, data_conclusao: dataConcl, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as OrdemServico;
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update({ status: novoStatus, data_conclusao: dataConcl, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) console.error('Supabase atualizarStatusOS error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const index = localOSStore.findIndex((o) => o.id === id);
@@ -208,16 +305,21 @@ export const OSService = {
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      const payload: any = { localizacao_atual: novaLocalizacao, updated_at: new Date().toISOString() };
-      if (detalhesTerceirizado) payload.detalhes_terceirizado = detalhesTerceirizado;
+      try {
+        const payload: any = { localizacao_atual: novaLocalizacao, updated_at: new Date().toISOString() };
+        if (detalhesTerceirizado) payload.detalhes_terceirizado = detalhesTerceirizado;
 
-      const { data, error } = await supabase
-        .from('ordens_servico')
-        .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as OrdemServico;
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) console.error('Supabase atualizarLocalizacaoOS error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const index = localOSStore.findIndex((o) => o.id === id);
@@ -239,17 +341,22 @@ export const OSService = {
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      const { data, error } = await supabase
-        .from('ordens_servico')
-        .update({
-          laudo_tecnico: laudoTecnico,
-          checklist_saida: checklistSaida,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as OrdemServico;
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update({
+            laudo_tecnico: laudoTecnico,
+            checklist_saida: checklistSaida,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) console.error('Supabase salvarLaudo error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const index = localOSStore.findIndex((o) => o.id === id);
@@ -277,8 +384,12 @@ export const OSService = {
 
     const supabase = createClient();
     if (supabase) {
-      await supabase.from('os_itens_pecas').insert([novoItem]);
-      return this.getOrdemServicoById(osId);
+      try {
+        await supabase.from('os_itens_pecas').insert([novoItem]);
+        return this.getOrdemServicoById(osId);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const index = localOSStore.findIndex((o) => o.id === osId);
@@ -286,7 +397,6 @@ export const OSService = {
       const pecasAtuais = localOSStore[index].pecas || [];
       localOSStore[index].pecas = [...pecasAtuais, novoItem];
 
-      // Recalcular valor pecas e total
       const somaPecas = localOSStore[index].pecas.reduce(
         (acc, p) => acc + (p.preco_venda * p.quantidade),
         0
@@ -307,8 +417,12 @@ export const OSService = {
   async removerItemPeca(osId: string, pecaId: string): Promise<OrdemServico | null> {
     const supabase = createClient();
     if (supabase) {
-      await supabase.from('os_itens_pecas').delete().eq('id', pecaId);
-      return this.getOrdemServicoById(osId);
+      try {
+        await supabase.from('os_itens_pecas').delete().eq('id', pecaId);
+        return this.getOrdemServicoById(osId);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const index = localOSStore.findIndex((o) => o.id === osId);

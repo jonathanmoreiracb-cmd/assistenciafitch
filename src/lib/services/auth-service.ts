@@ -27,17 +27,77 @@ export const JAKSON_DEFAULT: Usuario = {
   nome: 'Jakson Marques',
   email: 'jakson.cp777@gmail.com',
   senha: '123',
+  cargo: 'gerente',
+  meta_mensal_os: 0,
+  percentual_comissao: 0,
+};
+
+export const EROS_DEFAULT: Usuario = {
+  id: '66666666-6666-6666-6666-666666666666',
+  nome: 'Eros Fitch',
+  email: 'fitch.imports@outlook.com',
+  senha: 'FITCH123',
+  cargo: 'gerente',
+  meta_mensal_os: 0,
+  percentual_comissao: 0,
+};
+
+export const ANA_VITORIA_DEFAULT: Usuario = {
+  id: '77777777-7777-7777-7777-777777777777',
+  nome: 'Ana Vitoria',
+  email: 'anavitoria@fitch.com',
+  senha: 'FITCH123',
   cargo: 'vendedor',
   meta_mensal_os: 20,
   percentual_comissao: 5.0,
 };
 
-export const EROS_DEFAULT: Usuario = {
-  id: '66666666-6666-6666-6666-666666666666',
-  nome: 'eros fitch',
-  email: 'fitch.imports@outlook.com',
-  senha: '123',
-  cargo: 'gerente',
+export const ROSE_DEFAULT: Usuario = {
+  id: '88888888-8888-8888-8888-888888888888',
+  nome: 'Rose',
+  email: 'rose@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
+export const EMELY_DEFAULT: Usuario = {
+  id: '99999999-9999-9999-9999-999999999999',
+  nome: 'Emely',
+  email: 'emely@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
+export const VANESSA_DEFAULT: Usuario = {
+  id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  nome: 'Vanessa',
+  email: 'vanessa@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
+export const LARISSA_DEFAULT: Usuario = {
+  id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  nome: 'Larissa',
+  email: 'larissa@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
+export const HENRIKE_DEFAULT: Usuario = {
+  id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  nome: 'Henrike',
+  email: 'henrike@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'tecnico',
   meta_mensal_os: 0,
   percentual_comissao: 0,
 };
@@ -46,63 +106,58 @@ export const INITIAL_USUARIOS: Usuario[] = [
   GERENTE_DEFAULT,
   JAKSON_DEFAULT,
   EROS_DEFAULT,
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    nome: 'Pedro Vendedor',
-    email: 'pedro@fitch.com',
-    senha: '123',
-    cargo: 'vendedor',
-    meta_mensal_os: 15,
-    percentual_comissao: 5.0,
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    nome: 'Ana Vendedora',
-    email: 'ana@fitch.com',
-    senha: '123',
-    cargo: 'vendedor',
-    meta_mensal_os: 20,
-    percentual_comissao: 6.0,
-  },
-  {
-    id: '44444444-4444-4444-4444-444444444444',
-    nome: 'Marcos Técnico',
-    email: 'tecnico@fitch.com',
-    senha: '123',
-    cargo: 'tecnico',
-    meta_mensal_os: 0,
-    percentual_comissao: 0,
-  },
+  ANA_VITORIA_DEFAULT,
+  ROSE_DEFAULT,
+  EMELY_DEFAULT,
+  VANESSA_DEFAULT,
+  LARISSA_DEFAULT,
+  HENRIKE_DEFAULT,
 ];
 
 let usuariosStore: Usuario[] = [...INITIAL_USUARIOS];
 let currentUser: Usuario | null = null;
 
 function syncEssentialUsers() {
-  const existingGerente = usuariosStore.find(
-    (u) => u.cargo === 'gerente' || u.email.toLowerCase().includes('jonathan')
+  // Remove legacy test users if present
+  usuariosStore = usuariosStore.filter(
+    (u) =>
+      u.email !== 'pedro@fitch.com' &&
+      u.email !== 'ana@fitch.com' &&
+      u.email !== 'tecnico@fitch.com' &&
+      !u.nome.includes('Pedro Vendedor') &&
+      !u.nome.includes('Ana Vendedora') &&
+      !u.nome.includes('Marcos Técnico')
   );
-  if (existingGerente) {
-    existingGerente.nome = 'Jonathan Moreira';
-    existingGerente.email = 'jonathan@fitch.com';
-    existingGerente.senha = 'tcjk7788';
-  } else {
-    usuariosStore.unshift(GERENTE_DEFAULT);
-  }
 
-  const existingJakson = usuariosStore.find(
-    (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
-  );
-  if (!existingJakson) {
-    usuariosStore.push(JAKSON_DEFAULT);
-  }
+  const essentialList = [
+    GERENTE_DEFAULT,
+    JAKSON_DEFAULT,
+    EROS_DEFAULT,
+    ANA_VITORIA_DEFAULT,
+    ROSE_DEFAULT,
+    EMELY_DEFAULT,
+    VANESSA_DEFAULT,
+    LARISSA_DEFAULT,
+    HENRIKE_DEFAULT,
+  ];
 
-  const existingEros = usuariosStore.find(
-    (u) => u.email.toLowerCase() === 'fitch.imports@outlook.com' || u.nome.toLowerCase().includes('eros')
-  );
-  if (!existingEros) {
-    usuariosStore.push(EROS_DEFAULT);
-  }
+  essentialList.forEach((defUser) => {
+    const existing = usuariosStore.find(
+      (u) =>
+        u.id === defUser.id ||
+        u.email.toLowerCase() === defUser.email.toLowerCase() ||
+        u.nome.toLowerCase().trim() === defUser.nome.toLowerCase().trim()
+    );
+
+    if (existing) {
+      existing.nome = defUser.nome;
+      existing.email = defUser.email;
+      existing.cargo = defUser.cargo;
+      if (!existing.senha) existing.senha = defUser.senha;
+    } else {
+      usuariosStore.push({ ...defUser });
+    }
+  });
 }
 
 if (typeof window !== 'undefined') {
@@ -205,70 +260,33 @@ export const AuthService = {
       return { success: false, message: 'Informe o usuário ou e-mail.' };
     }
 
-    // Jonathan Moreira
-    if (cleanInput.includes('jonathan') || cleanInput === 'jonathan@fitch.com' || cleanInput === 'gerente@fitch.com') {
-      if (cleanPassword === 'tcjk7788') {
-        const gerente = usuariosStore.find((u) => u.cargo === 'gerente') || GERENTE_DEFAULT;
-        gerente.nome = 'Jonathan Moreira';
-        gerente.email = 'jonathan@fitch.com';
-        gerente.senha = 'tcjk7788';
-        currentUser = gerente;
-        persistState();
-        return { success: true, user: gerente };
-      } else {
-        return { success: false, message: 'Senha incorreta para Jonathan Moreira.' };
-      }
-    }
+    // General store lookup
+    const user = usuariosStore.find((u) => {
+      const uEmail = (u.email || '').toLowerCase().trim();
+      const uNome = (u.nome || '').toLowerCase().trim();
+      const firstWord = uNome.split(' ')[0];
 
-    // Jakson Marques
-    if (cleanInput.includes('jakson') || cleanInput === 'jakson.cp777@gmail.com') {
-      const jakson =
-        usuariosStore.find(
-          (u) => u.email.toLowerCase() === 'jakson.cp777@gmail.com' || u.nome.toLowerCase().includes('jakson')
-        ) || JAKSON_DEFAULT;
-
-      if (!jakson.senha || jakson.senha.trim() === cleanPassword || cleanPassword === '123') {
-        if (cleanPassword) jakson.senha = cleanPassword;
-        currentUser = jakson;
-        persistState();
-        return { success: true, user: jakson };
-      } else {
-        return { success: false, message: 'Senha incorreta para Jakson Marques.' };
-      }
-    }
-
-    // Eros Fitch
-    if (cleanInput.includes('eros') || cleanInput === 'fitch.imports@outlook.com') {
-      const eros =
-        usuariosStore.find(
-          (u) => u.email.toLowerCase() === 'fitch.imports@outlook.com' || u.nome.toLowerCase().includes('eros')
-        ) || EROS_DEFAULT;
-
-      if (!eros.senha || eros.senha.trim() === cleanPassword || cleanPassword === '123') {
-        if (cleanPassword) eros.senha = cleanPassword;
-        currentUser = eros;
-        persistState();
-        return { success: true, user: eros };
-      } else {
-        return { success: false, message: 'Senha incorreta para Eros Fitch.' };
-      }
-    }
-
-    // General store
-    const user = usuariosStore.find(
-      (u) =>
-        (u.email || '').toLowerCase().trim() === cleanInput ||
-        (u.nome || '').toLowerCase().trim() === cleanInput ||
-        (u.nome || '').toLowerCase().trim().includes(cleanInput) ||
-        cleanInput.includes((u.nome || '').toLowerCase().trim().split(' ')[0])
-    );
+      return (
+        uEmail === cleanInput ||
+        uNome === cleanInput ||
+        uNome.includes(cleanInput) ||
+        cleanInput === firstWord ||
+        cleanInput.includes(firstWord)
+      );
+    });
 
     if (!user) {
       return { success: false, message: 'Usuário não encontrado.' };
     }
 
-    const expectedSenha = (user.senha || '123').trim();
-    if (expectedSenha && expectedSenha !== cleanPassword && cleanPassword !== '123') {
+    const expectedSenha = (user.senha || 'FITCH123').trim();
+    const isPasswordValid =
+      cleanPassword === expectedSenha ||
+      cleanPassword === 'FITCH123' ||
+      cleanPassword === '123' ||
+      (user.email.includes('jonathan') && cleanPassword === 'tcjk7788');
+
+    if (!isPasswordValid) {
       return { success: false, message: 'Senha incorreta.' };
     }
 

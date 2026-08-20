@@ -172,15 +172,15 @@ export default function AdminPage() {
   // --- ESTOQUE HANDLERS ---
   const handleCadastrarPeca = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formPeca.descricao || !formPeca.codigo_sku || !formPeca.modelo_compativel) {
-      toast.error('Preencha os campos obrigatórios (Descrição, SKU e Modelo).');
+    if (!formPeca.descricao || !formPeca.modelo_compativel) {
+      toast.error('Preencha os campos obrigatórios (Descrição e Modelo).');
       return;
     }
 
     try {
       await EstoqueService.cadastrarPeca({
         descricao: formPeca.descricao,
-        codigo_sku: formPeca.codigo_sku.toUpperCase(),
+        codigo_sku: formPeca.codigo_sku ? formPeca.codigo_sku.toUpperCase() : '',
         tipo_qualidade: formPeca.tipo_qualidade,
         modelo_compativel: formPeca.modelo_compativel,
         quantidade_estoque: Number(formPeca.quantidade_estoque) || 0,
@@ -189,6 +189,15 @@ export default function AdminPage() {
       });
       toast.success('Peça cadastrada no estoque!');
       setShowNewPecaModal(false);
+      setFormPeca({
+        descricao: '',
+        codigo_sku: '',
+        tipo_qualidade: 'Original',
+        modelo_compativel: '',
+        quantidade_estoque: 5,
+        custo_unitario: '100.00',
+        preco_venda: '250.00',
+      });
       loadAllData();
     } catch (e) {
       toast.error('Erro ao cadastrar peça.');
@@ -732,7 +741,7 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">SKU *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">SKU (Opcional)</label>
                   <input
                     type="text"
                     placeholder="TEL-IP14PM"

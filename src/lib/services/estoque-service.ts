@@ -41,10 +41,16 @@ export const EstoqueService = {
   async cadastrarPeca(
     peca: Omit<PecaEstoque, 'id' | 'created_at'>
   ): Promise<PecaEstoque> {
+    const cleanSku = (peca.codigo_sku || '').trim() || `PEC-${Date.now().toString(36).toUpperCase()}`;
+    const payload = {
+      ...peca,
+      codigo_sku: cleanSku,
+    };
+
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('estoque_pecas').insert([peca]).select().single();
+        const { data, error } = await supabase.from('estoque_pecas').insert([payload]).select().single();
         if (!error && data) {
           const novaPeca = data as PecaEstoque;
           localEstoque.unshift(novaPeca);
@@ -58,7 +64,7 @@ export const EstoqueService = {
 
     const nova: PecaEstoque = {
       id: `est-${Date.now()}`,
-      ...peca,
+      ...payload,
       created_at: new Date().toISOString(),
     };
     localEstoque.unshift(nova);

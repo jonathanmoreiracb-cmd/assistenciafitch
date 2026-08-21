@@ -231,4 +231,47 @@ export const EstoqueService = {
         p.modelo_compativel.toLowerCase().includes(q)
     );
   },
+
+  async darSaidaEstoque(id: string, quantidadeReduzir: number): Promise<PecaEstoque | null> {
+    let currentItem = localEstoque.find((p) => p.id === id);
+
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data: dbData } = await supabase.from('estoque_pecas').select('*').eq('id', id).single();
+        if (dbData) currentItem = dbData as PecaEstoque;
+      } catch (e) {}
+    }
+
+    if (!currentItem) return null;
+
+    const qtdAtual = Number(currentItem.quantidade_estoque) || 0;
+    const qtdNova = Math.max(0, qtdAtual - Number(quantidadeReduzir));
+
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from('estoque_pecas')
+          .update({ quantidade_estoque: qtdNova })
+          .eq('id', id)
+          .select()
+          .single();
+        if (data) {
+          const updated = data as PecaEstoque;
+          const idx = localEstoque.findIndex((p) => p.id === id);
+          if (idx !== -1) localEstoque[idx] = updated;
+          persistLocalEstoque();
+          return updated;
+        }
+      } catch (e) {
+        console.error('Supabase darSaidaEstoque error:', e);
+      }
+    }
+
+    currentItem.quantidade_estoque = qtdNova;
+    const idx = localEstoque.findIndex((p) => p.id === id);
+    if (idx !== -1) localEstoque[idx] = currentItem;
+    persistLocalEstoque();
+    return { ...currentItem };
+  },
 };

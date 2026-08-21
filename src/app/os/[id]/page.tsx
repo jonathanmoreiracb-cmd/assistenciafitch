@@ -23,6 +23,10 @@ import {
   CheckSquare,
   Zap,
   Boxes,
+  CreditCard,
+  PackageCheck,
+  XCircle,
+  Receipt,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -94,6 +98,65 @@ export default function OSDetalhesPage() {
   // Print Modals
   const [showThermalPrint, setShowThermalPrint] = useState(false);
   const [showWarrantyPrint, setShowWarrantyPrint] = useState(false);
+
+  // Syscor Baixa Modal State
+  const [showSyscorBaixaModal, setShowSyscorBaixaModal] = useState(false);
+  const [syscorVendaInput, setSyscorVendaInput] = useState('');
+  const [syscorFormaPagamento, setSyscorFormaPagamento] = useState('Pix');
+  const [syscorSubmitting, setSyscorSubmitting] = useState(false);
+
+  // Devolução sem Cobrança Modal State
+  const [showDevolucaoModal, setShowDevolucaoModal] = useState(false);
+  const [devolucaoMotivoSelect, setDevolucaoMotivoSelect] = useState('Orçamento Recusado pelo Cliente');
+  const [devolucaoObsInput, setDevolucaoObsInput] = useState('');
+  const [devolucaoSubmitting, setDevolucaoSubmitting] = useState(false);
+
+  const handleConfirmSyscorBaixa = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!syscorVendaInput.trim()) {
+      toast.error('Informe o número da venda gerado no Syscor.');
+      return;
+    }
+    setSyscorSubmitting(true);
+    try {
+      const updated = await OSService.darBaixaPagamentoSyscor(osId, {
+        numero_venda_syscor: syscorVendaInput,
+        forma_pagamento: syscorFormaPagamento,
+      });
+      if (updated) {
+        setOs(updated);
+        setShowSyscorBaixaModal(false);
+        setSyscorVendaInput('');
+        toast.success(`Baixa efetuada com sucesso! Venda Syscor #${updated.numero_venda_syscor} vinculada e estoque atualizado.`);
+      }
+    } catch (err) {
+      toast.error('Erro ao efetuar baixa com Syscor.');
+    } finally {
+      setSyscorSubmitting(false);
+    }
+  };
+
+  const handleConfirmDevolucao = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setDevolucaoSubmitting(true);
+    try {
+      const motivoFinal = devolucaoObsInput.trim()
+        ? `${devolucaoMotivoSelect} (${devolucaoObsInput.trim()})`
+        : devolucaoMotivoSelect;
+
+      const updated = await OSService.encerrarSemCobranca(osId, motivoFinal);
+      if (updated) {
+        setOs(updated);
+        setShowDevolucaoModal(false);
+        setDevolucaoObsInput('');
+        toast.success('O.S. encerrada sem cobrança. Aparelho liberado para devolução.');
+      }
+    } catch (err) {
+      toast.error('Erro ao encerrar O.S.');
+    } finally {
+      setDevolucaoSubmitting(false);
+    }
+  };
 
   const loadOS = async () => {
     setLoading(true);
@@ -418,6 +481,70 @@ export default function OSDetalhesPage() {
             <Trash2 className="w-3.5 h-3.5" />
             Excluir O.S.
           </button>
+        </div>
+      </div>
+
+      {/* SYSCOR & BAIXA ACTION BANNER */}
+      <div className="apple-card p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white space-y-3 shadow-lg border border-slate-700/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+              <Receipt className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold tracking-tight">Controle de Baixa & Venda Syscor</h3>
+                {os.numero_venda_syscor ? (
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                    ✅ Baixa Efetuada no Syscor
+                  </span>
+                ) : os.motivo_encerramento ? (
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                    🚫 Devolvido sem Cobrança
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                    ⏳ Pendente de Baixa na Loja
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {os.numero_venda_syscor ? (
+                  <>Venda Syscor: <strong className="text-white">#{os.numero_venda_syscor}</strong> • Forma: <strong className="text-white">{os.forma_pagamento || 'Não informada'}</strong> • Estoque de Peças: <span className="text-emerald-300 font-semibold">{os.baixa_estoque_realizada ? 'Baixado no Estoque' : 'Pendente'}</span></>
+                ) : os.motivo_encerramento ? (
+                  <>O.S. encerrada sem cobrança. Motivo: <strong className="text-white">{os.motivo_encerramento}</strong></>
+                ) : (
+                  <>Cobrou o cliente no Syscor? Clique abaixo para dar baixa no sistema, vincular a venda e baixar as peças do estoque.</>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                setSyscorVendaInput(os.numero_venda_syscor || '');
+                setSyscorFormaPagamento(os.forma_pagamento || 'Pix');
+                setShowSyscorBaixaModal(true);
+              }}
+              className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02]"
+            >
+              <CreditCard className="w-4 h-4" />
+              {os.numero_venda_syscor ? 'Atualizar Venda Syscor' : '🟢 Dar Baixa (Venda Syscor)'}
+            </button>
+
+            {!os.numero_venda_syscor && (
+              <button
+                type="button"
+                onClick={() => setShowDevolucaoModal(true)}
+                className="px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs flex items-center gap-1.5 transition-all"
+              >
+                <XCircle className="w-4 h-4 text-red-400" />
+                🔴 Devolver sem Cobrança
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -924,6 +1051,162 @@ export default function OSDetalhesPage() {
                 Imprimir A4
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SYSCOR BAIXA MODAL */}
+      {showSyscorBaixaModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="apple-card bg-white p-6 max-w-lg w-full space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                Dar Baixa e Vincular Venda do Syscor
+              </h3>
+              <button onClick={() => setShowSyscorBaixaModal(false)} className="text-slate-400 hover:text-slate-900">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmSyscorBaixa} className="space-y-4 text-xs">
+              <div className="bg-emerald-50 border border-emerald-200/80 p-3 rounded-2xl space-y-1">
+                <p className="text-emerald-900 font-semibold">
+                  Ao dar baixa aqui, a O.S. será marcada como <strong>Entregue / Concluída</strong> e o estoque das peças utilizadas será baixado automaticamente.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">
+                  Número da Venda no Syscor <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 10492 ou VD-884"
+                  value={syscorVendaInput}
+                  onChange={(e) => setSyscorVendaInput(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 font-mono text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Forma de Pagamento no Syscor</label>
+                <select
+                  value={syscorFormaPagamento}
+                  onChange={(e) => setSyscorFormaPagamento(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 text-xs focus:outline-none focus:bg-white"
+                >
+                  <option value="Pix">Pix</option>
+                  <option value="Cartão de Crédito">Cartão de Crédito</option>
+                  <option value="Cartão de Débito">Cartão de Débito</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="Link de Pagamento / Online">Link de Pagamento / Online</option>
+                  <option value="Múltiplos Pagamentos (Syscor)">Múltiplos Pagamentos (Syscor)</option>
+                </select>
+              </div>
+
+              {os?.pecas && os.pecas.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">
+                    Peças com Baixa Automática no Estoque ({os.pecas.length})
+                  </span>
+                  <ul className="divide-y divide-slate-100 text-slate-700 text-[11px]">
+                    {os.pecas.map((p) => (
+                      <li key={p.id} className="py-1 flex justify-between">
+                        <span>{p.descricao} ({p.tipo_qualidade})</span>
+                        <span className="font-mono font-bold">{p.quantidade} un</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowSyscorBaixaModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={syscorSubmitting}
+                  className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-sm flex items-center gap-1.5"
+                >
+                  {syscorSubmitting ? 'Salvando...' : 'Confirmar Baixa & Vincular Syscor'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DEVOLUÇÃO SEM COBRANÇA MODAL */}
+      {showDevolucaoModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="apple-card bg-white p-6 max-w-lg w-full space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-red-600" />
+                Devolver Aparelho Sem Cobrança (Encerrar O.S.)
+              </h3>
+              <button onClick={() => setShowDevolucaoModal(false)} className="text-slate-400 hover:text-slate-900">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmDevolucao} className="space-y-4 text-xs">
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-1">
+                <p className="text-amber-900 font-semibold">
+                  A O.S. será encerrada sem cobrança (R$ 0,00). <strong>Nenhuma peça do estoque será descontada.</strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Motivo do Encerramento / Devolução</label>
+                <select
+                  value={devolucaoMotivoSelect}
+                  onChange={(e) => setDevolucaoMotivoSelect(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 text-xs focus:outline-none focus:bg-white"
+                >
+                  <option value="Orçamento Recusado pelo Cliente">Orçamento Recusado pelo Cliente</option>
+                  <option value="Sem Conserto / Placa Condenada">Sem Conserto / Placa Condenada</option>
+                  <option value="Cliente Desistiu da Espera">Cliente Desistiu da Espera</option>
+                  <option value="Aparelho Sem Peça Compatível no Mercado">Aparelho Sem Peça Compatível no Mercado</option>
+                  <option value="Outro Motivo">Outro Motivo</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Observações Adicionais (Opcional)</label>
+                <textarea
+                  rows={2}
+                  value={devolucaoObsInput}
+                  onChange={(e) => setDevolucaoObsInput(e.target.value)}
+                  placeholder="Ex: Cliente achou o valor da tela alto, devolvido montado."
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 text-xs text-slate-900 focus:outline-none focus:bg-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowDevolucaoModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={devolucaoSubmitting}
+                  className="px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-sm"
+                >
+                  {devolucaoSubmitting ? 'Encerrando...' : 'Confirmar Encerramento sem Cobrança'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

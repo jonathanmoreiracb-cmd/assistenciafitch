@@ -137,6 +137,10 @@ export interface OrdemServico {
   valor_desconto: number;
   valor_total: number;
   forma_pagamento?: string | null;
+  numero_venda_syscor?: string | null;
+  baixa_estoque_realizada?: boolean;
+  motivo_encerramento?: string | null;
+  data_baixa?: string | null;
   garantia_dias: number;
   pecas?: ItemPeca[];
   created_at?: string;

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { EstoqueService } from '@/lib/services/estoque-service';
 import {
   Cliente,
   DashboardMetrics,
@@ -364,6 +365,117 @@ export const OSService = {
       localOSStore[index].status = novoStatus;
       if (isConcluido) localOSStore[index].data_conclusao = dataConcl;
       localOSStore[index].updated_at = new Date().toISOString();
+      persistLocalState();
+      return localOSStore[index];
+    }
+
+    return null;
+  },
+
+  async darBaixaPagamentoSyscor(
+    id: string,
+    dados: { numero_venda_syscor: string; forma_pagamento: string }
+  ): Promise<OrdemServico | null> {
+    const os = await this.getOrdemServicoById(id);
+    if (!os) return null;
+
+    const nowIso = new Date().toISOString();
+    const payload: any = {
+      status: 'entregue' as StatusOS,
+      numero_venda_syscor: dados.numero_venda_syscor.trim(),
+      forma_pagamento: dados.forma_pagamento.trim(),
+      data_baixa: nowIso,
+      data_conclusao: os.data_conclusao || nowIso,
+      baixa_estoque_realizada: true,
+      updated_at: nowIso,
+    };
+
+    // Baixa automática de estoque para as peças utilizadas
+    if (!os.baixa_estoque_realizada && os.pecas && os.pecas.length > 0) {
+      for (const peca of os.pecas) {
+        if (peca.peca_estoque_id) {
+          try {
+            await EstoqueService.darSaidaEstoque(peca.peca_estoque_id, peca.quantidade || 1);
+          } catch (err) {
+            console.error('Erro ao dar baixa no estoque para a peça:', peca, err);
+          }
+        }
+      }
+    }
+
+    const supabase = createClient();
+    if (supabase && sanitizeUuid(id)) {
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update(payload)
+          .eq('id', id)
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .single();
+
+        if (error) console.error('Supabase darBaixaPagamentoSyscor error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const index = localOSStore.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      localOSStore[index] = {
+        ...localOSStore[index],
+        ...payload,
+      };
+      persistLocalState();
+      return localOSStore[index];
+    }
+
+    return null;
+  },
+
+  async encerrarSemCobranca(id: string, motivo: string): Promise<OrdemServico | null> {
+    const os = await this.getOrdemServicoById(id);
+    if (!os) return null;
+
+    const nowIso = new Date().toISOString();
+    const payload: any = {
+      status: 'cancelado' as StatusOS,
+      motivo_encerramento: motivo.trim(),
+      data_conclusao: os.data_conclusao || nowIso,
+      updated_at: nowIso,
+    };
+
+    const supabase = createClient();
+    if (supabase && sanitizeUuid(id)) {
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update(payload)
+          .eq('id', id)
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .single();
+
+        if (error) console.error('Supabase encerrarSemCobranca error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const index = localOSStore.findIndex((o) => o.id === id);
+    if (index !== -1) {
+      localOSStore[index] = {
+        ...localOSStore[index],
+        ...payload,
+      };
       persistLocalState();
       return localOSStore[index];
     }

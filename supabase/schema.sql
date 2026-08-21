@@ -129,6 +129,10 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
   valor_desconto NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   valor_total NUMERIC(10,2) GENERATED ALWAYS AS (GREATEST(0, (valor_servico + valor_pecas - valor_desconto))) STORED,
   forma_pagamento TEXT NULL,
+  numero_venda_syscor TEXT NULL,
+  baixa_estoque_realizada BOOLEAN NOT NULL DEFAULT false,
+  motivo_encerramento TEXT NULL,
+  data_baixa TIMESTAMPTZ NULL,
   garantia_dias INT NOT NULL DEFAULT 90,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -139,6 +143,10 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS vendedor_nome TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS tecnico_nome TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS aparelho_nao_liga BOOLEAN DEFAULT false;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS numero_venda_syscor TEXT;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS baixa_estoque_realizada BOOLEAN DEFAULT false;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS motivo_encerramento TEXT;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_baixa TIMESTAMPTZ;
 
 -- Index para buscas frequentes
 CREATE INDEX IF NOT EXISTS idx_os_numero ON ordens_servico(numero_os);

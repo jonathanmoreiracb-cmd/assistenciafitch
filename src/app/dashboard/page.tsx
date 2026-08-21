@@ -93,6 +93,7 @@ export default function DashboardPage() {
       !query ||
       os.numero_os.toString().includes(query) ||
       (os.cliente?.nome && os.cliente.nome.toLowerCase().includes(query)) ||
+      (os.numero_venda_syscor && os.numero_venda_syscor.toLowerCase().includes(query)) ||
       os.imei_ou_serial.toLowerCase().includes(query) ||
       os.modelo.toLowerCase().includes(query);
 
@@ -329,7 +330,7 @@ export default function DashboardPage() {
                 className="bg-slate-50/90 border border-slate-200/80 p-3.5 rounded-2xl space-y-3 transition-all active:scale-[0.99]"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Link
                       href={`/os/${os.id}`}
                       className="font-bold text-sm text-[#0071e3] font-mono hover:underline"
@@ -339,6 +340,11 @@ export default function DashboardPage() {
                     <span className="text-[11px] font-semibold text-slate-800 bg-white px-2 py-0.5 rounded-full border border-slate-200">
                       {os.tipo_dispositivo} {os.modelo}
                     </span>
+                    {os.numero_venda_syscor && (
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-mono">
+                        Syscor: #{os.numero_venda_syscor}
+                      </span>
+                    )}
                   </div>
                   {renderAppleStatusBadge(os.status)}
                 </div>
@@ -350,7 +356,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-slate-900 font-mono">
-                      {os.tipo_cobertura === 'Garantia da Loja' ? (
+                      {os.motivo_encerramento ? (
+                        <span className="text-slate-500 text-[11px]">R$ 0,00 (Devolvido)</span>
+                      ) : os.tipo_cobertura === 'Garantia da Loja' ? (
                         <span className="text-amber-600 text-[11px]">R$ 0,00 (Garantia)</span>
                       ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
                         <span className="text-indigo-600 text-[11px]">R$ 0,00 (Loja)</span>
@@ -453,6 +461,16 @@ export default function DashboardPage() {
                         <Link href={`/os/${os.id}`} className="hover:text-[#0071e3]">
                           #{os.numero_os}
                         </Link>
+                        {os.numero_venda_syscor && (
+                          <div className="text-[10px] font-semibold text-emerald-600 font-mono">
+                            Syscor #{os.numero_venda_syscor}
+                          </div>
+                        )}
+                        {os.motivo_encerramento && (
+                          <div className="text-[10px] font-semibold text-slate-500">
+                            Sem cobrança
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-3">
@@ -477,7 +495,9 @@ export default function DashboardPage() {
                       <td className="py-3.5 px-3">{renderAppleStatusBadge(os.status)}</td>
 
                       <td className="py-3.5 px-3 font-semibold text-slate-900 font-mono">
-                        {os.tipo_cobertura === 'Garantia da Loja' ? (
+                        {os.motivo_encerramento ? (
+                          <span className="text-slate-500 font-bold">R$ 0,00 (Devolvido)</span>
+                        ) : os.tipo_cobertura === 'Garantia da Loja' ? (
                           <span className="text-amber-600 font-bold">R$ 0,00 (Garantia)</span>
                         ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
                           <span className="text-indigo-600 font-bold">R$ 0,00 (Estoque Loja)</span>

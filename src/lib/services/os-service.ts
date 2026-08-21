@@ -303,7 +303,31 @@ export const OSService = {
 
         if (error) {
           console.error('Supabase criarOrdemServico Error:', error);
-          alert(`Aviso do Supabase: ${error.message}. Por favor, certifique-se de executar o script SQL de atualização no Supabase.`);
+
+          // Tentativa automática de fallback se a enum tipo_cobertura_enum ainda não tem 'Revisão / Upgrade' no banco Supabase
+          if (error.message.includes('tipo_cobertura_enum') || error.message.includes('invalid input value for enum')) {
+            const fallbackPayload = {
+              ...payload,
+              tipo_cobertura: 'Garantia da Loja',
+            };
+            const { data: retryData, error: retryErr } = await supabase
+              .from('ordens_servico')
+              .insert([fallbackPayload])
+              .select(`
+                *,
+                cliente:clientes(*),
+                pecas:os_itens_pecas(*)
+              `)
+              .single();
+
+            if (!retryErr && retryData) {
+              const resObj = retryData as OrdemServico;
+              resObj.tipo_cobertura = dados.tipo_cobertura;
+              return resObj;
+            }
+          }
+
+          alert(`Aviso do Supabase: ${error.message}.\n\nPara resolver definitivamente no banco Supabase, execute o comando abaixo no Editor SQL do Supabase:\nALTER TYPE tipo_cobertura_enum ADD VALUE IF NOT EXISTS 'Revisão / Upgrade';`);
         } else if (data) {
           return data as OrdemServico;
         }

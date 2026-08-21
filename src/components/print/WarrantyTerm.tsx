@@ -56,6 +56,9 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           <p className="text-[11px] font-bold text-slate-800">
             Data de Entrada: {dataEntradaFormatted}
           </p>
+          <p className="text-[11px] font-black text-slate-900 mt-0.5 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-xs">
+            VENDEDOR: {os.vendedor_nome || 'Loja / Atendente'}
+          </p>
           <span className="text-[10px] font-bold text-[#0071e3] bg-blue-50 px-2 py-0.5 rounded-xs border border-blue-200 mt-1 uppercase">
             Serviço: {os.tipo_cobertura === 'Garantia da Loja' ? 'Garantia de Seminovo (180 dias)' : os.tipo_cobertura === 'Revisão / Upgrade' ? 'Revisão / Trade-in (Estoque Loja)' : 'Assistência Particular'}
           </span>
@@ -66,9 +69,9 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
       <div className="grid grid-cols-2 gap-4 mb-5 bg-slate-50 p-4 rounded-xl border border-slate-200">
         <div className="space-y-1 text-xs">
           <h3 className="font-bold uppercase text-[10px] text-slate-500 border-b border-slate-300 pb-1 mb-1">
-            DADOS DO CLIENTE
+            DADOS DO CLIENTE & ATENDIMENTO
           </h3>
-          <p><strong className="text-slate-800">Nome:</strong> {os.cliente?.nome || 'N/A'}</p>
+          <p><strong className="text-slate-800">Cliente:</strong> <span className="font-bold text-slate-900">{os.cliente?.nome || 'N/A'}</span></p>
           <p><strong className="text-slate-800">CPF:</strong> {os.cliente?.cpf || 'Não informado'}</p>
           <p><strong className="text-slate-800">Telefone Principal:</strong> {os.cliente?.telefone || 'N/A'}</p>
           {os.cliente?.telefone_secundario && (
@@ -77,9 +80,12 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           {os.cliente?.email && (
             <p><strong className="text-slate-800">E-mail:</strong> {os.cliente.email}</p>
           )}
-          {os.cliente?.instagram && (
-            <p><strong className="text-slate-800">Instagram:</strong> {os.cliente.instagram}</p>
-          )}
+          <p className="pt-1 border-t border-slate-200 mt-1">
+            <strong className="text-slate-900 uppercase text-[10px]">VENDEDOR ABERTURA:</strong>{' '}
+            <span className="font-extrabold text-slate-900 bg-white px-2 py-0.5 border border-slate-300 rounded-xs">
+              👤 {os.vendedor_nome || 'Atendente Loja'}
+            </span>
+          </p>
         </div>
 
         <div className="space-y-1 text-xs">
@@ -214,8 +220,8 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
 
         <div className="text-center">
           <div className="border-b border-slate-400 mb-1 h-8"></div>
-          <p className="font-bold text-[10px] text-slate-900">Fitch Tecnologia</p>
-          <p className="text-[8px] text-slate-500">Técnico / Responsável</p>
+          <p className="font-bold text-[10px] text-slate-900">{os.vendedor_nome || 'Fitch Tecnologia'}</p>
+          <p className="text-[8px] text-slate-500">Vendedor / Atendente Responsável</p>
         </div>
 
         <div className="text-center">

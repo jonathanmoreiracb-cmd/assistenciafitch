@@ -809,6 +809,15 @@ export default function OSDetalhesPage() {
                 <p className="text-slate-500">{os.cliente?.telefone}</p>
               </div>
 
+              <div className="bg-indigo-50/80 p-3 rounded-2xl border border-indigo-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-indigo-900 uppercase block">
+                  Vendedor Responsável (Abertura O.S.)
+                </span>
+                <p className="font-extrabold text-indigo-950 text-xs flex items-center gap-1">
+                  👤 {os.vendedor_nome || 'Não informado / Loja'}
+                </p>
+              </div>
+
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
                 <span className="text-[10px] font-bold text-amber-700 uppercase block">
                   Defeito Reclamado
@@ -824,6 +833,10 @@ export default function OSDetalhesPage() {
               Resumo Financeiro
             </h3>
             <div className="space-y-1 text-xs">
+              <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1.5 mb-1.5">
+                <span>Vendedor Abertura:</span>
+                <span className="font-bold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
+              </div>
               <div className="flex justify-between text-slate-600">
                 <span>Mão de Obra:</span>
                 <span className="font-mono">R$ {Number(os.valor_servico).toFixed(2)}</span>

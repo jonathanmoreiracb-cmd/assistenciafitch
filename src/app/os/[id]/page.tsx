@@ -552,6 +552,33 @@ export default function OSDetalhesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
+          {/* TRADE-IN MARGIN ALERT FOR TECHNICIAN */}
+          {(os.tipo_cobertura === 'Revisão / Upgrade' || Number(os.desconto_avaliacao_tradein) > 0) && (
+            <div className="apple-card p-4 sm:p-5 bg-indigo-900 text-white space-y-2 border border-indigo-700/50 shadow-md">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                    <span className="text-xl">💰</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-indigo-200">
+                      Margem de Avaliação do Trade-in / Upgrade
+                    </h4>
+                    <p className="text-lg font-black font-mono text-white mt-0.5">
+                      R$ {Number(os.desconto_avaliacao_tradein || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase bg-indigo-500/30 border border-indigo-400/30 text-indigo-200 px-3 py-1 rounded-full shrink-0">
+                  Desconto na Compra
+                </span>
+              </div>
+              <p className="text-xs text-indigo-200 border-t border-indigo-800/80 pt-2">
+                💡 <strong>Aviso para o Técnico:</strong> Este valor de <strong>R$ {Number(os.desconto_avaliacao_tradein || 0).toFixed(2)}</strong> foi abatido do cliente no momento da compra do aparelho. Use este valor como margem para saber a viabilidade do reparo.
+              </p>
+            </div>
+          )}
+
           {/* Status 1-Click Transition Buttons */}
           <div className="apple-card p-4 sm:p-5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

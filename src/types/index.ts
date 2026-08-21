@@ -141,6 +141,7 @@ export interface OrdemServico {
   baixa_estoque_realizada?: boolean;
   motivo_encerramento?: string | null;
   data_baixa?: string | null;
+  desconto_avaliacao_tradein?: number;
   garantia_dias: number;
   pecas?: ItemPeca[];
   created_at?: string;

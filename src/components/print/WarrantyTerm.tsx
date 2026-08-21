@@ -86,6 +86,14 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
               👤 {os.vendedor_nome || 'Atendente Loja'}
             </span>
           </p>
+          {Number(os.desconto_avaliacao_tradein) > 0 && (
+            <p className="mt-1">
+              <strong className="text-indigo-900 uppercase text-[10px]">MARGEM TRADE-IN (DESCONTO):</strong>{' '}
+              <span className="font-mono font-bold text-indigo-950 bg-indigo-100 px-2 py-0.5 border border-indigo-300 rounded-xs">
+                R$ {Number(os.desconto_avaliacao_tradein).toFixed(2)}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="space-y-1 text-xs">

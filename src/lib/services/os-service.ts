@@ -288,6 +288,7 @@ export const OSService = {
           valor_servico: Number(dados.valor_servico) || 0,
           valor_pecas: Number(dados.valor_pecas) || 0,
           valor_desconto: Number(dados.valor_desconto) || 0,
+          desconto_avaliacao_tradein: Number(dados.desconto_avaliacao_tradein) || 0,
           garantia_dias: Number(dados.garantia_dias) || 90,
         };
 

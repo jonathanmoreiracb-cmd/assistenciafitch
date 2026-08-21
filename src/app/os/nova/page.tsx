@@ -98,6 +98,7 @@ export default function NovaOSPage() {
   });
   const [valorServico, setValorServico] = useState('0.00');
   const [valorDesconto, setValorDesconto] = useState('0.00');
+  const [descontoTradein, setDescontoTradein] = useState('0.00');
 
   const handleBuscarCliente = async (query: string) => {
     setSearchCliQuery(query);
@@ -183,6 +184,7 @@ export default function NovaOSPage() {
         valor_servico: tipoCobertura === 'Particular' ? Number(valorServico) || 0 : 0,
         valor_pecas: 0,
         valor_desconto: tipoCobertura === 'Particular' ? Number(valorDesconto) || 0 : 0,
+        desconto_avaliacao_tradein: Number(descontoTradein) || 0,
         garantia_dias: tipoCobertura === 'Garantia da Loja' ? 180 : 90,
       });
 
@@ -806,6 +808,31 @@ export default function NovaOSPage() {
                   />
                 </div>
               </div>
+
+              {/* Campo Especial para Trade-in / Upgrade */}
+              {tipoCobertura === 'Revisão / Upgrade' && (
+                <div className="bg-indigo-50 border border-indigo-200/90 p-4 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-indigo-950 uppercase">
+                      💰 Desconto Abatido na Avaliação do Trade-in (R$)
+                    </label>
+                    <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                      Margem Retida p/ Reparo
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 400.00 (Valor descontado do cliente p/ o conserto)"
+                    value={descontoTradein}
+                    onChange={(e) => setDescontoTradein(e.target.value)}
+                    className="w-full bg-white border border-indigo-300 rounded-full px-3.5 py-2 text-xs text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  />
+                  <p className="text-[11px] text-indigo-800">
+                    💡 <strong>Exemplo:</strong> Se o aparelho valia R$ 1.400,00 e foi abatido R$ 400,00 da bateria (pago R$ 1.000,00 ao cliente), informe <strong>400,00</strong>. O técnico verá esse valor para saber a margem disponível para negociar o conserto.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
   baixa_estoque_realizada BOOLEAN NOT NULL DEFAULT false,
   motivo_encerramento TEXT NULL,
   data_baixa TIMESTAMPTZ NULL,
+  desconto_avaliacao_tradein NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   garantia_dias INT NOT NULL DEFAULT 90,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -148,6 +149,7 @@ ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS numero_venda_syscor TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS baixa_estoque_realizada BOOLEAN DEFAULT false;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS motivo_encerramento TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_baixa TIMESTAMPTZ;
+ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS desconto_avaliacao_tradein NUMERIC(10,2) DEFAULT 0.00;
 
 -- Index para buscas frequentes
 CREATE INDEX IF NOT EXISTS idx_os_numero ON ordens_servico(numero_os);

@@ -96,7 +96,7 @@ export default function NovaOSPage() {
     d.setDate(d.getDate() + 2);
     return d.toISOString().slice(0, 16);
   });
-  const [valorServico, setValorServico] = useState('150.00');
+  const [valorServico, setValorServico] = useState('0.00');
   const [valorDesconto, setValorDesconto] = useState('0.00');
 
   const handleBuscarCliente = async (query: string) => {
@@ -769,11 +769,16 @@ export default function NovaOSPage() {
             </div>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-              <span className="text-xs font-bold text-[#0071e3] uppercase block">
-                Valor Estimado conforme Tabela da Loja
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#0071e3] uppercase block">
+                  Prazo & Desconto da Loja
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                  💡 Peça + Mão de obra já inclusos no preço de venda
+                </span>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Previsão de Entrega
@@ -782,27 +787,13 @@ export default function NovaOSPage() {
                     type="datetime-local"
                     value={previsaoEntrega}
                     onChange={(e) => setPrevisaoEntrega(e.target.value)}
-                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 text-xs text-slate-900 focus:outline-none"
+                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Valor Mão de Obra (R$) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    disabled={tipoCobertura === 'Garantia da Loja'}
-                    value={tipoCobertura === 'Garantia da Loja' ? '0.00' : valorServico}
-                    onChange={(e) => setValorServico(e.target.value)}
-                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 text-xs text-slate-900 font-mono focus:outline-none disabled:opacity-50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Desconto (R$)
+                    Desconto Especial (R$)
                   </label>
                   <input
                     type="number"
@@ -810,7 +801,8 @@ export default function NovaOSPage() {
                     disabled={tipoCobertura === 'Garantia da Loja'}
                     value={tipoCobertura === 'Garantia da Loja' ? '0.00' : valorDesconto}
                     onChange={(e) => setValorDesconto(e.target.value)}
-                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 text-xs text-slate-900 font-mono focus:outline-none disabled:opacity-50"
+                    placeholder="0.00"
+                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 font-mono focus:outline-none disabled:opacity-50"
                   />
                 </div>
               </div>

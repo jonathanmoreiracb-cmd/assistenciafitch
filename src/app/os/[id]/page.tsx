@@ -710,7 +710,7 @@ export default function OSDetalhesPage() {
 
               <input
                 type="number"
-                placeholder="Venda R$"
+                placeholder="Venda Total R$ (Peça + Serv)"
                 value={novaPecaPreco}
                 onChange={(e) => setNovaPecaPreco(e.target.value)}
                 className="bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono"
@@ -722,7 +722,7 @@ export default function OSDetalhesPage() {
                   onClick={handleAddPeca}
                   className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-semibold flex items-center gap-1"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Adicionar Peça
+                  <Plus className="w-3.5 h-3.5" /> Adicionar Peça / Serviço
                 </button>
               </div>
             </div>
@@ -732,10 +732,10 @@ export default function OSDetalhesPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px]">
-                    <th className="py-2 px-2">Peça</th>
+                    <th className="py-2 px-2">Peça / Serviço</th>
                     <th className="py-2 px-2">Qualidade</th>
                     <th className="py-2 px-2">Custo</th>
-                    <th className="py-2 px-2">Venda</th>
+                    <th className="py-2 px-2">Venda Total (Peça + Serv)</th>
                     <th className="py-2 px-2 text-right">Ação</th>
                   </tr>
                 </thead>
@@ -838,15 +838,11 @@ export default function OSDetalhesPage() {
                 <span className="font-bold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Mão de Obra:</span>
-                <span className="font-mono">R$ {Number(os.valor_servico).toFixed(2)}</span>
+                <span>Peças & Serviços (Peça + Mão de Obra):</span>
+                <span className="font-mono">R$ {Number(os.valor_pecas + os.valor_servico).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Peças:</span>
-                <span className="font-mono">R$ {Number(os.valor_pecas).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Desconto:</span>
+                <span>Desconto Especial:</span>
                 <span className="font-mono text-red-600">- R$ {Number(os.valor_desconto).toFixed(2)}</span>
               </div>
               <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-bold text-slate-900">

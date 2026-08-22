@@ -74,10 +74,10 @@ export default function AdminPage() {
   // --- ABA 4: DADOS DA LOJA STATE ---
   const [lojaConfig, setLojaConfig] = useState({
     nome: 'Fitch Tecnologia',
-    subtitulo: 'Assistência Técnica Especializada Apple & Android',
-    telefone: '(11) 99999-8888',
+    subtitulo: 'Assistência Técnica Especializada - Manutenção de iPhone e Android',
+    telefone: '+55 (24) 99330-7474',
     cnpj: '12.345.678/0001-99',
-    chavePix: 'financeiro@fitchtecnologia.com.br',
+    chavePix: 'gerenciafitch@gmail.com',
     garantiaPadraoDias: 90,
   });
 

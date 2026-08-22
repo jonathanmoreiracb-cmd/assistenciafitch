@@ -46,10 +46,10 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
               Assistência Técnica Especializada Apple & Android
             </p>
             <p className="text-slate-700 font-medium text-[10px] mt-0.5">
-              Manutenção de iPhone, iPad, Apple Watch, MacBook e Android Premium
+              Manutenção de iPhone e Android
             </p>
             <p className="text-slate-700 font-semibold text-[10px]">
-              Contato: (11) 99999-8888 | financeiro@fitchtecnologia.com.br
+              Contato: +55 (24) 99330-7474 | gerenciafitch@gmail.com
             </p>
           </div>
         </div>

@@ -305,7 +305,34 @@ export const OSService = {
         if (error) {
           console.error('Supabase criarOrdemServico Error:', error);
 
-          // Tentativa automática de fallback se a enum tipo_cobertura_enum ainda não tem 'Revisão / Upgrade' no banco Supabase
+          // Retry fallback 1: Coluna 'desconto_avaliacao_tradein' ainda não existe no banco Supabase
+          if (error.message.includes('desconto_avaliacao_tradein') || error.message.includes('schema cache') || error.message.includes('column')) {
+            const payloadNoTradein = { ...payload };
+            delete payloadNoTradein.desconto_avaliacao_tradein;
+
+            if (error.message.includes('tipo_cobertura_enum') || error.message.includes('invalid input value for enum')) {
+              payloadNoTradein.tipo_cobertura = 'Garantia da Loja';
+            }
+
+            const { data: retryData, error: retryErr } = await supabase
+              .from('ordens_servico')
+              .insert([payloadNoTradein])
+              .select(`
+                *,
+                cliente:clientes(*),
+                pecas:os_itens_pecas(*)
+              `)
+              .single();
+
+            if (!retryErr && retryData) {
+              const resObj = retryData as OrdemServico;
+              resObj.tipo_cobertura = dados.tipo_cobertura;
+              resObj.desconto_avaliacao_tradein = Number(dados.desconto_avaliacao_tradein) || 0;
+              return resObj;
+            }
+          }
+
+          // Retry fallback 2: Enum 'tipo_cobertura_enum' ainda não possui 'Revisão / Upgrade' no banco Supabase
           if (error.message.includes('tipo_cobertura_enum') || error.message.includes('invalid input value for enum')) {
             const fallbackPayload = {
               ...payload,
@@ -324,11 +351,10 @@ export const OSService = {
             if (!retryErr && retryData) {
               const resObj = retryData as OrdemServico;
               resObj.tipo_cobertura = dados.tipo_cobertura;
+              resObj.desconto_avaliacao_tradein = Number(dados.desconto_avaliacao_tradein) || 0;
               return resObj;
             }
           }
-
-          alert(`Aviso do Supabase: ${error.message}.\n\nPara resolver definitivamente no banco Supabase, execute o comando abaixo no Editor SQL do Supabase:\nALTER TYPE tipo_cobertura_enum ADD VALUE IF NOT EXISTS 'Revisão / Upgrade';`);
         } else if (data) {
           return data as OrdemServico;
         }

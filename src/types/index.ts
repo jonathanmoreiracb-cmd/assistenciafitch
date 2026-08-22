@@ -62,6 +62,7 @@ export interface PecaEstoque {
   marca?: MarcaPeca | string;
   estoque_minimo?: number;
   localizacao_gaveta?: string;
+  fornecedor?: string;
   quantidade_estoque: number;
   custo_unitario: number;
   preco_venda: number;

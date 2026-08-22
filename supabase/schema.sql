@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS estoque_pecas (
   marca TEXT NOT NULL DEFAULT 'Apple',
   estoque_minimo INT NOT NULL DEFAULT 3,
   localizacao_gaveta TEXT NULL DEFAULT 'Bancada',
+  fornecedor TEXT NULL DEFAULT 'Geral / Outro',
   quantidade_estoque INT NOT NULL DEFAULT 0,
   custo_unitario NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   preco_venda NUMERIC(10,2) NOT NULL DEFAULT 0.00,
@@ -86,6 +87,7 @@ ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Bater
 ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS marca TEXT DEFAULT 'Apple';
 ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS estoque_minimo INT DEFAULT 3;
 ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS localizacao_gaveta TEXT DEFAULT 'Bancada';
+ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS fornecedor TEXT DEFAULT 'Geral / Outro';
 
 -- 5. TABELA ORDENS DE SERVIÇO
 CREATE TABLE IF NOT EXISTS ordens_servico (

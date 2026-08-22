@@ -69,6 +69,7 @@ export default function EstoquePage() {
     marca: 'Apple' as MarcaPeca,
     estoque_minimo: 3,
     localizacao_gaveta: 'Bancada',
+    fornecedor: 'China Parts',
     quantidade_estoque: 5,
     custo_unitario: '100.00',
     preco_venda: '250.00',
@@ -110,6 +111,7 @@ export default function EstoquePage() {
       marca: 'Apple',
       estoque_minimo: 3,
       localizacao_gaveta: 'Bancada',
+      fornecedor: 'China Parts',
       quantidade_estoque: 5,
       custo_unitario: '100.00',
       preco_venda: '250.00',
@@ -128,6 +130,7 @@ export default function EstoquePage() {
       marca: (p.marca as MarcaPeca) || 'Apple',
       estoque_minimo: p.estoque_minimo !== undefined ? p.estoque_minimo : 3,
       localizacao_gaveta: p.localizacao_gaveta || 'Bancada',
+      fornecedor: p.fornecedor || 'China Parts',
       quantidade_estoque: p.quantidade_estoque,
       custo_unitario: p.custo_unitario.toString(),
       preco_venda: p.preco_venda.toString(),
@@ -160,6 +163,7 @@ export default function EstoquePage() {
           marca: formNew.marca,
           estoque_minimo: Number(formNew.estoque_minimo) || 3,
           localizacao_gaveta: formNew.localizacao_gaveta || 'Bancada',
+          fornecedor: formNew.fornecedor || 'China Parts',
           quantidade_estoque: Number(formNew.quantidade_estoque) || 0,
           custo_unitario: Number(formNew.custo_unitario) || 0,
           preco_venda: Number(formNew.preco_venda) || 0,
@@ -175,6 +179,7 @@ export default function EstoquePage() {
           marca: formNew.marca,
           estoque_minimo: Number(formNew.estoque_minimo) || 3,
           localizacao_gaveta: formNew.localizacao_gaveta || 'Bancada',
+          fornecedor: formNew.fornecedor || 'China Parts',
           quantidade_estoque: Number(formNew.quantidade_estoque) || 0,
           custo_unitario: Number(formNew.custo_unitario) || 0,
           preco_venda: Number(formNew.preco_venda) || 0,
@@ -239,7 +244,8 @@ export default function EstoquePage() {
       p.modelo_compativel.toLowerCase().includes(query) ||
       (p.categoria || '').toLowerCase().includes(query) ||
       (p.marca || '').toLowerCase().includes(query) ||
-      (p.localizacao_gaveta || '').toLowerCase().includes(query);
+      (p.localizacao_gaveta || '').toLowerCase().includes(query) ||
+      (p.fornecedor || '').toLowerCase().includes(query);
 
     // Categoria filter
     const matchCategoria =
@@ -606,9 +612,14 @@ export default function EstoquePage() {
                         <span className="text-[10px] font-mono text-slate-500">{p.tipo_qualidade}</span>
                       </td>
                       <td className="py-3 px-3 text-slate-600 font-semibold">
-                        <span className="inline-flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[11px]">
-                          📍 {p.localizacao_gaveta || 'Bancada'}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="inline-flex items-center gap-1 bg-slate-100 px-2.5 py-0.5 rounded-full text-[10px]">
+                            📍 {p.localizacao_gaveta || 'Bancada'}
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-900 border border-indigo-200 px-2 py-0.5 rounded-full text-[10px] font-extrabold">
+                            🏭 {p.fornecedor || 'China Parts'}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-3">
                         <span
@@ -769,8 +780,8 @@ export default function EstoquePage() {
                 </div>
               </div>
 
-              {/* Modelo & Localização */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Modelo, Localização e Fornecedor */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">Modelo Compatível *</label>
                   <input
@@ -785,15 +796,28 @@ export default function EstoquePage() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Localização (Gaveta / Caixa)</label>
+                  <label className="block text-slate-700 font-bold mb-1">Localização (Gaveta)</label>
                   <input
                     type="text"
-                    placeholder="Ex: Gaveta A1, Caixa 3, Prateleira 2"
+                    placeholder="Ex: Gaveta A1"
                     value={formNew.localizacao_gaveta}
                     onChange={(e) =>
                       setFormNew({ ...formNew, localizacao_gaveta: e.target.value })
                     }
                     className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Fornecedor / Origem</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: China Parts, SP Peças"
+                    value={formNew.fornecedor}
+                    onChange={(e) =>
+                      setFormNew({ ...formNew, fornecedor: e.target.value })
+                    }
+                    className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 focus:outline-none font-semibold"
                   />
                 </div>
               </div>

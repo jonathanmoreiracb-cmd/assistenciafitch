@@ -38,9 +38,19 @@ body {
 
 /* Print CSS Setup for Thermal Labels and A4 Terms */
 @media print {
-  body {
+  @page {
+    size: 80mm 50mm;
+    margin: 0 !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+    width: 80mm !important;
+    height: 50mm !important;
+    overflow: hidden !important;
   }
 
   .no-print, nav, header, button, .print-hide {
@@ -49,11 +59,11 @@ body {
 
   /* Thermal Label Mode (80mm x 50mm Landscape) */
   .printable-thermal-area {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
-    height: 50mm !important;
+    height: 48.5mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -61,19 +71,22 @@ body {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: hidden !important;
   }
 
   .thermal-label-container {
     border: none !important;
     margin: 0 !important;
-    padding: 2.5mm !important;
+    padding: 1.5mm 3mm !important;
     width: 80mm !important;
-    height: 50mm !important;
+    height: 48.5mm !important;
+    max-height: 48.5mm !important;
     box-sizing: border-box !important;
-    page-break-after: always;
-    page-break-inside: avoid;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
     background: white !important;
     color: black !important;
+    overflow: hidden !important;
   }
 
   /* Warranty A4 Term Mode */

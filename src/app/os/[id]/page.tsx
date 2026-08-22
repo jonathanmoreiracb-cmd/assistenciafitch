@@ -390,58 +390,59 @@ export default function OSDetalhesPage() {
   return (
     <div className="space-y-6 font-sans">
       {/* Top Header Card */}
-      {/* Top Header Card */}
-      <div className="apple-card p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+      <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-start lg:items-center gap-3 sm:gap-4">
           <Link
             href="/dashboard"
-            className="p-2 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 shrink-0 mt-1 sm:mt-0"
+            className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all shrink-0 mt-0.5"
+            title="Voltar ao Dashboard"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-lg sm:text-xl font-extrabold text-[#1d1d1f] font-mono">
+              <span className="text-lg sm:text-xl font-black text-white bg-gradient-to-r from-[#0071e3] to-blue-600 px-3 py-1 rounded-full font-mono shadow-xs">
                 O.S. #{os.numero_os}
               </span>
-              <span className="text-[11px] sm:text-xs font-semibold bg-[#0071e3]/10 text-[#0071e3] px-2.5 sm:px-3 py-0.5 rounded-full">
-                {os.tipo_dispositivo} {os.modelo}
+              <span className="text-xs font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                {os.tipo_dispositivo} {os.modelo} ({os.cor})
               </span>
 
-              {/* Tipo de Serviço Badge */}
+              {/* Tipo de Cobertura Badge */}
               {os.tipo_cobertura === 'Particular' && (
-                <span className="text-[11px] sm:text-xs font-semibold bg-blue-50 text-[#0071e3] border border-blue-200 px-2.5 sm:px-3 py-0.5 rounded-full">
-                  🛠️ Assistência Particular (Pago)
+                <span className="text-xs font-bold bg-blue-50 text-[#0071e3] border border-blue-200 px-3 py-1 rounded-full">
+                  🛠️ Assistência Particular
                 </span>
               )}
               {os.tipo_cobertura === 'Garantia da Loja' && (
-                <span className="text-[11px] sm:text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 px-2.5 sm:px-3 py-0.5 rounded-full">
-                  🛡️ Garantia de Seminovo (180 Dias - R$ 0,00)
+                <span className="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 rounded-full">
+                  🛡️ Garantia de Seminovo (180 Dias)
                 </span>
               )}
               {os.tipo_cobertura === 'Revisão / Upgrade' && (
-                <span className="text-[11px] sm:text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-300 px-2.5 sm:px-3 py-0.5 rounded-full">
-                  🔄 Revisão / Trade-in (Aparelho da Loja)
-                </span>
-              )}
-              {os.vendedor_nome && (
-                <span className="text-xs text-slate-500 font-medium">
-                  • Vendedor: {os.vendedor_nome}
+                <span className="text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-300 px-3 py-1 rounded-full">
+                  🔄 Revisão / Trade-in
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Cliente: <strong className="text-slate-900">{os.cliente?.nome}</strong> ({os.cliente?.telefone}) • Entrada:{' '}
-              {new Date(os.data_entrada).toLocaleDateString('pt-BR')}
-            </p>
+
+            <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap pt-0.5">
+              <span>Cliente: <strong className="text-slate-900">{os.cliente?.nome}</strong> ({os.cliente?.telefone})</span>
+              <span>• Entrada: <strong className="text-slate-900">{new Date(os.data_entrada).toLocaleDateString('pt-BR')}</strong></span>
+              {os.vendedor_nome && (
+                <span className="bg-indigo-50 text-indigo-950 font-black px-3 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1">
+                  👤 Vendedor: {os.vendedor_nome}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap self-end lg:self-auto">
           <button
             onClick={() => setShowExitChecklistModal(true)}
-            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
           >
             <CheckSquare className="w-3.5 h-3.5 text-[#0071e3]" />
             Checklist Saída
@@ -449,7 +450,7 @@ export default function OSDetalhesPage() {
 
           <button
             onClick={() => setShowThermalPrint(true)}
-            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
           >
             <Printer className="w-3.5 h-3.5 text-[#0071e3]" />
             Etiqueta (80x50mm)
@@ -457,7 +458,7 @@ export default function OSDetalhesPage() {
 
           <button
             onClick={() => setShowWarrantyPrint(true)}
-            className="px-3 py-2 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
           >
             <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
             Termo A4
@@ -467,7 +468,7 @@ export default function OSDetalhesPage() {
             href={geratLinkWhatsApp()}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-2 sm:py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs"
+            className="px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             WhatsApp
@@ -475,25 +476,25 @@ export default function OSDetalhesPage() {
 
           <button
             onClick={handleDeletarOS}
-            className="col-span-2 sm:col-span-1 px-3 py-2 sm:py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
             title="Excluir Ordem de Serviço permanentemente"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Excluir O.S.
+            Excluir
           </button>
         </div>
       </div>
 
       {/* SYSCOR & BAIXA ACTION BANNER */}
-      <div className="apple-card p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white space-y-3 shadow-lg border border-slate-700/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
-              <Receipt className="w-5 h-5 text-emerald-400" />
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white space-y-3 shadow-xl border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <Receipt className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold tracking-tight">Controle de Baixa & Venda Syscor</h3>
+                <h3 className="text-sm font-extrabold tracking-tight text-white">Controle de Baixa & Venda Syscor</h3>
                 {os.numero_venda_syscor ? (
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-bold">
                     ✅ Baixa Efetuada no Syscor
@@ -508,19 +509,19 @@ export default function OSDetalhesPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                 {os.numero_venda_syscor ? (
-                  <>Venda Syscor: <strong className="text-white">#{os.numero_venda_syscor}</strong> • Forma: <strong className="text-white">{os.forma_pagamento || 'Não informada'}</strong> • Estoque de Peças: <span className="text-emerald-300 font-semibold">{os.baixa_estoque_realizada ? 'Baixado no Estoque' : 'Pendente'}</span></>
+                  <>Venda Syscor: <strong className="text-white">#{os.numero_venda_syscor}</strong> • Forma: <strong className="text-white">{os.forma_pagamento || 'Não informada'}</strong> • Estoque: <span className="text-emerald-300 font-semibold">{os.baixa_estoque_realizada ? 'Baixado no Estoque' : 'Pendente'}</span></>
                 ) : os.motivo_encerramento ? (
                   <>O.S. encerrada sem cobrança. Motivo: <strong className="text-white">{os.motivo_encerramento}</strong></>
                 ) : (
-                  <>Cobrou o cliente no Syscor? Clique abaixo para dar baixa no sistema, vincular a venda e baixar as peças do estoque.</>
+                  <>Cobrou o cliente no Syscor? Clique ao lado para dar baixa no sistema, vincular a venda e dar saída automática nas peças do estoque.</>
                 )}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 flex-wrap">
+          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -528,7 +529,7 @@ export default function OSDetalhesPage() {
                 setSyscorFormaPagamento(os.forma_pagamento || 'Pix');
                 setShowSyscorBaixaModal(true);
               }}
-              className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02]"
+              className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-[1.02]"
             >
               <CreditCard className="w-4 h-4" />
               {os.numero_venda_syscor ? 'Atualizar Venda Syscor' : '🟢 Dar Baixa (Venda Syscor)'}
@@ -538,7 +539,7 @@ export default function OSDetalhesPage() {
               <button
                 type="button"
                 onClick={() => setShowDevolucaoModal(true)}
-                className="px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs flex items-center gap-1.5 transition-all"
+                className="px-4 py-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all"
               >
                 <XCircle className="w-4 h-4 text-red-400" />
                 🔴 Devolver sem Cobrança
@@ -554,27 +555,27 @@ export default function OSDetalhesPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* TRADE-IN MARGIN ALERT FOR TECHNICIAN */}
           {(os.tipo_cobertura === 'Revisão / Upgrade' || Number(os.desconto_avaliacao_tradein) > 0) && (
-            <div className="apple-card p-4 sm:p-5 bg-indigo-900 text-white space-y-2 border border-indigo-700/50 shadow-md">
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-950 text-white space-y-3 border border-indigo-700/60 shadow-xl">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
-                    <span className="text-xl">💰</span>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20 shadow-inner">
+                    <span className="text-2xl">💰</span>
                   </div>
                   <div>
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-indigo-200">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-indigo-300">
                       Margem de Avaliação do Trade-in / Upgrade
                     </h4>
-                    <p className="text-lg font-black font-mono text-white mt-0.5">
+                    <p className="text-2xl font-black font-mono text-emerald-400 mt-0.5 drop-shadow-xs">
                       R$ {Number(os.desconto_avaliacao_tradein || 0).toFixed(2)}
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold uppercase bg-indigo-500/30 border border-indigo-400/30 text-indigo-200 px-3 py-1 rounded-full shrink-0">
+                <span className="text-[10px] font-extrabold uppercase bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 px-3.5 py-1 rounded-full shrink-0">
                   Desconto na Compra
                 </span>
               </div>
-              <p className="text-xs text-indigo-200 border-t border-indigo-800/80 pt-2">
-                💡 <strong>Aviso para o Técnico:</strong> Este valor de <strong>R$ {Number(os.desconto_avaliacao_tradein || 0).toFixed(2)}</strong> foi abatido do cliente no momento da compra do aparelho. Use este valor como margem para saber a viabilidade do reparo.
+              <p className="text-xs text-indigo-100 border-t border-indigo-800/80 pt-2.5 leading-relaxed">
+                💡 <strong>Aviso para o Técnico:</strong> Este valor de <strong className="text-emerald-300">R$ {Number(os.desconto_avaliacao_tradein || 0).toFixed(2)}</strong> foi abatido do cliente no momento da compra do aparelho. Utilize este valor como margem para saber a viabilidade do reparo.
               </p>
             </div>
           )}
@@ -844,74 +845,81 @@ export default function OSDetalhesPage() {
 
         {/* Right Column (1 col) */}
         <div className="space-y-6">
-          <div className="apple-card p-5 space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
               Resumo do Dispositivo
             </h3>
 
-            <div className="space-y-2 text-xs">
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-bold text-[#0071e3] uppercase block">
-                  Aparelho
+            <div className="space-y-2.5 text-xs">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-extrabold text-[#0071e3] uppercase block">
+                  Aparelho & Credenciais
                 </span>
-                <p className="font-bold text-slate-900 text-sm">
+                <p className="font-extrabold text-slate-900 text-sm">
                   {os.tipo_dispositivo} {os.modelo} ({os.cor})
                 </p>
-                <p className="font-mono text-slate-500 text-[11px]">
-                  IMEI/SN: {os.imei_ou_serial}
+                <p className="font-mono text-slate-600 text-[11px]">
+                  IMEI/SN: <strong className="text-slate-900">{os.imei_ou_serial}</strong>
                 </p>
-                <p className="font-mono text-slate-500 text-[11px]">
-                  Senha Tela: <strong className="text-slate-900">{os.senha_aparelho || 'SEM SENHA'}</strong>
+                <p className="font-mono text-slate-600 text-[11px]">
+                  Senha Tela: <strong className="text-slate-900 bg-amber-100 px-2 py-0.5 rounded-md">{os.senha_aparelho || 'SEM SENHA'}</strong>
                 </p>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">
-                  Cliente
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase block">
+                  Dados do Cliente
                 </span>
-                <p className="font-bold text-slate-900">{os.cliente?.nome}</p>
-                <p className="text-slate-500">{os.cliente?.telefone}</p>
+                <p className="font-extrabold text-slate-900 text-sm">{os.cliente?.nome}</p>
+                <p className="text-slate-600 font-semibold">{os.cliente?.telefone}</p>
+                {os.cliente?.cpf && <p className="text-slate-500 font-mono text-[11px]">CPF: {os.cliente.cpf}</p>}
               </div>
 
-              <div className="bg-indigo-50/80 p-3 rounded-2xl border border-indigo-200/80 space-y-1">
-                <span className="text-[10px] font-bold text-indigo-900 uppercase block">
+              <div className="bg-indigo-50 p-3.5 rounded-2xl border border-indigo-200/90 space-y-1">
+                <span className="text-[10px] font-extrabold text-indigo-900 uppercase block">
                   Vendedor Responsável (Abertura O.S.)
                 </span>
-                <p className="font-extrabold text-indigo-950 text-xs flex items-center gap-1">
+                <p className="font-black text-indigo-950 text-xs flex items-center gap-1.5">
                   👤 {os.vendedor_nome || 'Não informado / Loja'}
                 </p>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-bold text-amber-700 uppercase block">
+              <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200/90 space-y-1">
+                <span className="text-[10px] font-extrabold text-amber-900 uppercase block">
                   Defeito Reclamado
                 </span>
-                <p className="text-slate-700 italic">{os.defeito_reclamado}</p>
+                <p className="text-slate-800 font-medium italic">{os.defeito_reclamado}</p>
               </div>
             </div>
           </div>
 
           {/* Financial Summary */}
-          <div className="apple-card p-5 space-y-3 bg-gradient-to-b from-white to-slate-50">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <div className="bg-gradient-to-b from-white to-slate-50 p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
               Resumo Financeiro
             </h3>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-1.5 mb-1.5">
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-2">
                 <span>Vendedor Abertura:</span>
-                <span className="font-bold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
+                <span className="font-extrabold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Peças & Serviços (Peça + Mão de Obra):</span>
-                <span className="font-mono">R$ {Number(os.valor_pecas + os.valor_servico).toFixed(2)}</span>
+                <span>Peças & Serviços (Peça + Serv):</span>
+                <span className="font-mono font-bold text-slate-900">R$ {Number(os.valor_pecas + os.valor_servico).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Desconto Especial:</span>
-                <span className="font-mono text-red-600">- R$ {Number(os.valor_desconto).toFixed(2)}</span>
+                <span className="font-mono font-bold text-red-600">- R$ {Number(os.valor_desconto).toFixed(2)}</span>
               </div>
-              <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-bold text-slate-900">
+              {Number(os.desconto_avaliacao_tradein) > 0 && (
+                <div className="flex justify-between text-indigo-900 bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+                  <span className="font-bold">Margem Trade-in:</span>
+                  <span className="font-mono font-black text-indigo-950">R$ {Number(os.desconto_avaliacao_tradein).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-extrabold text-slate-900">
                 <span>TOTAL O.S.:</span>
-                <span className="font-mono text-emerald-600 text-base">
+                <span className="font-mono text-emerald-600 text-lg font-black bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                   R$ {Number(os.valor_total).toFixed(2)}
                 </span>
               </div>

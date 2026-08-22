@@ -20,6 +20,7 @@ import {
 import { AuthService } from '@/lib/services/auth-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
 import { OSService } from '@/lib/services/os-service';
+import EstoquePage from '@/app/estoque/page';
 import { calcularComissaoVolume } from '@/lib/utils/commission';
 import {
   CargoUsuario,
@@ -516,89 +517,7 @@ export default function AdminPage() {
       )}
 
       {/* ABA 2: ESTOQUE DE PEÇAS */}
-      {activeTab === 'estoque' && (
-        <div className="apple-card p-6 space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Catálogo & Estoque de Peças</h3>
-              <p className="text-xs text-slate-500">Cadastre peças com custo de aquisição e preço de venda.</p>
-            </div>
-            <button
-              onClick={handleOpenNewPecaModal}
-              className="px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-xs rounded-full shadow-xs flex items-center gap-1.5"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Nova Peça</span>
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px]">
-                  <th className="py-3 px-3">SKU</th>
-                  <th className="py-3 px-3">Descrição da Peça</th>
-                  <th className="py-3 px-3">Qualidade</th>
-                  <th className="py-3 px-3">Modelo Compatível</th>
-                  <th className="py-3 px-3">Estoque</th>
-                  <th className="py-3 px-3">Custo Unit.</th>
-                  <th className="py-3 px-3">Venda Unit.</th>
-                  <th className="py-3 px-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pecas.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-3 font-mono font-bold text-[#0071e3]">{p.codigo_sku}</td>
-                    <td className="py-3.5 px-3 font-semibold text-slate-900">{p.descricao}</td>
-                    <td className="py-3.5 px-3 font-mono text-[10px] text-slate-600">{p.tipo_qualidade}</td>
-                    <td className="py-3.5 px-3 text-slate-700">{p.modelo_compativel}</td>
-                    <td className="py-3.5 px-3">
-                      <span className="font-bold px-2.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-800">
-                        {p.quantidade_estoque} un
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3 font-mono text-slate-500">R$ {Number(p.custo_unitario).toFixed(2)}</td>
-                    <td className="py-3.5 px-3 font-mono font-bold text-slate-900">R$ {Number(p.preco_venda).toFixed(2)}</td>
-                    <td className="py-3.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleOpenRestockPecaModal(p)}
-                          className="px-2.5 py-1 bg-[#0071e3]/10 hover:bg-[#0071e3]/20 text-[#0071e3] rounded-full font-semibold text-[10px] inline-flex items-center gap-1 transition-colors"
-                          title="Dar entrada no estoque"
-                        >
-                          <Plus className="w-3 h-3" /> Entrada
-                        </button>
-                        <button
-                          onClick={() => handleOpenEditPecaModal(p)}
-                          className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                          title="Editar peça"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePeca(p.id, p.descricao)}
-                          className="p-1.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Excluir peça"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {pecas.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
-                      Nenhuma peça cadastrada. Clique em "+ Nova Peça" para cadastrar.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {activeTab === 'estoque' && <EstoquePage />}
 
       {/* ABA 3: RELATÓRIOS FINANCEIROS */}
       {activeTab === 'relatorios' && (

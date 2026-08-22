@@ -36,14 +36,18 @@ export interface Usuario {
 }
 
 export type CategoriaPeca =
-  | 'Baterias'
-  | 'Telas'
-  | 'Tampas'
-  | 'Câmeras'
-  | 'Conectores de Carga'
-  | 'Flex / Cabos'
-  | 'Carcaças'
-  | 'Vidros / Lentes'
+  | 'Bateria'
+  | 'Tela'
+  | 'Tampa'
+  | 'Face ID'
+  | 'Carcaça'
+  | 'NFC'
+  | 'Camera'
+  | 'Conector'
+  | 'Sensor'
+  | 'Sinal'
+  | 'CI carga'
+  | 'Transplante'
   | 'Outros';
 
 export type MarcaPeca = 'Apple' | 'Samsung' | 'Xiaomi' | 'Motorola' | 'Outra';

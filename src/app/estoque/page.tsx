@@ -27,14 +27,18 @@ import {
 import { toast } from 'sonner';
 
 const CATEGORIAS_LIST: { id: CategoriaPeca; label: string; icon: string }[] = [
-  { id: 'Baterias', label: 'Baterias', icon: '🔋' },
-  { id: 'Telas', label: 'Telas', icon: '📱' },
-  { id: 'Tampas', label: 'Tampas', icon: '🚪' },
-  { id: 'Câmeras', label: 'Câmeras', icon: '📷' },
-  { id: 'Conectores de Carga', label: 'Conectores', icon: '🔌' },
-  { id: 'Flex / Cabos', label: 'Flex / Cabos', icon: '⚡' },
-  { id: 'Carcaças', label: 'Carcaças', icon: '🛠️' },
-  { id: 'Vidros / Lentes', label: 'Vidros / Lentes', icon: '🔍' },
+  { id: 'Bateria', label: 'Bateria', icon: '🔋' },
+  { id: 'Tela', label: 'Tela', icon: '📱' },
+  { id: 'Tampa', label: 'Tampa', icon: '🚪' },
+  { id: 'Face ID', label: 'Face ID', icon: '👤' },
+  { id: 'Carcaça', label: 'Carcaça', icon: '🛠️' },
+  { id: 'NFC', label: 'NFC', icon: '📶' },
+  { id: 'Camera', label: 'Camera', icon: '📷' },
+  { id: 'Conector', label: 'Conector', icon: '🔌' },
+  { id: 'Sensor', label: 'Sensor', icon: '👁️' },
+  { id: 'Sinal', label: 'Sinal', icon: '📡' },
+  { id: 'CI carga', label: 'CI carga', icon: '⚡' },
+  { id: 'Transplante', label: 'Transplante', icon: '🧬' },
   { id: 'Outros', label: 'Outros', icon: '📦' },
 ];
 
@@ -61,7 +65,7 @@ export default function EstoquePage() {
     codigo_sku: '',
     tipo_qualidade: 'Original' as TipoQualidadePeca,
     modelo_compativel: '',
-    categoria: 'Baterias' as CategoriaPeca,
+    categoria: 'Bateria' as CategoriaPeca,
     marca: 'Apple' as MarcaPeca,
     estoque_minimo: 3,
     localizacao_gaveta: 'Bancada',
@@ -102,7 +106,7 @@ export default function EstoquePage() {
       codigo_sku: '',
       tipo_qualidade: 'Original',
       modelo_compativel: '',
-      categoria: 'Baterias',
+      categoria: 'Bateria',
       marca: 'Apple',
       estoque_minimo: 3,
       localizacao_gaveta: 'Bancada',
@@ -120,7 +124,7 @@ export default function EstoquePage() {
       codigo_sku: p.codigo_sku || '',
       tipo_qualidade: p.tipo_qualidade,
       modelo_compativel: p.modelo_compativel,
-      categoria: (p.categoria as CategoriaPeca) || 'Baterias',
+      categoria: (p.categoria as CategoriaPeca) || 'Bateria',
       marca: (p.marca as MarcaPeca) || 'Apple',
       estoque_minimo: p.estoque_minimo !== undefined ? p.estoque_minimo : 3,
       localizacao_gaveta: p.localizacao_gaveta || 'Bancada',
@@ -239,7 +243,7 @@ export default function EstoquePage() {
 
     // Categoria filter
     const matchCategoria =
-      selectedCategoria === 'Todas' || (p.categoria || 'Baterias') === selectedCategoria;
+      selectedCategoria === 'Todas' || (p.categoria || 'Bateria') === selectedCategoria;
 
     // Marca filter
     const matchMarca =
@@ -391,7 +395,7 @@ export default function EstoquePage() {
           </button>
 
           {CATEGORIAS_LIST.map((cat) => {
-            const count = pecas.filter((p) => (p.categoria || 'Baterias') === cat.id).length;
+            const count = pecas.filter((p) => (p.categoria || 'Bateria') === cat.id).length;
             const isSelected = selectedCategoria === cat.id;
             return (
               <button
@@ -484,7 +488,7 @@ export default function EstoquePage() {
                           {p.codigo_sku || 'SEM SKU'}
                         </span>
                         <span className="text-[10px] font-bold text-slate-700 bg-slate-200/70 px-2 py-0.5 rounded-full">
-                          {p.categoria || 'Baterias'}
+                          {p.categoria || 'Bateria'}
                         </span>
                         <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
                           {p.marca || 'Apple'}
@@ -589,7 +593,7 @@ export default function EstoquePage() {
                       <td className="py-3 px-3">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-extrabold text-[10px] text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full self-start">
-                            {p.categoria || 'Baterias'}
+                            {p.categoria || 'Bateria'}
                           </span>
                           <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 self-start">
                             {p.marca || 'Apple'}

@@ -128,7 +128,7 @@ export default function EstoquePage() {
       modelo_compativel: p.modelo_compativel,
       categoria: (p.categoria as CategoriaPeca) || 'Bateria',
       marca: (p.marca as MarcaPeca) || 'Apple',
-      estoque_minimo: p.estoque_minimo !== undefined ? p.estoque_minimo : 3,
+      estoque_minimo: p.estoque_minimo !== undefined && p.estoque_minimo !== null ? Number(p.estoque_minimo) : 3,
       localizacao_gaveta: p.localizacao_gaveta || 'Bancada',
       fornecedor: p.fornecedor || 'China Parts',
       quantidade_estoque: p.quantidade_estoque,
@@ -152,6 +152,9 @@ export default function EstoquePage() {
       return;
     }
 
+    const minVal = Number(formNew.estoque_minimo);
+    const estoqueMinimoClean = !isNaN(minVal) ? minVal : 3;
+
     try {
       if (editingPeca) {
         await EstoqueService.atualizarPeca(editingPeca.id, {
@@ -161,7 +164,7 @@ export default function EstoquePage() {
           modelo_compativel: formNew.modelo_compativel,
           categoria: formNew.categoria,
           marca: formNew.marca,
-          estoque_minimo: Number(formNew.estoque_minimo) || 3,
+          estoque_minimo: estoqueMinimoClean,
           localizacao_gaveta: formNew.localizacao_gaveta || 'Bancada',
           fornecedor: formNew.fornecedor || 'China Parts',
           quantidade_estoque: Number(formNew.quantidade_estoque) || 0,
@@ -177,7 +180,7 @@ export default function EstoquePage() {
           modelo_compativel: formNew.modelo_compativel,
           categoria: formNew.categoria,
           marca: formNew.marca,
-          estoque_minimo: Number(formNew.estoque_minimo) || 3,
+          estoque_minimo: estoqueMinimoClean,
           localizacao_gaveta: formNew.localizacao_gaveta || 'Bancada',
           fornecedor: formNew.fornecedor || 'China Parts',
           quantidade_estoque: Number(formNew.quantidade_estoque) || 0,
@@ -256,17 +259,19 @@ export default function EstoquePage() {
       selectedMarca === 'Todas' || (p.marca || 'Apple') === selectedMarca;
 
     // Low stock filter
-    const isLow = p.quantidade_estoque <= (p.estoque_minimo !== undefined ? p.estoque_minimo : 3);
+    const minEstoque = p.estoque_minimo !== undefined && p.estoque_minimo !== null ? Number(p.estoque_minimo) : 3;
+    const isLow = minEstoque > 0 ? Number(p.quantidade_estoque) <= minEstoque : Number(p.quantidade_estoque) === 0;
     const matchLowStock = !onlyLowStock || isLow;
 
     return matchText && matchCategoria && matchMarca && matchLowStock;
   });
 
   // Analytics Metrics
-  const totalItens = pecas.reduce((acc, p) => acc + p.quantidade_estoque, 0);
-  const pecasBaixasCount = pecas.filter(
-    (p) => p.quantidade_estoque <= (p.estoque_minimo !== undefined ? p.estoque_minimo : 3)
-  ).length;
+  const totalItens = pecas.reduce((acc, p) => acc + Number(p.quantidade_estoque), 0);
+  const pecasBaixasCount = pecas.filter((p) => {
+    const minE = p.estoque_minimo !== undefined && p.estoque_minimo !== null ? Number(p.estoque_minimo) : 3;
+    return minE > 0 ? Number(p.quantidade_estoque) <= minE : Number(p.quantidade_estoque) === 0;
+  }).length;
   const valorTotalCusto = pecas.reduce((acc, p) => acc + p.custo_unitario * p.quantidade_estoque, 0);
   const valorTotalVenda = pecas.reduce((acc, p) => acc + p.preco_venda * p.quantidade_estoque, 0);
 
@@ -483,8 +488,8 @@ export default function EstoquePage() {
             <p className="py-8 text-center text-slate-400 text-xs">Nenhuma peça encontrada no filtro.</p>
           ) : (
             pecasFiltradas.map((p) => {
-              const minEstoque = p.estoque_minimo !== undefined ? p.estoque_minimo : 3;
-              const isLow = p.quantidade_estoque <= minEstoque;
+              const minEstoque = p.estoque_minimo !== undefined && p.estoque_minimo !== null ? Number(p.estoque_minimo) : 3;
+              const isLow = minEstoque > 0 ? Number(p.quantidade_estoque) <= minEstoque : Number(p.quantidade_estoque) === 0;
               return (
                 <div key={p.id} className="bg-slate-50/90 border border-slate-200/80 p-3.5 rounded-2xl space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
@@ -589,8 +594,8 @@ export default function EstoquePage() {
                 </tr>
               ) : (
                 pecasFiltradas.map((p) => {
-                  const minEstoque = p.estoque_minimo !== undefined ? p.estoque_minimo : 3;
-                  const isLow = p.quantidade_estoque <= minEstoque;
+                  const minEstoque = p.estoque_minimo !== undefined && p.estoque_minimo !== null ? Number(p.estoque_minimo) : 3;
+                  const isLow = minEstoque > 0 ? Number(p.quantidade_estoque) <= minEstoque : Number(p.quantidade_estoque) === 0;
                   return (
                     <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3 px-3 font-mono font-bold text-[#0071e3] whitespace-nowrap">
@@ -840,10 +845,12 @@ export default function EstoquePage() {
                   <label className="block text-[11px] font-bold text-amber-700 mb-1">Alerta Mín. (un)</label>
                   <input
                     type="number"
+                    min="0"
                     value={formNew.estoque_minimo}
-                    onChange={(e) =>
-                      setFormNew({ ...formNew, estoque_minimo: Number(e.target.value) || 1 })
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormNew({ ...formNew, estoque_minimo: val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0) });
+                    }}
                     className="w-full bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-slate-900 font-mono"
                   />
                 </div>

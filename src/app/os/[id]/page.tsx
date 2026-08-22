@@ -707,49 +707,86 @@ export default function OSDetalhesPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-              <input
-                type="text"
-                placeholder="Descrição da Peça"
-                value={novaPecaDesc}
-                onChange={(e) => setNovaPecaDesc(e.target.value)}
-                className="sm:col-span-2 bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900"
-              />
+            {/* Form de Adicionar Peça / Orçamento com Rótulos Claros */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                Adicionar Peça / Serviço ao Orçamento
+              </span>
 
-              <select
-                value={novaPecaQualidade}
-                onChange={(e) => setNovaPecaQualidade(e.target.value as TipoQualidadePeca)}
-                className="bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900"
-              >
-                <option value="Original">Original</option>
-                <option value="Primeira Linha">Primeira Linha</option>
-                <option value="OLED">OLED</option>
-                <option value="Incell">Incell</option>
-              </select>
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                {/* Descrição */}
+                <div className="sm:col-span-5">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Descrição da Peça / Serviço
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Tela iPhone 13 Original, Troca Bateria"
+                    value={novaPecaDesc}
+                    onChange={(e) => setNovaPecaDesc(e.target.value)}
+                    className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30"
+                  />
+                </div>
 
-              <input
-                type="number"
-                placeholder="Custo R$"
-                value={novaPecaCusto}
-                onChange={(e) => setNovaPecaCusto(e.target.value)}
-                className="bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono"
-              />
+                {/* Qualidade */}
+                <div className="sm:col-span-3">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Qualidade / Tipo
+                  </label>
+                  <select
+                    value={novaPecaQualidade}
+                    onChange={(e) => setNovaPecaQualidade(e.target.value as TipoQualidadePeca)}
+                    className="w-full bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900 focus:outline-none"
+                  >
+                    <option value="Original">Original</option>
+                    <option value="Primeira Linha">Primeira Linha</option>
+                    <option value="OLED">OLED</option>
+                    <option value="Incell">Incell</option>
+                  </select>
+                </div>
 
-              <input
-                type="number"
-                placeholder="Venda Total R$ (Peça + Serv)"
-                value={novaPecaPreco}
-                onChange={(e) => setNovaPecaPreco(e.target.value)}
-                className="bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono"
-              />
+                {/* Custo da Peça (Pago pela loja) */}
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Custo Peça (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={novaPecaCusto}
+                    onChange={(e) => setNovaPecaCusto(e.target.value)}
+                    className="w-full bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono focus:outline-none"
+                  />
+                </div>
 
-              <div className="sm:col-span-5 flex justify-end pt-1">
+                {/* Valor de Venda ao Cliente */}
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-emerald-700 mb-1">
+                    Preço Venda (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={novaPecaPreco}
+                    onChange={(e) => setNovaPecaPreco(e.target.value)}
+                    className="w-full bg-white border border-emerald-300 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <span className="text-[10px] text-slate-500 italic">
+                  💡 <strong>Custo Peça:</strong> quanto a loja pagou na peça. <strong>Preço Venda:</strong> valor cobrado do cliente.
+                </span>
+
                 <button
                   type="button"
                   onClick={handleAddPeca}
-                  className="px-4 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-semibold flex items-center gap-1"
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-[1.02] shrink-0"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Adicionar Peça / Serviço
+                  <Plus className="w-4 h-4" /> Adicionar Peça / Serviço
                 </button>
               </div>
             </div>
@@ -761,8 +798,8 @@ export default function OSDetalhesPage() {
                   <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px]">
                     <th className="py-2 px-2">Peça / Serviço</th>
                     <th className="py-2 px-2">Qualidade</th>
-                    <th className="py-2 px-2">Custo</th>
-                    <th className="py-2 px-2">Venda Total (Peça + Serv)</th>
+                    <th className="py-2 px-2">Custo Peça</th>
+                    <th className="py-2 px-2">Preço de Venda</th>
                     <th className="py-2 px-2 text-right">Ação</th>
                   </tr>
                 </thead>

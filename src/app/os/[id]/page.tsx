@@ -701,7 +701,7 @@ export default function OSDetalhesPage() {
                 <option value="">-- Escolher do Estoque --</option>
                 {estoquePecas.map((est) => (
                   <option key={est.id} value={est.id}>
-                    {est.codigo_sku} | {est.descricao} (Disponível: {est.quantidade_estoque} un)
+                    [{est.categoria || 'Peça'}] {est.descricao} ({est.codigo_sku}) {est.localizacao_gaveta ? `📍 ${est.localizacao_gaveta} • ` : '• '}Disp: {est.quantidade_estoque} un • R$ {Number(est.preco_venda).toFixed(2)}
                   </option>
                 ))}
               </select>

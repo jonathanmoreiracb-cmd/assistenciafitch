@@ -42,9 +42,13 @@ export const EstoqueService = {
     peca: Omit<PecaEstoque, 'id' | 'created_at'>
   ): Promise<PecaEstoque> {
     const cleanSku = (peca.codigo_sku || '').trim() || `PEC-${Date.now().toString(36).toUpperCase()}`;
-    const payload = {
+    const payload: any = {
       ...peca,
       codigo_sku: cleanSku,
+      categoria: peca.categoria || 'Baterias',
+      marca: peca.marca || 'Apple',
+      estoque_minimo: peca.estoque_minimo !== undefined ? Number(peca.estoque_minimo) : 3,
+      localizacao_gaveta: peca.localizacao_gaveta || 'Bancada',
     };
 
     const supabase = createClient();
@@ -56,6 +60,31 @@ export const EstoqueService = {
           localEstoque.unshift(novaPeca);
           persistLocalEstoque();
           return novaPeca;
+        }
+
+        // Retry fallback se as novas colunas ainda não existirem no Supabase DB
+        if (error && (error.message.includes('column') || error.message.includes('schema cache'))) {
+          const payloadBase = {
+            descricao: payload.descricao,
+            codigo_sku: payload.codigo_sku,
+            tipo_qualidade: payload.tipo_qualidade,
+            modelo_compativel: payload.modelo_compativel,
+            quantidade_estoque: payload.quantidade_estoque,
+            custo_unitario: payload.custo_unitario,
+            preco_venda: payload.preco_venda,
+          };
+          const { data: retryData, error: retryErr } = await supabase
+            .from('estoque_pecas')
+            .insert([payloadBase])
+            .select()
+            .single();
+
+          if (!retryErr && retryData) {
+            const novaPeca = { ...(retryData as PecaEstoque), ...payload };
+            localEstoque.unshift(novaPeca);
+            persistLocalEstoque();
+            return novaPeca;
+          }
         }
       } catch (e) {
         console.error(e);

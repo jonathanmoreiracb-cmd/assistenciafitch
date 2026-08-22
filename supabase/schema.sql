@@ -72,11 +72,20 @@ CREATE TABLE IF NOT EXISTS estoque_pecas (
   codigo_sku TEXT UNIQUE NOT NULL,
   tipo_qualidade tipo_qualidade_peca_enum NOT NULL DEFAULT 'Original',
   modelo_compativel TEXT NOT NULL,
+  categoria TEXT NOT NULL DEFAULT 'Baterias',
+  marca TEXT NOT NULL DEFAULT 'Apple',
+  estoque_minimo INT NOT NULL DEFAULT 3,
+  localizacao_gaveta TEXT NULL DEFAULT 'Bancada',
   quantidade_estoque INT NOT NULL DEFAULT 0,
   custo_unitario NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   preco_venda NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Baterias';
+ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS marca TEXT DEFAULT 'Apple';
+ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS estoque_minimo INT DEFAULT 3;
+ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS localizacao_gaveta TEXT DEFAULT 'Bancada';
 
 -- 5. TABELA ORDENS DE SERVIÇO
 CREATE TABLE IF NOT EXISTS ordens_servico (

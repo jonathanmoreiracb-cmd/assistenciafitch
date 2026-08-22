@@ -35,12 +35,29 @@ export interface Usuario {
   created_at?: string;
 }
 
+export type CategoriaPeca =
+  | 'Baterias'
+  | 'Telas'
+  | 'Tampas'
+  | 'Câmeras'
+  | 'Conectores de Carga'
+  | 'Flex / Cabos'
+  | 'Carcaças'
+  | 'Vidros / Lentes'
+  | 'Outros';
+
+export type MarcaPeca = 'Apple' | 'Samsung' | 'Xiaomi' | 'Motorola' | 'Outra';
+
 export interface PecaEstoque {
   id: string;
   descricao: string;
   codigo_sku: string;
   tipo_qualidade: TipoQualidadePeca;
   modelo_compativel: string;
+  categoria?: CategoriaPeca | string;
+  marca?: MarcaPeca | string;
+  estoque_minimo?: number;
+  localizacao_gaveta?: string;
   quantidade_estoque: number;
   custo_unitario: number;
   preco_venda: number;

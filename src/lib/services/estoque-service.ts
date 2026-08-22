@@ -29,8 +29,28 @@ export const EstoqueService = {
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('estoque_pecas').select('*').order('created_at', { ascending: false });
-        if (!error && data) return data as PecaEstoque[];
+        const { data, error } = await supabase
+          .from('estoque_pecas')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          const mapped = data.map((dbPeca: any) => {
+            const localMatch = localEstoque.find(
+              (l) => l.id === dbPeca.id || (l.codigo_sku && l.codigo_sku === dbPeca.codigo_sku)
+            );
+            return {
+              ...dbPeca,
+              categoria: dbPeca.categoria || localMatch?.categoria || 'Bateria',
+              marca: dbPeca.marca || localMatch?.marca || 'Apple',
+              localizacao_gaveta: dbPeca.localizacao_gaveta || localMatch?.localizacao_gaveta || 'Bancada',
+              fornecedor: dbPeca.fornecedor || localMatch?.fornecedor || 'China Parts',
+            } as PecaEstoque;
+          });
+          localEstoque = mapped;
+          persistLocalEstoque();
+          return mapped;
+        }
       } catch (e) {
         console.error(e);
       }
@@ -45,10 +65,11 @@ export const EstoqueService = {
     const payload: any = {
       ...peca,
       codigo_sku: cleanSku,
-      categoria: peca.categoria || 'Baterias',
+      categoria: peca.categoria || 'Bateria',
       marca: peca.marca || 'Apple',
       estoque_minimo: peca.estoque_minimo !== undefined ? Number(peca.estoque_minimo) : 3,
       localizacao_gaveta: peca.localizacao_gaveta || 'Bancada',
+      fornecedor: peca.fornecedor || 'China Parts',
     };
 
     const supabase = createClient();
@@ -56,14 +77,14 @@ export const EstoqueService = {
       try {
         const { data, error } = await supabase.from('estoque_pecas').insert([payload]).select().single();
         if (!error && data) {
-          const novaPeca = data as PecaEstoque;
+          const novaPeca = { ...(data as PecaEstoque), ...payload };
           localEstoque.unshift(novaPeca);
           persistLocalEstoque();
           return novaPeca;
         }
 
-        // Retry fallback se as novas colunas ainda não existirem no Supabase DB
-        if (error && (error.message.includes('column') || error.message.includes('schema cache'))) {
+        // Retry fallback se as novas colunas ainda não existirem ou houver falha de cache no Supabase DB
+        if (error) {
           const payloadBase = {
             descricao: payload.descricao,
             codigo_sku: payload.codigo_sku,
@@ -215,10 +236,11 @@ export const EstoqueService = {
           .select()
           .single();
         if (data) {
+          const updated = { ...(data as PecaEstoque), ...dados };
           const idx = localEstoque.findIndex((p) => p.id === id);
-          if (idx !== -1) localEstoque[idx] = data as PecaEstoque;
+          if (idx !== -1) localEstoque[idx] = updated;
           persistLocalEstoque();
-          return data as PecaEstoque;
+          return updated;
         }
       } catch (e) {
         console.error(e);

@@ -481,7 +481,14 @@ export default function DashboardPage() {
                       </td>
 
                       <td className="py-3.5 px-3 font-medium text-slate-800">
-                        {os.tipo_dispositivo} {os.modelo}
+                        <div>
+                          <span>{os.tipo_dispositivo} {os.modelo}</span>
+                          {((os.fotos_entrada || []).length > 0 || ((os.checklist_entrada as any)?.fotos_urls || []).length > 0) && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-[#0071e3] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                              📷 {((os.fotos_entrada || []).length + ((os.checklist_entrada as any)?.fotos_urls || []).length)} foto(s)
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-3 text-slate-600">

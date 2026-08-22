@@ -27,6 +27,10 @@ import {
   PackageCheck,
   XCircle,
   Receipt,
+  Camera,
+  Eye,
+  History,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -54,6 +58,7 @@ export default function OSDetalhesPage() {
   const [os, setOs] = useState<OrdemServico | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(() => AuthService.getCurrentUser());
+  const [activeImageZoom, setActiveImageZoom] = useState<string | null>(null);
 
   // Inventory parts for selection
   const [estoquePecas, setEstoquePecas] = useState<PecaEstoque[]>([]);
@@ -651,6 +656,127 @@ export default function OSDetalhesPage() {
               >
                 ✅ Pronto na Loja
               </button>
+            </div>
+          </div>
+
+          {/* FOTOS DO APARELHO & EVIDÊNCIAS DE ENTRADA */}
+          {(() => {
+            const fotosArray = Array.from(
+              new Set([
+                ...(os.fotos_entrada || []),
+                ...((os.checklist_entrada as any)?.fotos_urls || []),
+              ])
+            ).filter(Boolean);
+
+            return (
+              <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4.5 h-4.5 text-[#0071e3]" />
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                      Fotos do Aparelho & Evidências de Entrada
+                    </h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-0.5 rounded-full">
+                    {fotosArray.length} foto(s) anexada(s)
+                  </span>
+                </div>
+
+                {fotosArray.length === 0 ? (
+                  <div className="p-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                    📷 Nenhuma foto anexada no momento da abertura desta O.S.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {fotosArray.map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setActiveImageZoom(imgUrl)}
+                        className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer shadow-xs hover:shadow-md transition-all hover:scale-[1.02]"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Foto Aparelho ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                          <Eye className="w-4 h-4" /> Expandir
+                        </div>
+                        <span className="absolute bottom-1.5 left-1.5 text-[9px] font-mono font-bold bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-xs">
+                          Foto #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* LINHA DO TEMPO DA OPERAÇÃO & AUDITORIA */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-4.5 h-4.5 text-purple-600" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                  Histórico & Linha do Tempo da Operação
+                </h3>
+              </div>
+              <span className="text-[10px] font-extrabold text-purple-700 bg-purple-50 px-3 py-0.5 rounded-full border border-purple-100">
+                Auditoria da O.S.
+              </span>
+            </div>
+
+            <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+              {/* Evento 1: Abertura */}
+              <div className="relative">
+                <span className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-[#0071e3] ring-4 ring-blue-50"></span>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                  <div className="flex items-center justify-between flex-wrap gap-1">
+                    <span className="font-extrabold text-xs text-slate-900">1. Abertura da Ordem de Serviço</span>
+                    <span className="text-[10px] font-mono font-semibold text-slate-500">
+                      {new Date(os.data_entrada).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    O.S. aberta pelo Vendedor Responsável: <strong className="text-slate-900">{os.vendedor_nome || 'Loja'}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Evento 2: Status Atual */}
+              <div className="relative">
+                <span className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-amber-500 ring-4 ring-amber-50"></span>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                  <div className="flex items-center justify-between flex-wrap gap-1">
+                    <span className="font-extrabold text-xs text-slate-900">2. Status Atual da Manutenção</span>
+                    <span className="text-[10px] font-mono font-bold text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                      {formatStatusName(os.status)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    Localização atual do dispositivo: <strong>{formatLocationName(os.localizacao_atual)}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Evento 3: Baixa Syscor */}
+              {os.numero_venda_syscor && (
+                <div className="relative">
+                  <span className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+                  <div className="bg-emerald-50/80 p-3.5 rounded-2xl border border-emerald-200/80 space-y-1">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <span className="font-extrabold text-xs text-emerald-950">3. Baixa de Pagamento & Saída do Estoque</span>
+                      <span className="text-[10px] font-mono font-bold text-emerald-800">
+                        {os.data_baixa ? new Date(os.data_baixa).toLocaleString('pt-BR') : 'Baixado'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-900">
+                      Venda registrada no Syscor: <strong>#{os.numero_venda_syscor}</strong> ({os.forma_pagamento || 'Pix'}) • Saída de estoque confirmada.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1288,6 +1414,30 @@ export default function OSDetalhesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL ZOOM DE FOTO (LIGHTBOX) */}
+      {activeImageZoom && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setActiveImageZoom(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveImageZoom(null)}
+              className="self-end text-white hover:text-slate-300 text-xs font-bold bg-white/10 px-3 py-1.5 rounded-full border border-white/20 shadow-md transition-all hover:bg-white/20"
+            >
+              ✕ Fechar Visualização
+            </button>
+            <img
+              src={activeImageZoom}
+              alt="Foto Ampliada do Aparelho"
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+            />
           </div>
         </div>
       )}

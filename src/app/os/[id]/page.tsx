@@ -1230,7 +1230,7 @@ export default function OSDetalhesPage() {
       {showWarrantyPrint && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="apple-card bg-white p-6 max-w-4xl w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3 no-print">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#0071e3]" />
                 Termo de Garantia A4
@@ -1240,11 +1240,11 @@ export default function OSDetalhesPage() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <div className="flex-1 overflow-y-auto bg-slate-50 p-4 rounded-2xl border border-slate-100 print:bg-white print:p-0 print:border-none print:overflow-visible">
               <WarrantyTerm os={os} />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 no-print">
               <button
                 onClick={() => setShowWarrantyPrint(false)}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"

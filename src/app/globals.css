@@ -38,9 +38,15 @@ body {
 
 /* Print CSS Setup for Thermal Labels and A4 Terms */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   @page {
-    size: 80mm 50mm;
-    margin: 0 !important;
+    size: A4 portrait;
+    margin: 8mm 10mm !important;
   }
 
   html, body {
@@ -48,9 +54,8 @@ body {
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
-    width: 80mm !important;
-    height: 50mm !important;
-    overflow: hidden !important;
+    width: 100% !important;
+    overflow: visible !important;
   }
 
   .no-print, nav, header, button, .print-hide {
@@ -91,15 +96,16 @@ body {
 
   /* Warranty A4 Term Mode */
   .a4-warranty-term {
+    position: relative !important;
     border: none !important;
     margin: 0 auto !important;
-    padding: 8mm 12mm !important;
+    padding: 0 !important;
     width: 100% !important;
-    max-width: 210mm !important;
+    max-width: 190mm !important;
     box-shadow: none !important;
     background: #ffffff !important;
     color: #000000 !important;
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
   }
 }
 

@@ -83,22 +83,47 @@ export const EstoqueService = {
           return novaPeca;
         }
 
-        // Retry fallback se as novas colunas ainda não existirem ou houver falha de cache no Supabase DB
+        // Retry fallback se colunas adicionais falharem no Supabase DB
         if (error) {
           const payloadBase = {
             descricao: payload.descricao,
             codigo_sku: payload.codigo_sku,
             tipo_qualidade: payload.tipo_qualidade,
             modelo_compativel: payload.modelo_compativel,
+            categoria: payload.categoria,
+            marca: payload.marca,
+            localizacao_gaveta: payload.localizacao_gaveta,
+            estoque_minimo: payload.estoque_minimo,
             quantidade_estoque: payload.quantidade_estoque,
             custo_unitario: payload.custo_unitario,
             preco_venda: payload.preco_venda,
           };
-          const { data: retryData, error: retryErr } = await supabase
+          let { data: retryData, error: retryErr } = await supabase
             .from('estoque_pecas')
             .insert([payloadBase])
             .select()
             .single();
+
+          if (retryErr) {
+            // Se falhar devido a colunas ausentes no schema remoto, garante a insercao dos campos base com categoria
+            const payloadCore = {
+              descricao: payload.descricao,
+              codigo_sku: payload.codigo_sku,
+              tipo_qualidade: payload.tipo_qualidade,
+              modelo_compativel: payload.modelo_compativel,
+              categoria: payload.categoria,
+              quantidade_estoque: payload.quantidade_estoque,
+              custo_unitario: payload.custo_unitario,
+              preco_venda: payload.preco_venda,
+            };
+            const { data: coreData, error: coreErr } = await supabase
+              .from('estoque_pecas')
+              .insert([payloadCore])
+              .select()
+              .single();
+            retryData = coreData;
+            retryErr = coreErr;
+          }
 
           if (!retryErr && retryData) {
             const novaPeca = { ...(retryData as PecaEstoque), ...payload };

@@ -92,6 +92,16 @@ export const LARISSA_DEFAULT: Usuario = {
   percentual_comissao: 5.0,
 };
 
+export const JULIANA_DEFAULT: Usuario = {
+  id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  nome: 'Juliana',
+  email: 'juliana@fitch.com',
+  senha: 'FITCH123',
+  cargo: 'vendedor',
+  meta_mensal_os: 20,
+  percentual_comissao: 5.0,
+};
+
 export const HENRIKE_DEFAULT: Usuario = {
   id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
   nome: 'Henrike',
@@ -111,6 +121,7 @@ export const INITIAL_USUARIOS: Usuario[] = [
   EMELY_DEFAULT,
   VANESSA_DEFAULT,
   LARISSA_DEFAULT,
+  JULIANA_DEFAULT,
   HENRIKE_DEFAULT,
 ];
 
@@ -138,6 +149,7 @@ function syncEssentialUsers() {
     EMELY_DEFAULT,
     VANESSA_DEFAULT,
     LARISSA_DEFAULT,
+    JULIANA_DEFAULT,
     HENRIKE_DEFAULT,
   ];
 

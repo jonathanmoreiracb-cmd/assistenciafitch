@@ -41,9 +41,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- Inserts Iniciais de Exemplo
 INSERT INTO usuarios (id, nome, email, senha, cargo, meta_mensal_os, percentual_comissao) VALUES
   ('11111111-1111-1111-1111-111111111111', 'Jonathan Moreira', 'jonathan@fitch.com', 'tcjk7788', 'gerente', 0, 0.00),
-  ('22222222-2222-2222-2222-222222222222', 'Pedro Vendedor', 'pedro.vendas@fitch.com', '123', 'vendedor', 20, 5.00),
-  ('33333333-3333-3333-3333-333333333333', 'Ana Vendedora', 'ana.vendas@fitch.com', '123', 'vendedor', 20, 5.00),
-  ('44444444-4444-4444-4444-444444444444', 'Marcos Técnico', 'marcos.tecnico@fitch.com', '123', 'tecnico', 0, 0.00)
+  ('55555555-5555-5555-5555-555555555555', 'Jakson Marques', 'jakson.cp777@gmail.com', '123', 'gerente', 0, 0.00),
+  ('66666666-6666-6666-6666-666666666666', 'Eros Fitch', 'fitch.imports@outlook.com', 'FITCH123', 'gerente', 0, 0.00),
+  ('77777777-7777-7777-7777-777777777777', 'Ana Vitoria', 'anavitoria@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('88888888-8888-8888-8888-888888888888', 'Rose', 'rose@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('99999999-9999-9999-9999-999999999999', 'Emely', 'emely@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Vanessa', 'vanessa@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Larissa', 'larissa@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Juliana', 'juliana@fitch.com', 'FITCH123', 'vendedor', 20, 5.00),
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Henrike', 'henrike@fitch.com', 'FITCH123', 'tecnico', 0, 0.00)
 ON CONFLICT (email) DO NOTHING;
 
 -- 3. TABELA CLIENTES (Campos Obrigatórios: Nome, Telefone, CPF)

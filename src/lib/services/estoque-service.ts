@@ -35,6 +35,9 @@ export const EstoqueService = {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
+          const dbIds = new Set(data.map((d: any) => d.id));
+          const localOnly = localEstoque.filter((l) => !dbIds.has(l.id) && l.id.startsWith('est-'));
+
           const mapped = data.map((dbPeca: any) => {
             const localMatch = localEstoque.find(
               (l) => l.id === dbPeca.id || (l.codigo_sku && l.codigo_sku === dbPeca.codigo_sku)
@@ -47,9 +50,10 @@ export const EstoqueService = {
               fornecedor: dbPeca.fornecedor || localMatch?.fornecedor || 'China Parts',
             } as PecaEstoque;
           });
-          localEstoque = mapped;
+
+          localEstoque = [...localOnly, ...mapped];
           persistLocalEstoque();
-          return mapped;
+          return localEstoque;
         }
       } catch (e) {
         console.error(e);
@@ -61,7 +65,17 @@ export const EstoqueService = {
   async cadastrarPeca(
     peca: Omit<PecaEstoque, 'id' | 'created_at'>
   ): Promise<PecaEstoque> {
-    const cleanSku = (peca.codigo_sku || '').trim() || `PEC-${Date.now().toString(36).toUpperCase()}`;
+    let cleanSku = (peca.codigo_sku || '').trim().toUpperCase();
+    if (!cleanSku) {
+      cleanSku = `PEC-${Date.now().toString(36).toUpperCase()}`;
+    }
+
+    // Evitar erro de SKU duplicado se ja existir localmente
+    const skuExists = localEstoque.some((p) => (p.codigo_sku || '').toUpperCase() === cleanSku);
+    if (skuExists) {
+      cleanSku = `${cleanSku}-${Math.floor(Math.random() * 90 + 10)}`;
+    }
+
     const payload: any = {
       ...peca,
       codigo_sku: cleanSku,

@@ -31,7 +31,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
       {/* Header */}
       <div className="flex items-start justify-between border-b-2 border-slate-950 pb-4 mb-4">
         <div className="flex items-center gap-3.5">
-          <div className="bg-slate-950 p-2.5 rounded-xl flex items-center shrink-0 border border-slate-800">
+          <div className="bg-white p-2 rounded-xl flex items-center shrink-0 border-2 border-slate-900">
             <img
               src="/logo.png"
               alt="Fitch Tecnologia"
@@ -55,13 +55,13 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
         </div>
 
         <div className="text-right flex flex-col items-end shrink-0">
-          <span className="text-sm font-mono font-black uppercase bg-slate-950 text-white px-3.5 py-1 rounded-md border border-slate-900 shadow-xs mb-1">
+          <span className="text-sm font-mono font-black uppercase bg-white text-slate-950 px-3.5 py-1 rounded-md border-2 border-slate-950 mb-1">
             ORDEM DE SERVIÇO Nº #{os.numero_os}
           </span>
           <p className="text-[11px] font-bold text-slate-900">
             Data de Entrada: <strong className="text-slate-950">{dataEntradaFormatted}</strong>
           </p>
-          <p className="text-[11px] font-black text-slate-950 mt-1 bg-amber-100/90 border border-amber-400 px-2.5 py-0.5 rounded-md">
+          <p className="text-[11px] font-black text-slate-950 mt-1 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-md">
             VENDEDOR: {os.vendedor_nome || 'Loja / Atendente'}
           </p>
           <span className="text-[10px] font-black text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-300 mt-1 uppercase">
@@ -120,7 +120,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
             <strong className="text-slate-950">{os.buscar_iphone_desativado ? 'SIM (Confirmado)' : 'NÃO'}</strong>
           </p>
           {os.aparelho_nao_liga && (
-            <p className="font-extrabold text-amber-950 bg-amber-200 border border-amber-400 px-2 py-0.5 rounded-md inline-block text-[10px] mt-1">
+            <p className="font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md inline-block text-[10px] mt-1">
               ⚡ Aparelho Desligado / Não Liga na Entrada
             </p>
           )}
@@ -185,18 +185,18 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
       </div>
 
       {/* Financial Summary */}
-      <div className="flex justify-between items-center mb-5 bg-slate-950 text-white p-4 rounded-xl border-2 border-slate-950 shadow-sm">
+      <div className="flex justify-between items-center mb-5 bg-white text-slate-950 p-3.5 rounded-xl border-2 border-slate-950">
         <div>
-          <p className="text-[10px] text-slate-300 uppercase font-black tracking-wider">
+          <p className="text-[10px] text-slate-900 uppercase font-black tracking-wider border-b border-slate-200 pb-0.5 mb-1">
             Resumo Financeiro & Condições
           </p>
-          <p className="text-xs text-white font-bold mt-0.5">
+          <p className="text-xs text-slate-900 font-bold">
             Vendedor: {os.vendedor_nome || 'Fitch Tecnologia'} | Garantia da Loja: {os.garantia_dias} dias
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[10px] text-slate-300 block uppercase font-black tracking-wider">VALOR ESTIMADO / TOTAL O.S.</span>
-          <span className="text-2xl font-black font-mono text-emerald-400 drop-shadow-xs">
+          <span className="text-[10px] text-slate-700 block uppercase font-black tracking-wider">VALOR ESTIMADO / TOTAL O.S.</span>
+          <span className="text-2xl font-black font-mono text-slate-950">
             R$ {Number(os.valor_total).toFixed(2)}
           </span>
         </div>

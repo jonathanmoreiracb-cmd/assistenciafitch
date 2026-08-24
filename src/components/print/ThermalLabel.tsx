@@ -47,7 +47,7 @@ export const ThermalLabel: React.FC<ThermalLabelProps> = ({ os }) => {
         </div>
 
         <div className="text-right">
-          <span className="font-black text-[14px] bg-black text-white px-2 py-0.5 rounded-xs block leading-none">
+          <span className="font-black text-[14px] bg-white text-black border-2 border-black px-2 py-0.5 rounded-xs block leading-none">
             O.S. #{os.numero_os}
           </span>
         </div>
@@ -75,11 +75,11 @@ export const ThermalLabel: React.FC<ThermalLabelProps> = ({ os }) => {
 
           <div className="truncate flex items-center gap-1">
             <strong className="uppercase text-[8.5px] text-gray-700">SENHA:</strong>{' '}
-            <span className="font-black text-[11px] bg-gray-200 border border-gray-400 px-1 py-0.2 rounded-xs text-black">
+            <span className="font-black text-[11px] bg-white border border-gray-400 px-1 py-0.2 rounded-xs text-black">
               {os.senha_aparelho || 'SEM SENHA'}
             </span>
             {os.buscar_iphone_desativado && (
-              <span className="text-[7.5px] font-black bg-black text-white px-1 py-0.2 rounded-xs">
+              <span className="text-[7.5px] font-black bg-white text-black border border-black px-1 py-0.2 rounded-xs">
                 F.iPh OFF
               </span>
             )}
@@ -104,7 +104,7 @@ export const ThermalLabel: React.FC<ThermalLabelProps> = ({ os }) => {
       <div className="flex items-center justify-between border-t-2 border-black pt-0.5 mt-0.5 text-[7.5px] font-bold leading-none text-black shrink-0">
         <span>Vend: {os.vendedor_nome || 'Loja'}</span>
         <span>Entrada: {formattedDate}</span>
-        <span className="font-black bg-black text-white px-1 py-0.2 rounded-xs uppercase">
+        <span className="font-black bg-white text-black border border-black px-1 py-0.2 rounded-xs uppercase">
           {os.tipo_cobertura === 'Garantia da Loja'
             ? 'GARANTIA SEMINOVO'
             : os.tipo_cobertura === 'Revisão / Upgrade'

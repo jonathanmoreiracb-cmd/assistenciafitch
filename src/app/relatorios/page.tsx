@@ -106,7 +106,7 @@ export default function RelatoriosPage() {
     );
 
     const calcComissao = calcularComissaoVolume(osParticularesConcluidas.length);
-    const meta = v.meta_mensal_os || 15;
+    const meta = v.meta_mensal_os || 10;
     const percentualMeta = Math.min(100, (osParticularesConcluidas.length / meta) * 100);
 
     return {
@@ -222,17 +222,17 @@ export default function RelatoriosPage() {
           <div>
             <h3 className="text-base font-bold text-[#1d1d1f] flex items-center gap-2">
               <Users className="w-5 h-5 text-[#0071e3]" />
-              Comissões por Volume de O.S. Particulares
+              Gratificação por Assistência Particular Negociada
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Escala progressiva: R$ 20,00 até R$ 50,00 por O.S. Particular. (O.S. de Garantia não geram comissão).
+              Escala progressiva: R$ 20,00 até R$ 50,00 por O.S. Particular negociada. (O.S. de Garantia não geram gratificação).
             </p>
           </div>
 
-          <div className="text-right text-[10px] text-slate-400 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-2xl">
-            <span>R$ 20 (1-10 un) • R$ 30 (11-20 un)</span>
+          <div className="text-right text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-2xl font-medium">
+            <span>Até 5 un: R$ 20,00 • 6 un: R$ 30,00</span>
             <br />
-            <span>R$ 40 (21-30 un) • R$ 50 (31+ un)</span>
+            <span>7 a 8 un: R$ 40,00 • Acima de 8 (9+): R$ 50,00</span>
           </div>
         </div>
 

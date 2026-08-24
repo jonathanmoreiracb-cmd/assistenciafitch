@@ -48,7 +48,7 @@ export const ANA_VITORIA_DEFAULT: Usuario = {
   email: 'anavitoria@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 
@@ -58,7 +58,7 @@ export const ROSE_DEFAULT: Usuario = {
   email: 'rose@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 
@@ -68,7 +68,7 @@ export const EMELY_DEFAULT: Usuario = {
   email: 'emely@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 
@@ -78,7 +78,7 @@ export const VANESSA_DEFAULT: Usuario = {
   email: 'vanessa@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 
@@ -88,7 +88,7 @@ export const LARISSA_DEFAULT: Usuario = {
   email: 'larissa@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 
@@ -98,7 +98,7 @@ export const JULIANA_DEFAULT: Usuario = {
   email: 'juliana@fitch.com',
   senha: 'FITCH123',
   cargo: 'vendedor',
-  meta_mensal_os: 20,
+  meta_mensal_os: 10,
   percentual_comissao: 5.0,
 };
 

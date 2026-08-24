@@ -46,7 +46,7 @@ export default function AdminPage() {
     email: '',
     senha: '123',
     cargo: 'vendedor' as CargoUsuario,
-    meta_mensal_os: 15,
+    meta_mensal_os: 10,
   });
 
   // --- ABA 2: ESTOQUE STATE ---
@@ -156,7 +156,7 @@ export default function AdminPage() {
       email: u.email,
       senha: u.senha || '123',
       cargo: u.cargo,
-      meta_mensal_os: u.meta_mensal_os || 15,
+      meta_mensal_os: u.meta_mensal_os || 10,
     });
     setShowUserModal(true);
   };
@@ -342,7 +342,7 @@ export default function AdminPage() {
       0
     );
     const calcComissao = calcularComissaoVolume(osParticularesConcluidas.length);
-    const meta = v.meta_mensal_os || 15;
+    const meta = v.meta_mensal_os || 10;
     const percentualMeta = Math.min(100, (osParticularesConcluidas.length / meta) * 100);
 
     return {
@@ -450,7 +450,7 @@ export default function AdminPage() {
                   email: '',
                   senha: '123',
                   cargo: 'vendedor',
-                  meta_mensal_os: 15,
+                  meta_mensal_os: 10,
                 });
                 setShowUserModal(true);
               }}

@@ -424,6 +424,11 @@ export default function OSDetalhesPage() {
                   🛡️ Garantia de Seminovo (180 Dias)
                 </span>
               )}
+              {os.tipo_cobertura === 'Garantia Android' && (
+                <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full">
+                  📱 Garantia Android Novo (90 Dias)
+                </span>
+              )}
               {os.tipo_cobertura === 'Revisão / Upgrade' && (
                 <span className="text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-300 px-3 py-1 rounded-full">
                   🔄 Revisão / Trade-in

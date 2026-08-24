@@ -12,7 +12,7 @@ export type StatusOS =
 
 export type TipoQualidadePeca = 'Original' | 'Primeira Linha' | 'OLED' | 'Incell';
 
-export type TipoCobertura = 'Particular' | 'Garantia da Loja' | 'Revisão / Upgrade';
+export type TipoCobertura = 'Particular' | 'Garantia da Loja' | 'Garantia Android' | 'Revisão / Upgrade';
 
 export type LocalizacaoDispositivo =
   | 'bancada_local'

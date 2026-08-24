@@ -107,6 +107,8 @@ export const ThermalLabel: React.FC<ThermalLabelProps> = ({ os }) => {
         <span className="font-black bg-white text-black border border-black px-1 py-0.2 rounded-xs uppercase">
           {os.tipo_cobertura === 'Garantia da Loja'
             ? 'GARANTIA SEMINOVO'
+            : os.tipo_cobertura === 'Garantia Android'
+            ? 'GARANTIA ANDROID'
             : os.tipo_cobertura === 'Revisão / Upgrade'
             ? 'REVISÃO TRADE-IN'
             : 'PARTICULAR'}

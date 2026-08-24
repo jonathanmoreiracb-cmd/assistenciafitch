@@ -106,7 +106,10 @@ export default function DashboardPage() {
         os.localizacao_atual === 'laboratorio_sp' ||
         os.localizacao_atual === 'em_transito_retorno_sp';
     } else if (activeTab === 'garantia') {
-      matchTab = os.tipo_cobertura === 'Garantia da Loja' || os.tipo_cobertura === 'Revisão / Upgrade';
+      matchTab =
+        os.tipo_cobertura === 'Garantia da Loja' ||
+        os.tipo_cobertura === 'Garantia Android' ||
+        os.tipo_cobertura === 'Revisão / Upgrade';
     }
 
     let matchStatus = true;
@@ -359,7 +362,9 @@ export default function DashboardPage() {
                       {os.motivo_encerramento ? (
                         <span className="text-slate-500 text-[11px]">R$ 0,00 (Devolvido)</span>
                       ) : os.tipo_cobertura === 'Garantia da Loja' ? (
-                        <span className="text-amber-600 text-[11px]">R$ 0,00 (Garantia)</span>
+                        <span className="text-amber-600 text-[11px]">R$ 0,00 (Garantia Apple)</span>
+                      ) : os.tipo_cobertura === 'Garantia Android' ? (
+                        <span className="text-emerald-600 text-[11px]">R$ 0,00 (Garantia Android)</span>
                       ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
                         <span className="text-indigo-600 text-[11px]">R$ 0,00 (Loja)</span>
                       ) : (
@@ -505,7 +510,9 @@ export default function DashboardPage() {
                         {os.motivo_encerramento ? (
                           <span className="text-slate-500 font-bold">R$ 0,00 (Devolvido)</span>
                         ) : os.tipo_cobertura === 'Garantia da Loja' ? (
-                          <span className="text-amber-600 font-bold">R$ 0,00 (Garantia)</span>
+                          <span className="text-amber-600 font-bold">R$ 0,00 (Garantia Apple)</span>
+                        ) : os.tipo_cobertura === 'Garantia Android' ? (
+                          <span className="text-emerald-600 font-bold">R$ 0,00 (Garantia Android)</span>
                         ) : os.tipo_cobertura === 'Revisão / Upgrade' ? (
                           <span className="text-indigo-600 font-bold">R$ 0,00 (Estoque Loja)</span>
                         ) : (

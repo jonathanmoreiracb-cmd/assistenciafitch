@@ -65,7 +65,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
             VENDEDOR: {os.vendedor_nome || 'Loja / Atendente'}
           </p>
           <span className="text-[10px] font-black text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-300 mt-1 uppercase">
-            Serviço: {os.tipo_cobertura === 'Garantia da Loja' ? 'Garantia de Seminovo (180 dias)' : os.tipo_cobertura === 'Revisão / Upgrade' ? 'Revisão / Trade-in (Estoque Loja)' : 'Assistência Particular'}
+            Serviço: {os.tipo_cobertura === 'Garantia da Loja' ? 'Garantia de Seminovo (180 dias)' : os.tipo_cobertura === 'Garantia Android' ? 'Garantia Android Novo (90 dias)' : os.tipo_cobertura === 'Revisão / Upgrade' ? 'Revisão / Trade-in (Estoque Loja)' : 'Assistência Particular'}
           </span>
         </div>
       </div>

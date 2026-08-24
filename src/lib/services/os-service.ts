@@ -727,7 +727,7 @@ export const OSService = {
     }).length;
 
     const garantiasLojaCount = ordens.filter(
-      (o) => o.tipo_cobertura === 'Garantia da Loja'
+      (o) => o.tipo_cobertura === 'Garantia da Loja' || o.tipo_cobertura === 'Garantia Android'
     ).length;
 
     return {

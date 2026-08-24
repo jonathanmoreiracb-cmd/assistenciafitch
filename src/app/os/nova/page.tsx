@@ -497,7 +497,7 @@ export default function NovaOSPage() {
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
               Tipo de Serviço / Origem da Demanda *
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Option 1: Assistência Particular */}
               <button
                 type="button"
@@ -536,7 +536,7 @@ export default function NovaOSPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-amber-700">
-                    🛡️ Garantia de Seminovo
+                    🛡️ Garantia Seminovo (180d)
                   </span>
                   <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                     R$ 0,00
@@ -547,7 +547,33 @@ export default function NovaOSPage() {
                 </p>
               </button>
 
-              {/* Option 3: Revisão / Trade-in Upgrade */}
+              {/* Option 3: Garantia Android */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoCobertura('Garantia Android');
+                  setValorServico('0.00');
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
+                  tipoCobertura === 'Garantia Android'
+                    ? 'bg-white border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-900 shadow-sm'
+                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-emerald-700">
+                    📱 Garantia Android (90d)
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    R$ 0,00
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Garantia de 90 dias para Androids novos vendidos na loja. Pós-venda (R$ 0,00 pro cliente).
+                </p>
+              </button>
+
+              {/* Option 4: Revisão / Trade-in Upgrade */}
               <button
                 type="button"
                 onClick={() => {
@@ -800,8 +826,8 @@ export default function NovaOSPage() {
                   <input
                     type="number"
                     step="0.01"
-                    disabled={tipoCobertura === 'Garantia da Loja'}
-                    value={tipoCobertura === 'Garantia da Loja' ? '0.00' : valorDesconto}
+                    disabled={tipoCobertura === 'Garantia da Loja' || tipoCobertura === 'Garantia Android'}
+                    value={tipoCobertura === 'Garantia da Loja' || tipoCobertura === 'Garantia Android' ? '0.00' : valorDesconto}
                     onChange={(e) => setValorDesconto(e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-white border border-slate-200/80 rounded-full px-3.5 py-2 text-xs text-slate-900 font-mono focus:outline-none disabled:opacity-50"

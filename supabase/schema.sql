@@ -16,7 +16,7 @@ CREATE TYPE status_os_enum AS ENUM (
   'cancelado'
 );
 CREATE TYPE tipo_qualidade_peca_enum AS ENUM ('Original', 'Primeira Linha', 'OLED', 'Incell');
-CREATE TYPE tipo_cobertura_enum AS ENUM ('Particular', 'Garantia da Loja', 'Revisão / Upgrade');
+CREATE TYPE tipo_cobertura_enum AS ENUM ('Particular', 'Garantia da Loja', 'Garantia Android', 'Revisão / Upgrade');
 CREATE TYPE localizacao_dispositivo_enum AS ENUM (
   'bancada_local',
   'em_transito_ida_sp',
@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 
 -- Garantir novas colunas e enums se a tabela já existia
 ALTER TYPE tipo_cobertura_enum ADD VALUE IF NOT EXISTS 'Revisão / Upgrade';
+ALTER TYPE tipo_cobertura_enum ADD VALUE IF NOT EXISTS 'Garantia Android';
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS vendedor_nome TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS tecnico_nome TEXT;
 ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS aparelho_nao_liga BOOLEAN DEFAULT false;

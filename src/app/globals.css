@@ -67,7 +67,7 @@ body {
     color: #000000 !important;
     width: 100% !important;
     height: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   /* HIDE ALL PAGE CONTENT AND ALL MODAL BACKDROPS/CONTAINERS BY DEFAULT */
@@ -99,7 +99,7 @@ body {
 
   body.printing-thermal-mode .printable-thermal-area,
   body.is-printing-thermal .printable-thermal-area {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
@@ -108,20 +108,15 @@ body {
     padding: 0 !important;
     background: #ffffff !important;
     z-index: 99999999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
+    display: block !important;
+    overflow: visible !important;
   }
 
   body.printing-thermal-mode .thermal-label-container,
   body.is-printing-thermal .thermal-label-container {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 80mm !important;
-    height: 50mm !important;
-    max-height: 50mm !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
     margin: 0 !important;
     padding: 1.5mm 2.5mm !important;
     box-sizing: border-box !important;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { OSService } from '@/lib/services/os-service';
 import { OrdemServico } from '@/types';
 import { ThermalLabel } from '@/components/print/ThermalLabel';
@@ -10,13 +10,22 @@ import Link from 'next/link';
 
 export default function DirectLabelPrintPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const osId = params.id as string;
 
   const [os, setOs] = useState<OrdemServico | null>(null);
   const [loading, setLoading] = useState(true);
-  const [scale, setScale] = useState<number>(140); // Default enlarged scale 140% for thermal label printers
+  const [scale, setScale] = useState<number>(100);
   const [isRotated, setIsRotated] = useState(false);
+
+  useEffect(() => {
+    // Add thermal print classes to body so globals.css print rules keep label visible
+    document.body.classList.add('is-printing-thermal');
+    document.body.classList.add('printing-thermal-mode');
+    return () => {
+      document.body.classList.remove('is-printing-thermal');
+      document.body.classList.remove('printing-thermal-mode');
+    };
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -34,7 +43,26 @@ export default function DirectLabelPrintPage() {
   }, [osId]);
 
   const handlePrint = () => {
+    document.body.classList.add('is-printing-thermal');
+    document.body.classList.add('printing-thermal-mode');
+    if (isRotated) {
+      document.body.classList.add('rotate-thermal-90');
+    } else {
+      document.body.classList.remove('rotate-thermal-90');
+    }
     window.print();
+  };
+
+  const handleRotateToggle = () => {
+    setIsRotated((prev) => {
+      const next = !prev;
+      if (next) {
+        document.body.classList.add('rotate-thermal-90');
+      } else {
+        document.body.classList.remove('rotate-thermal-90');
+      }
+      return next;
+    });
   };
 
   if (loading) {
@@ -86,7 +114,7 @@ export default function DirectLabelPrintPage() {
               <span className="text-[10px] text-slate-400 px-2 font-bold flex items-center gap-1">
                 <ZoomIn className="w-3 h-3 text-[#0071e3]" /> Escala:
               </span>
-              {[100, 120, 140, 160, 180, 200].map((s) => (
+              {[100, 115, 130, 150, 175, 200].map((s) => (
                 <button
                   key={s}
                   onClick={() => setScale(s)}
@@ -103,7 +131,7 @@ export default function DirectLabelPrintPage() {
 
             {/* Rotate Toggle */}
             <button
-              onClick={() => setIsRotated(!isRotated)}
+              onClick={handleRotateToggle}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all ${
                 isRotated
                   ? 'bg-amber-500 text-white border-amber-600'
@@ -129,9 +157,9 @@ export default function DirectLabelPrintPage() {
       {/* Main Preview Container */}
       <div className="flex-1 w-full flex flex-col items-center justify-center p-6 space-y-6">
         <div className="no-print bg-slate-900 border border-slate-800 p-4 rounded-2xl max-w-md text-center text-xs text-slate-300">
-          💡 <strong>Dica da Impressora Térmica Coibeu / Xprinter:</strong>
+          💡 <strong>Dica de Impressão Coibeu / Xprinter:</strong>
           <br />
-          Selecione o tamanho de papel <strong>80x50mm</strong> na caixa do navegador. Se a impressão sair menor que a etiqueta, aumente a escala para <strong>140% ou 160%</strong> acima!
+          Selecione o papel <strong>80x50mm</strong> na janela de impressão do Chrome. Se a etiqueta sair menor no adesivo, selecione a escala <strong>130% ou 150%</strong> acima antes de clicar em Imprimir!
         </div>
 
         {/* Outer Label Frame */}
@@ -141,43 +169,14 @@ export default function DirectLabelPrintPage() {
             style={{
               width: '80mm',
               height: '50mm',
-              transform: `scale(${scale / 100}) ${isRotated ? 'rotate(90deg)' : ''}`,
-              transformOrigin: isRotated ? '40mm 25mm' : 'top left',
+              transform: scale !== 100 ? `scale(${scale / 100})` : undefined,
+              transformOrigin: 'top left',
             }}
           >
             <ThermalLabel os={os} />
           </div>
         </div>
       </div>
-
-      {/* Global CSS injected specifically for this direct print page */}
-      <style jsx global>{`
-        @media print {
-          body {
-            background: #ffffff !important;
-            color: #000000 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .no-print, header, nav, footer, button {
-            display: none !important;
-          }
-          @page {
-            size: 80mm 50mm;
-            margin: 0 !important;
-          }
-          .printable-thermal-area {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #ffffff !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

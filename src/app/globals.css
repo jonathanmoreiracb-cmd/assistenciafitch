@@ -37,7 +37,7 @@ body {
 }
 
 /* ==========================================================================
-   PRINT CSS SETUP (BULLETPROOF THERMAL LABEL 80x50mm & A4 WARRANTY TERM)
+   PRINT CSS SETUP (EXACT 80mm x 50mm LANDSCAPE THERMAL STICKER & A4 TERM)
    ========================================================================== */
 @media print {
   * {
@@ -52,10 +52,10 @@ body {
     margin: 8mm 10mm !important;
   }
 
-  /* Thermal Page Size: 80mm x 50mm */
+  /* Thermal Page Size: 80mm x 50mm Landscape */
   body.printing-thermal-mode @page,
   body.is-printing-thermal @page {
-    size: 80mm 50mm !important;
+    size: 80mm 50mm landscape !important;
     margin: 0 !important;
   }
 
@@ -83,7 +83,7 @@ body {
   }
 
   /* ==============================================================
-     1) THERMAL LABEL PRINT MODE (80mm x 50mm)
+     1) THERMAL LABEL PRINT MODE (80mm x 50mm LANDSCAPE)
      ============================================================== */
   body.printing-thermal-mode .printable-thermal-area,
   body.printing-thermal-mode .printable-thermal-area *,
@@ -120,10 +120,10 @@ body {
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
-    height: 48.5mm !important;
-    max-height: 48.5mm !important;
+    height: 50mm !important;
+    max-height: 50mm !important;
     margin: 0 !important;
-    padding: 1.5mm 3mm !important;
+    padding: 1.5mm 2.5mm !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;

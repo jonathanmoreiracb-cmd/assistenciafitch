@@ -37,7 +37,7 @@ body {
 }
 
 /* ==========================================================================
-   PRINT CSS SETUP (EXACT 80mm x 50mm LANDSCAPE THERMAL STICKER & A4 TERM)
+   PRINT CSS SETUP (EXACT 80mm x 50mm THERMAL STICKER & A4 TERM)
    ========================================================================== */
 @media print {
   * {
@@ -52,10 +52,10 @@ body {
     margin: 8mm 10mm !important;
   }
 
-  /* Thermal Page Size: 80mm x 50mm Landscape */
+  /* Thermal Page Size: 80mm x 50mm */
   body.printing-thermal-mode @page,
   body.is-printing-thermal @page {
-    size: 80mm 50mm landscape !important;
+    size: 80mm 50mm !important;
     margin: 0 !important;
   }
 
@@ -83,7 +83,7 @@ body {
   }
 
   /* ==============================================================
-     1) THERMAL LABEL PRINT MODE (80mm x 50mm LANDSCAPE)
+     1) THERMAL LABEL PRINT MODE (80mm x 50mm)
      ============================================================== */
   body.printing-thermal-mode .printable-thermal-area,
   body.printing-thermal-mode .printable-thermal-area *,
@@ -128,6 +128,12 @@ body {
     background: #ffffff !important;
     color: #000000 !important;
     overflow: hidden !important;
+  }
+
+  /* Manual 90° Rotation Class for Printer Drivers that rotate 90° */
+  body.rotate-thermal-90 .thermal-label-container {
+    transform: rotate(90deg) !important;
+    transform-origin: 40mm 25mm !important;
   }
 
   /* ==============================================================

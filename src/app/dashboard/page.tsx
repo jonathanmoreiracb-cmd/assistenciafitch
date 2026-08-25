@@ -38,6 +38,19 @@ export default function DashboardPage() {
   // Print Modals
   const [printThermalOS, setPrintThermalOS] = useState<OrdemServico | null>(null);
   const [printWarrantyOS, setPrintWarrantyOS] = useState<OrdemServico | null>(null);
+  const [isRotated90, setIsRotated90] = useState(false);
+
+  const handleToggleRotate = () => {
+    setIsRotated90((prev) => {
+      const next = !prev;
+      if (next) {
+        document.body.classList.add('rotate-thermal-90');
+      } else {
+        document.body.classList.remove('rotate-thermal-90');
+      }
+      return next;
+    });
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -613,19 +626,36 @@ export default function DashboardPage() {
               <ThermalLabel os={printThermalOS} />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               <button
-                onClick={() => setPrintThermalOS(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                type="button"
+                onClick={handleToggleRotate}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                  isRotated90
+                    ? 'bg-amber-500 text-white border-amber-600'
+                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                }`}
               >
-                Cancelar
+                🔄 {isRotated90 ? 'Giro 90° Ativado' : 'Girar Etiqueta 90°'}
               </button>
-              <button
-                onClick={handlePrintThermal}
-                className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
-              >
-                Imprimir Etiqueta (80x50mm)
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    document.body.classList.remove('rotate-thermal-90');
+                    setIsRotated90(false);
+                    setPrintThermalOS(null);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handlePrintThermal}
+                  className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
+                >
+                  Imprimir Etiqueta (80x50mm)
+                </button>
+              </div>
             </div>
           </div>
         </div>

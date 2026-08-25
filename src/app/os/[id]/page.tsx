@@ -330,16 +330,24 @@ export default function OSDetalhesPage() {
   };
 
   const handlePrintThermal = () => {
+    document.body.classList.remove('is-printing-warranty');
     document.body.classList.add('printing-thermal-mode');
+    document.body.classList.add('is-printing-thermal');
     window.print();
     setTimeout(() => {
       document.body.classList.remove('printing-thermal-mode');
+      document.body.classList.remove('is-printing-thermal');
     }, 1000);
   };
 
   const handlePrintWarranty = () => {
     document.body.classList.remove('printing-thermal-mode');
+    document.body.classList.remove('is-printing-thermal');
+    document.body.classList.add('is-printing-warranty');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('is-printing-warranty');
+    }, 1000);
   };
 
   const handleDeletarOS = async () => {

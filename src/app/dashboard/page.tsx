@@ -62,7 +62,16 @@ export default function DashboardPage() {
     return () => window.removeEventListener('fitch_auth_changed', handleAuth);
   }, []);
 
-  const handlePrint = () => {
+  const handlePrintThermal = () => {
+    document.body.classList.add('printing-thermal-mode');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-thermal-mode');
+    }, 1000);
+  };
+
+  const handlePrintWarranty = () => {
+    document.body.classList.remove('printing-thermal-mode');
     window.print();
   };
 
@@ -604,7 +613,7 @@ export default function DashboardPage() {
                 Cancelar
               </button>
               <button
-                onClick={handlePrint}
+                onClick={handlePrintThermal}
                 className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
               >
                 Imprimir Etiqueta (80x50mm)
@@ -643,10 +652,10 @@ export default function DashboardPage() {
                 Fechar
               </button>
               <button
-                onClick={handlePrint}
+                onClick={handlePrintWarranty}
                 className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
               >
-                Imprimir A4
+                Imprimir Termo A4
               </button>
             </div>
           </div>

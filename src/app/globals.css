@@ -49,6 +49,11 @@ body {
     margin: 8mm 10mm !important;
   }
 
+  body.printing-thermal-mode @page {
+    size: 80mm 50mm;
+    margin: 0 !important;
+  }
+
   html, body {
     margin: 0 !important;
     padding: 0 !important;
@@ -57,15 +62,14 @@ body {
     width: 100% !important;
     height: 100% !important;
     overflow: visible !important;
-    visibility: hidden !important;
   }
 
-  .no-print, nav, header, button, .print-hide, .apple-card:not(:has(.a4-warranty-term)) {
+  .no-print, nav, header, button, .print-hide {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* Thermal Label Mode (80mm x 50mm Landscape) */
+  /* Thermal Label Mode (80mm x 50mm) */
   .printable-thermal-area,
   .printable-thermal-area * {
     visibility: visible !important;
@@ -76,15 +80,20 @@ body {
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
-    height: 48.5mm !important;
+    height: 50mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
-    z-index: 99999 !important;
+    z-index: 999999 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     overflow: hidden !important;
+  }
+
+  .thermal-label-container,
+  .thermal-label-container * {
+    visibility: visible !important;
   }
 
   .thermal-label-container {
@@ -121,7 +130,7 @@ body {
     background: #ffffff !important;
     color: #000000 !important;
     page-break-inside: avoid !important;
-    z-index: 99999 !important;
+    z-index: 999999 !important;
   }
 }
 

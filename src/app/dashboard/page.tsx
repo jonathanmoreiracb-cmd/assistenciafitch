@@ -626,18 +626,27 @@ export default function DashboardPage() {
               <ThermalLabel os={printThermalOS} />
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={handleToggleRotate}
-                className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
-                  isRotated90
-                    ? 'bg-amber-500 text-white border-amber-600'
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                🔄 {isRotated90 ? 'Giro 90° Ativado' : 'Girar Etiqueta 90°'}
-              </button>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 flex-wrap gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleToggleRotate}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                    isRotated90
+                      ? 'bg-amber-500 text-white border-amber-600'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  🔄 {isRotated90 ? 'Giro 90° Ativado' : 'Girar 90°'}
+                </button>
+                <Link
+                  href={`/print/label/${printThermalOS.id}`}
+                  target="_blank"
+                  className="px-3 py-1.5 text-xs font-bold rounded-full border border-blue-200 bg-blue-50 text-[#0071e3] hover:bg-blue-100 transition-all flex items-center gap-1"
+                >
+                  🔍 Modo Escala & Zoom
+                </Link>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => {

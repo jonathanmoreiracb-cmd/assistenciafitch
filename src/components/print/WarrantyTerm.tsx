@@ -192,6 +192,11 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           </p>
           <p className="text-xs text-slate-900 font-bold">
             Vendedor: {os.vendedor_nome || 'Fitch Tecnologia'} | Garantia da Loja: {os.garantia_dias} dias
+            {os.numero_venda_syscor && (
+              <span className="ml-1 text-slate-950 font-black">
+                | Venda Syscor: #{os.numero_venda_syscor} ({os.forma_pagamento || 'Pix'})
+              </span>
+            )}
           </p>
         </div>
         <div className="text-right">

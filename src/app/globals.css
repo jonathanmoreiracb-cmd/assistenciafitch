@@ -46,16 +46,18 @@ body {
     color-adjust: exact !important;
   }
 
-  /* Default A4 Page */
-  @page {
+  /* Named & Fallback Page Sizes */
+  @page thermal-page {
+    size: 80mm 50mm;
+    margin: 0 !important;
+  }
+
+  @page a4-page {
     size: A4 portrait;
     margin: 8mm 10mm !important;
   }
 
-  /* Thermal Page Size: 80mm x 50mm */
-  body.printing-thermal-mode @page,
-  body.is-printing-thermal @page {
-    size: 80mm 50mm !important;
+  @page {
     margin: 0 !important;
   }
 
@@ -65,9 +67,14 @@ body {
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+  }
+
+  body.printing-thermal-mode,
+  body.is-printing-thermal {
     width: 80mm !important;
     height: 50mm !important;
     overflow: hidden !important;
+    page: thermal-page !important;
   }
 
   /* HIDE ALL PAGE CONTENT AND ALL MODAL BACKDROPS/CONTAINERS BY DEFAULT */

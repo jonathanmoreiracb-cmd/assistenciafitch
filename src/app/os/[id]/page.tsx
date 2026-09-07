@@ -346,10 +346,21 @@ export default function OSDetalhesPage() {
     document.body.classList.remove('is-printing-warranty');
     document.body.classList.add('printing-thermal-mode');
     document.body.classList.add('is-printing-thermal');
+
+    let styleEl = document.getElementById('thermal-page-override');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'thermal-page-override';
+      styleEl.innerHTML = `@page { size: 80mm 50mm !important; margin: 0 !important; }`;
+      document.head.appendChild(styleEl);
+    }
+
     window.print();
     setTimeout(() => {
       document.body.classList.remove('printing-thermal-mode');
       document.body.classList.remove('is-printing-thermal');
+      const el = document.getElementById('thermal-page-override');
+      if (el) el.remove();
     }, 1000);
   };
 
@@ -799,15 +810,65 @@ export default function OSDetalhesPage() {
               {os.numero_venda_syscor && (
                 <div className="relative">
                   <span className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
-                  <div className="bg-emerald-50/80 p-3.5 rounded-2xl border border-emerald-200/80 space-y-1">
-                    <div className="flex items-center justify-between flex-wrap gap-1">
-                      <span className="font-extrabold text-xs text-emerald-950">3. Baixa de Pagamento & Saída do Estoque</span>
-                      <span className="text-[10px] font-mono font-bold text-emerald-800">
+                  <div className="bg-emerald-50/90 p-4 rounded-2xl border border-emerald-200/90 space-y-2.5 shadow-xs">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <span className="font-black text-xs text-emerald-950 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        3. Baixa de Pagamento & Venda Syscor Registrada
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
                         {os.data_baixa ? new Date(os.data_baixa).toLocaleString('pt-BR') : 'Baixado'}
                       </span>
                     </div>
-                    <p className="text-xs text-emerald-900">
-                      Venda registrada no Syscor: <strong>#{os.numero_venda_syscor}</strong> ({os.forma_pagamento || 'Pix'}) • Saída de estoque confirmada.
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white/90 p-3 rounded-xl border border-emerald-200/80 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">Nº Venda Syscor</span>
+                        <strong className="text-emerald-950 font-mono text-sm">#{os.numero_venda_syscor}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">Forma de Pagamento</span>
+                        <strong className="text-emerald-950">{os.forma_pagamento || 'Não informada'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">Valor Total Cobrado</span>
+                        <strong className="text-emerald-700 font-mono text-sm">R$ {Number(os.valor_total || 0).toFixed(2)}</strong>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1.5 border-t border-emerald-200/60">
+                      <div className="flex items-center gap-1.5">
+                        <PackageCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>
+                          <strong>Estoque:</strong> {os.baixa_estoque_realizada ? 'Saída automática de peças confirmada.' : 'Pendente de baixa.'}
+                        </span>
+                      </div>
+                      {os.pecas && os.pecas.length > 0 && (
+                        <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/60 px-2 py-0.5 rounded-md border border-emerald-200">
+                          Peças: {os.pecas.map((p) => `${p.descricao} (${p.quantidade} un)`).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Evento 4: Devolução sem Cobrança */}
+              {os.motivo_encerramento && !os.numero_venda_syscor && (
+                <div className="relative">
+                  <span className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-amber-500 ring-4 ring-amber-50"></span>
+                  <div className="bg-amber-50/90 p-4 rounded-2xl border border-amber-200/90 space-y-1.5 shadow-xs">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <span className="font-extrabold text-xs text-amber-950 flex items-center gap-1.5">
+                        <XCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        3. Encerramento por Devolução (Sem Cobrança)
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full border border-amber-300">
+                        {os.data_baixa ? new Date(os.data_baixa).toLocaleString('pt-BR') : 'Encerrado'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-900">
+                      Motivo do encerramento sem cobrança: <strong className="text-amber-950">{os.motivo_encerramento}</strong>.
                     </p>
                   </div>
                 </div>

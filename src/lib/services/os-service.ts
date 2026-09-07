@@ -174,18 +174,28 @@ export const OSService = {
   },
 
   // 2. ORDENS DE SERVIÇO
-  async getOrdensServico(): Promise<OrdemServico[]> {
+  async getOrdensServico(options?: { apenasAtivas?: boolean; apenasEncerradas?: boolean }): Promise<OrdemServico[]> {
+    const apenasAtivas = options?.apenasAtivas ?? false;
+    const apenasEncerradas = options?.apenasEncerradas ?? false;
+
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('ordens_servico')
           .select(`
             *,
             cliente:clientes(*),
             pecas:os_itens_pecas(*)
-          `)
-          .order('numero_os', { ascending: false });
+          `);
+
+        if (apenasAtivas) {
+          query = query.not('status', 'in', '("entregue","cancelado")');
+        } else if (apenasEncerradas) {
+          query = query.in('status', ['entregue', 'cancelado']);
+        }
+
+        const { data, error } = await query.order('numero_os', { ascending: false });
 
         if (error) {
           console.error('Supabase getOrdensServico error:', error);
@@ -196,7 +206,23 @@ export const OSService = {
         console.error(e);
       }
     }
+
+    if (apenasAtivas) {
+      return localOSStore.filter((o) => o.status !== 'entregue' && o.status !== 'cancelado');
+    }
+    if (apenasEncerradas) {
+      return localOSStore.filter((o) => o.status === 'entregue' || o.status === 'cancelado');
+    }
+
     return localOSStore;
+  },
+
+  async getOrdensServicoAtivas(): Promise<OrdemServico[]> {
+    return this.getOrdensServico({ apenasAtivas: true });
+  },
+
+  async getOrdensServicoEncerradas(): Promise<OrdemServico[]> {
+    return this.getOrdensServico({ apenasEncerradas: true });
   },
 
   async getOrdemServicoById(id: string): Promise<OrdemServico | null> {
@@ -687,26 +713,43 @@ export const OSService = {
 
   // 3. METRICS
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const ordens = await this.getOrdensServico();
+    const ordensAtivas = await this.getOrdensServicoAtivas();
 
-    const totalAtivas = ordens.filter(
-      (o) => o.status !== 'entregue' && o.status !== 'cancelado'
-    ).length;
-
-    const prontosEntrega = ordens.filter((o) => o.status === 'pronto_para_retirada').length;
+    const totalAtivas = ordensAtivas.length;
+    const prontosEntrega = ordensAtivas.filter((o) => o.status === 'pronto_para_retirada').length;
 
     const mesAtual = new Date().getMonth();
     const anoAtual = new Date().getFullYear();
 
-    const faturamentoMes = ordens
-      .filter((o) => {
-        if (o.status !== 'pronto_para_retirada' && o.status !== 'entregue') return false;
-        const d = new Date(o.data_conclusao || o.data_entrada);
-        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-      })
-      .reduce((acc, o) => acc + (o.valor_total || 0), 0);
+    let faturamentoMes = 0;
+    const supabase = createClient();
 
-    const emSpCount = ordens.filter(
+    if (supabase) {
+      try {
+        const primeiroDiaMes = new Date(anoAtual, mesAtual, 1).toISOString();
+        const { data } = await supabase
+          .from('ordens_servico')
+          .select('valor_total')
+          .in('status', ['pronto_para_retirada', 'entregue'])
+          .gte('created_at', primeiroDiaMes);
+
+        if (data) {
+          faturamentoMes = data.reduce((acc: number, item: any) => acc + Number(item.valor_total || 0), 0);
+        }
+      } catch (e) {
+        console.error('Error fetching faturamento metrics:', e);
+      }
+    } else {
+      faturamentoMes = localOSStore
+        .filter((o) => {
+          if (o.status !== 'pronto_para_retirada' && o.status !== 'entregue') return false;
+          const d = new Date(o.data_conclusao || o.data_entrada);
+          return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+        })
+        .reduce((acc, o) => acc + (o.valor_total || 0), 0);
+    }
+
+    const emSpCount = ordensAtivas.filter(
       (o) =>
         o.localizacao_atual === 'em_transito_ida_sp' ||
         o.localizacao_atual === 'laboratorio_sp' ||
@@ -714,7 +757,7 @@ export const OSService = {
     ).length;
 
     const hoje = new Date();
-    const spVencidasCount = ordens.filter((o) => {
+    const spVencidasCount = ordensAtivas.filter((o) => {
       if (
         o.localizacao_atual !== 'laboratorio_sp' &&
         o.localizacao_atual !== 'em_transito_ida_sp'
@@ -726,7 +769,7 @@ export const OSService = {
       return prev < hoje;
     }).length;
 
-    const garantiasLojaCount = ordens.filter(
+    const garantiasLojaCount = ordensAtivas.filter(
       (o) => o.tipo_cobertura === 'Garantia da Loja' || o.tipo_cobertura === 'Garantia Android'
     ).length;
 

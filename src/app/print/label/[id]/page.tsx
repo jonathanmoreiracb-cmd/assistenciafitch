@@ -21,9 +21,20 @@ export default function DirectLabelPrintPage() {
     // Add thermal print classes to body so globals.css print rules keep label visible
     document.body.classList.add('is-printing-thermal');
     document.body.classList.add('printing-thermal-mode');
+    
+    let styleEl = document.getElementById('thermal-page-override');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'thermal-page-override';
+      styleEl.innerHTML = `@page { size: 80mm 50mm !important; margin: 0 !important; }`;
+      document.head.appendChild(styleEl);
+    }
+
     return () => {
       document.body.classList.remove('is-printing-thermal');
       document.body.classList.remove('printing-thermal-mode');
+      const el = document.getElementById('thermal-page-override');
+      if (el) el.remove();
     };
   }, []);
 

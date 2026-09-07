@@ -38,18 +38,28 @@ export default function NovaOSPage() {
   const currentUser = AuthService.getCurrentUser();
   const vendedores = AuthService.getVendedores();
 
+  const optionsVendedores = React.useMemo(() => {
+    const list = [...vendedores];
+    if (currentUser && !list.some((v) => v.id === currentUser.id)) {
+      list.unshift(currentUser);
+    }
+    return list;
+  }, [vendedores, currentUser]);
+
   const [vendedorSelecionado, setVendedorSelecionado] = useState<Usuario>(() => {
-    return (
-      (currentUser && vendedores.find((v) => v.id === currentUser.id)) ||
-      vendedores[0] || {
-        id: '11111111-1111-1111-1111-111111111111',
-        nome: 'Jonathan Moreira',
-        email: 'jonathan@fitch.com',
-        cargo: 'gerente',
-        meta_mensal_os: 0,
-        percentual_comissao: 0,
-      }
-    );
+    if (currentUser) {
+      const foundInList = optionsVendedores.find((v) => v.id === currentUser.id);
+      if (foundInList) return foundInList;
+      return currentUser;
+    }
+    return optionsVendedores[0] || {
+      id: '11111111-1111-1111-1111-111111111111',
+      nome: 'Jonathan Moreira',
+      email: 'jonathan@fitch.com',
+      cargo: 'gerente',
+      meta_mensal_os: 0,
+      percentual_comissao: 0,
+    };
   });
 
   // Step 1 State: Customer
@@ -212,12 +222,12 @@ export default function NovaOSPage() {
           <select
             value={vendedorSelecionado.id}
             onChange={(e) => {
-              const v = vendedores.find((v) => v.id === e.target.value);
+              const v = optionsVendedores.find((v) => v.id === e.target.value);
               if (v) setVendedorSelecionado(v);
             }}
             className="bg-slate-100 border border-slate-200 rounded-full px-3 py-1 text-xs text-[#0071e3] font-bold focus:outline-none"
           >
-            {vendedores.map((v) => (
+            {optionsVendedores.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.nome}
               </option>

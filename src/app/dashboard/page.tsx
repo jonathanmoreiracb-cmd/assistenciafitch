@@ -27,11 +27,14 @@ import { toast } from 'sonner';
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
+  const [ordensEncerradas, setOrdensEncerradas] = useState<OrdemServico[]>([]);
+  const [loadingEncerradas, setLoadingEncerradas] = useState(false);
+  const [hasLoadedEncerradas, setHasLoadedEncerradas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(() => AuthService.getCurrentUser());
 
   // Filters
-  const [activeTab, setActiveTab] = useState<'todas' | 'bancada' | 'sp' | 'garantia'>('todas');
+  const [activeTab, setActiveTab] = useState<'em_andamento' | 'bancada' | 'sp' | 'garantia' | 'encerradas'>('em_andamento');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
@@ -52,19 +55,46 @@ export default function DashboardPage() {
     });
   };
 
+  const fetchEncerradas = async () => {
+    setLoadingEncerradas(true);
+    try {
+      const list = await OSService.getOrdensServicoEncerradas();
+      setOrdensEncerradas(list);
+      setHasLoadedEncerradas(true);
+    } catch (e) {
+      toast.error('Erro ao carregar O.S. encerradas.');
+    } finally {
+      setLoadingEncerradas(false);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [m, list] = await Promise.all([
+      const promises: [Promise<DashboardMetrics>, Promise<OrdemServico[]>, Promise<OrdemServico[]>?] = [
         OSService.getDashboardMetrics(),
-        OSService.getOrdensServico(),
-      ]);
+        OSService.getOrdensServicoAtivas(),
+      ];
+      if (hasLoadedEncerradas) {
+        promises.push(OSService.getOrdensServicoEncerradas());
+      }
+      const [m, listAtivas, listEncerradas] = await Promise.all(promises);
       setMetrics(m);
-      setOrdens(list);
+      setOrdens(listAtivas);
+      if (listEncerradas) {
+        setOrdensEncerradas(listEncerradas);
+      }
     } catch (e) {
       toast.error('Erro ao carregar dados.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab: 'em_andamento' | 'bancada' | 'sp' | 'garantia' | 'encerradas') => {
+    setActiveTab(tab);
+    if (tab === 'encerradas' && !hasLoadedEncerradas) {
+      fetchEncerradas();
     }
   };
 
@@ -79,10 +109,21 @@ export default function DashboardPage() {
     document.body.classList.remove('is-printing-warranty');
     document.body.classList.add('printing-thermal-mode');
     document.body.classList.add('is-printing-thermal');
+
+    let styleEl = document.getElementById('thermal-page-override');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'thermal-page-override';
+      styleEl.innerHTML = `@page { size: 80mm 50mm !important; margin: 0 !important; }`;
+      document.head.appendChild(styleEl);
+    }
+
     window.print();
     setTimeout(() => {
       document.body.classList.remove('printing-thermal-mode');
       document.body.classList.remove('is-printing-thermal');
+      const el = document.getElementById('thermal-page-override');
+      if (el) el.remove();
     }, 1000);
   };
 
@@ -112,7 +153,9 @@ export default function DashboardPage() {
   };
 
   // Filtered List logic (with RBAC enforcement)
-  const ordensFiltradas = ordens.filter((os) => {
+  const ordensBase = activeTab === 'encerradas' ? ordensEncerradas : ordens;
+
+  const ordensFiltradas = ordensBase.filter((os) => {
     if (currentUser?.cargo === 'vendedor') {
       const isOwner = os.vendedor_id === currentUser.id || os.vendedor_nome === currentUser.nome;
       if (!isOwner) return false;
@@ -124,8 +167,8 @@ export default function DashboardPage() {
       os.numero_os.toString().includes(query) ||
       (os.cliente?.nome && os.cliente.nome.toLowerCase().includes(query)) ||
       (os.numero_venda_syscor && os.numero_venda_syscor.toLowerCase().includes(query)) ||
-      os.imei_ou_serial.toLowerCase().includes(query) ||
-      os.modelo.toLowerCase().includes(query);
+      (os.imei_ou_serial && os.imei_ou_serial.toLowerCase().includes(query)) ||
+      (os.modelo && os.modelo.toLowerCase().includes(query));
 
     let matchTab = true;
     if (activeTab === 'bancada') {
@@ -140,6 +183,10 @@ export default function DashboardPage() {
         os.tipo_cobertura === 'Garantia da Loja' ||
         os.tipo_cobertura === 'Garantia Android' ||
         os.tipo_cobertura === 'Revisão / Upgrade';
+    } else if (activeTab === 'encerradas') {
+      matchTab = os.status === 'entregue' || os.status === 'cancelado';
+    } else if (activeTab === 'em_andamento') {
+      matchTab = os.status !== 'entregue' && os.status !== 'cancelado';
     }
 
     let matchStatus = true;
@@ -289,18 +336,18 @@ export default function DashboardPage() {
           {/* Segmented Control Filter Tabs (Scrollable on Mobile) */}
           <div className="bg-slate-100/80 p-1 rounded-full flex items-center gap-1 self-start max-w-full overflow-x-auto no-scrollbar">
             <button
-              onClick={() => setActiveTab('todas')}
+              onClick={() => handleTabChange('em_andamento')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                activeTab === 'todas'
+                activeTab === 'em_andamento'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Todas as O.S.
+              Em Andamento
             </button>
 
             <button
-              onClick={() => setActiveTab('bancada')}
+              onClick={() => handleTabChange('bancada')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'bancada'
                   ? 'bg-white text-slate-900 shadow-xs'
@@ -311,7 +358,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('sp')}
+              onClick={() => handleTabChange('sp')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'sp'
                   ? 'bg-white text-slate-900 shadow-xs'
@@ -322,7 +369,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('garantia')}
+              onClick={() => handleTabChange('garantia')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeTab === 'garantia'
                   ? 'bg-white text-slate-900 shadow-xs'
@@ -330,6 +377,17 @@ export default function DashboardPage() {
               }`}
             >
               Garantias Loja
+            </button>
+
+            <button
+              onClick={() => handleTabChange('encerradas')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'encerradas'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Encerradas / Histórico
             </button>
           </div>
 
@@ -348,7 +406,7 @@ export default function DashboardPage() {
 
         {/* MOBILE CARD LIST (VISIBLE ONLY ON MOBILE) */}
         <div className="block md:hidden space-y-3">
-          {loading ? (
+          {loading || (activeTab === 'encerradas' && loadingEncerradas) ? (
             <div className="py-8 text-center text-slate-400 text-xs">
               Carregando Ordens de Serviço...
             </div>
@@ -476,7 +534,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
+              {loading || (activeTab === 'encerradas' && loadingEncerradas) ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400">
                     Carregando Ordens de Serviço...
@@ -527,7 +585,7 @@ export default function DashboardPage() {
                       </td>
 
                       <td className="py-3.5 px-3 text-slate-600">
-                        {os.vendedor_nome || 'Pedro Vendedor'}
+                        {os.vendedor_nome || 'Atendente'}
                       </td>
 
                       <td className="py-3.5 px-3">

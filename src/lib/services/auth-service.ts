@@ -319,7 +319,12 @@ export const AuthService = {
 
   getVendedores(): Usuario[] {
     syncEssentialUsers();
-    return usuariosStore.filter((u) => u.cargo === 'vendedor');
+    return usuariosStore.filter((u) => u.cargo === 'vendedor' || u.cargo === 'gerente');
+  },
+
+  getAtendentes(): Usuario[] {
+    syncEssentialUsers();
+    return usuariosStore.filter((u) => u.cargo === 'vendedor' || u.cargo === 'gerente');
   },
 
   getTecnicos(): Usuario[] {

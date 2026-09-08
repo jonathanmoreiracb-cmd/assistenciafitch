@@ -77,44 +77,36 @@ body {
     display: none !important;
   }
 
-  /* Hide background page content when printing modal */
-  main > div:not(.fixed),
-  main > section:not(.fixed),
-  main > form:not(.fixed) {
-    display: none !important;
-  }
-
-  /* Strip overlay/card styling from modal containers in print mode */
-  .fixed.backdrop-blur-xs,
-  .fixed.bg-black\/50,
-  .fixed.inset-0 {
+  /* When printing A4 Warranty Term, ensure all parent containers are visible and unconstrained */
+  body.is-printing-warranty,
+  body.is-printing-warranty html,
+  body.is-printing-warranty main,
+  body.is-printing-warranty main > div,
+  body.is-printing-warranty div.fixed,
+  body.is-printing-warranty div.apple-card,
+  body.is-printing-warranty div.overflow-y-auto {
     position: static !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    overflow: visible !important;
     display: block !important;
-  }
-
-  .apple-card.shadow-2xl,
-  .apple-card.shadow-2xl > div {
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
+    visibility: visible !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
     margin: 0 !important;
-    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: none !important;
     max-height: none !important;
+    width: 100% !important;
+    height: auto !important;
     overflow: visible !important;
   }
 
-  /* Hide modal header bar and modal action footer buttons when printing */
-  .fixed .border-b,
-  .fixed .border-t {
+  /* Hide background cards/tables that do NOT contain the Warranty Term */
+  body.is-printing-warranty .apple-card:not(:has(.a4-warranty-term)),
+  body.is-printing-warranty .grid:not(:has(.a4-warranty-term)),
+  body.is-printing-warranty div.space-y-6 > div:not(:has(.a4-warranty-term)):not(.fixed),
+  body.is-printing-warranty .fixed .border-b,
+  body.is-printing-warranty .fixed .border-t {
     display: none !important;
   }
 

@@ -17,6 +17,9 @@ import {
   Printer,
   Trash2,
   ExternalLink,
+  Filter,
+  X,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { AuthService } from '@/lib/services/auth-service';
@@ -38,6 +41,9 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'em_andamento' | 'bancada' | 'sp' | 'garantia' | 'encerradas'>('em_andamento');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [vendedorFilter, setVendedorFilter] = useState<string>('todos');
+  const [coberturaFilter, setCoberturaFilter] = useState<string>('todos');
+  const [localizacaoFilter, setLocalizacaoFilter] = useState<string>('todos');
 
   // Print Modals
   const [printThermalOS, setPrintThermalOS] = useState<OrdemServico | null>(null);
@@ -153,6 +159,35 @@ export default function DashboardPage() {
     return `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`;
   };
 
+  // Sellers list: combine AuthService atendentes and any seller names in orders
+  const vendedoresList = React.useMemo(() => {
+    const atendentes = AuthService.getAtendentes();
+    const namesSet = new Set<string>();
+    atendentes.forEach((a) => namesSet.add(a.nome));
+    ordens.forEach((o) => {
+      if (o.vendedor_nome) namesSet.add(o.vendedor_nome);
+    });
+    ordensEncerradas.forEach((o) => {
+      if (o.vendedor_nome) namesSet.add(o.vendedor_nome);
+    });
+    return Array.from(namesSet).sort();
+  }, [ordens, ordensEncerradas]);
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('todos');
+    setVendedorFilter('todos');
+    setCoberturaFilter('todos');
+    setLocalizacaoFilter('todos');
+  };
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    statusFilter !== 'todos' ||
+    vendedorFilter !== 'todos' ||
+    coberturaFilter !== 'todos' ||
+    localizacaoFilter !== 'todos';
+
   // Filtered List logic (with RBAC enforcement)
   const ordensBase = activeTab === 'encerradas' ? ordensEncerradas : ordens;
 
@@ -167,9 +202,14 @@ export default function DashboardPage() {
       !query ||
       os.numero_os.toString().includes(query) ||
       (os.cliente?.nome && os.cliente.nome.toLowerCase().includes(query)) ||
+      (os.cliente?.cpf && os.cliente.cpf.toLowerCase().includes(query)) ||
+      (os.cliente?.telefone && os.cliente.telefone.toLowerCase().includes(query)) ||
       (os.numero_venda_syscor && os.numero_venda_syscor.toLowerCase().includes(query)) ||
       (os.imei_ou_serial && os.imei_ou_serial.toLowerCase().includes(query)) ||
-      (os.modelo && os.modelo.toLowerCase().includes(query));
+      (os.modelo && os.modelo.toLowerCase().includes(query)) ||
+      (os.tipo_dispositivo && os.tipo_dispositivo.toLowerCase().includes(query)) ||
+      (os.vendedor_nome && os.vendedor_nome.toLowerCase().includes(query)) ||
+      (os.defeito_reclamado && os.defeito_reclamado.toLowerCase().includes(query));
 
     let matchTab = true;
     if (activeTab === 'bancada') {
@@ -195,7 +235,22 @@ export default function DashboardPage() {
       matchStatus = os.status === statusFilter;
     }
 
-    return matchQuery && matchTab && matchStatus;
+    let matchVendedor = true;
+    if (vendedorFilter !== 'todos') {
+      matchVendedor = os.vendedor_nome === vendedorFilter || os.vendedor_id === vendedorFilter;
+    }
+
+    let matchCobertura = true;
+    if (coberturaFilter !== 'todos') {
+      matchCobertura = os.tipo_cobertura === coberturaFilter;
+    }
+
+    let matchLocalizacao = true;
+    if (localizacaoFilter !== 'todos') {
+      matchLocalizacao = os.localizacao_atual === localizacaoFilter;
+    }
+
+    return matchQuery && matchTab && matchStatus && matchVendedor && matchCobertura && matchLocalizacao;
   });
 
   const handleDeletarOS = async (targetOs: OrdemServico) => {
@@ -401,8 +456,120 @@ export default function DashboardPage() {
               placeholder="Buscar O.S., cliente ou IMEI..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100/70 border border-slate-200/80 rounded-full pl-9 pr-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071e3]/30"
+              className="w-full bg-slate-100/70 border border-slate-200/80 rounded-full pl-9 pr-8 py-1.5 text-xs text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071e3]/30"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                title="Limpar busca"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* FILTERS TOOLBAR */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[11px] mr-0.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#0071e3]" />
+              <span>Filtros:</span>
+            </div>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`border rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+                statusFilter !== 'todos'
+                  ? 'bg-blue-50 border-[#0071e3] text-[#0071e3] shadow-xs'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <option value="todos">Status: Todos</option>
+              <option value="aguardando_analise">Aguardando Análise</option>
+              <option value="orcamento_gerado">Orçamento Gerado</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="aguardando_peca">Aguardando Peça</option>
+              <option value="em_reparo">Em Reparo</option>
+              <option value="pronto_para_retirada">Pronto para Retirada</option>
+              <option value="entregue">Entregue</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+
+            {/* Vendedor Filter */}
+            {currentUser?.cargo !== 'vendedor' && (
+              <select
+                value={vendedorFilter}
+                onChange={(e) => setVendedorFilter(e.target.value)}
+                className={`border rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+                  vendedorFilter !== 'todos'
+                    ? 'bg-blue-50 border-[#0071e3] text-[#0071e3] shadow-xs'
+                    : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <option value="todos">Vendedor: Todos</option>
+                {vendedoresList.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Tipo de Cobertura / Serviço */}
+            <select
+              value={coberturaFilter}
+              onChange={(e) => setCoberturaFilter(e.target.value)}
+              className={`border rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+                coberturaFilter !== 'todos'
+                  ? 'bg-blue-50 border-[#0071e3] text-[#0071e3] shadow-xs'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <option value="todos">Serviço: Todos</option>
+              <option value="Particular">Particular</option>
+              <option value="Garantia da Loja">Garantia Seminovo (180d)</option>
+              <option value="Garantia Android">Garantia Android (90d)</option>
+              <option value="Revisão / Upgrade">Revisão / Trade-in</option>
+            </select>
+
+            {/* Localização Filter */}
+            <select
+              value={localizacaoFilter}
+              onChange={(e) => setLocalizacaoFilter(e.target.value)}
+              className={`border rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+                localizacaoFilter !== 'todos'
+                  ? 'bg-blue-50 border-[#0071e3] text-[#0071e3] shadow-xs'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <option value="todos">Localização: Todas</option>
+              <option value="bancada_local">Bancada Local</option>
+              <option value="em_transito_ida_sp">Em Trânsito p/ SP</option>
+              <option value="laboratorio_sp">Laboratório SP</option>
+              <option value="em_transito_retorno_sp">Retorno de SP</option>
+              <option value="pronto_na_loja">Pronto na Loja</option>
+            </select>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-full border border-rose-200 transition-colors shadow-2xs"
+                title="Limpar todos os filtros"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Limpar Filtros</span>
+              </button>
+            )}
+          </div>
+
+          {/* Result Counter */}
+          <div className="text-[11px] font-medium text-slate-400">
+            Exibindo <strong className="text-slate-900 font-bold">{ordensFiltradas.length}</strong> de <strong className="text-slate-900 font-bold">{ordensBase.length}</strong> O.S.
           </div>
         </div>
 

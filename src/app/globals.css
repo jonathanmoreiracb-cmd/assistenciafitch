@@ -72,42 +72,21 @@ body {
     overflow: visible !important;
   }
 
-  /* Standard UI Elements to hide when printing */
-  nav, header, footer, button, .no-print, .print-hide, #user-role-bar {
+  /* Standard UI Elements to ALWAYS hide when printing */
+  nav,
+  header,
+  footer,
+  button,
+  .no-print,
+  .print-hide,
+  #user-role-bar,
+  .fixed.bottom-0 {
     display: none !important;
-  }
-
-  /* When printing A4 Warranty Term, ensure all parent containers are visible and unconstrained */
-  body.is-printing-warranty,
-  body.is-printing-warranty html,
-  body.is-printing-warranty main,
-  body.is-printing-warranty main > div,
-  body.is-printing-warranty div.fixed,
-  body.is-printing-warranty div.apple-card,
-  body.is-printing-warranty div.overflow-y-auto {
-    position: static !important;
-    display: block !important;
-    visibility: visible !important;
-    background: #ffffff !important;
-    backdrop-filter: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    max-width: none !important;
-    max-height: none !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Hide background cards/tables that do NOT contain the Warranty Term */
-  body.is-printing-warranty .apple-card:not(:has(.a4-warranty-term)),
-  body.is-printing-warranty .grid:not(:has(.a4-warranty-term)),
-  body.is-printing-warranty div.space-y-6 > div:not(:has(.a4-warranty-term)):not(.fixed),
-  body.is-printing-warranty .fixed .border-b,
-  body.is-printing-warranty .fixed .border-t {
-    display: none !important;
+    overflow: hidden !important;
   }
 
   /* ==============================================================
@@ -178,29 +157,94 @@ body {
      ============================================================== */
   body.is-printing-warranty {
     page: a4-page !important;
+    background: #ffffff !important;
   }
 
-  .a4-warranty-term,
-  .a4-warranty-term * {
+  /* Hide background content when printing warranty */
+  body.is-printing-warranty .dashboard-content-area,
+  body.is-printing-warranty .os-detail-content-area {
+    display: none !important;
+  }
+
+  /* Reset modal containers so the Term fills the printed page cleanly */
+  body.is-printing-warranty .modal-warranty-overlay {
+    position: static !important;
+    display: block !important;
     visibility: visible !important;
-    border-color: #000000 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
+  body.is-printing-warranty .modal-warranty-container {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.is-printing-warranty .modal-warranty-scroll {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: visible !important;
+    max-height: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* The Printable Document */
   .a4-warranty-term {
     position: relative !important;
-    left: 0 !important;
-    top: 0 !important;
     width: 100% !important;
     max-width: 190mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
-    z-index: 99999999 !important;
+    visibility: visible !important;
+    display: block !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
+  }
+
+  .a4-warranty-term * {
+    visibility: visible !important;
+    border-color: #000000 !important;
+  }
+
+  /* Explicitly preserve all inner layout elements inside WarrantyTerm */
+  .a4-warranty-term .grid,
+  .a4-warranty-term div.grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+
+  .a4-warranty-term .flex,
+  .a4-warranty-term div.flex {
+    display: flex !important;
+    visibility: visible !important;
   }
 }
 

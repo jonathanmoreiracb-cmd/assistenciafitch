@@ -51,7 +51,12 @@ export const Navbar: React.FC = () => {
     router.push('/login');
   };
 
-  if (pathname.startsWith('/consulta/') || pathname === '/login' || pathname === '/') {
+  if (
+    pathname.startsWith('/consulta/') ||
+    pathname.startsWith('/print/') ||
+    pathname === '/login' ||
+    pathname === '/'
+  ) {
     return <Toaster position="top-right" theme="light" />;
   }
 

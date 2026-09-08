@@ -31,6 +31,7 @@ import {
   Eye,
   History,
   Image as ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -449,7 +450,8 @@ export default function OSDetalhesPage() {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Top Header Card */}
+      <div className="os-detail-content-area space-y-6">
+        {/* Top Header Card */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start lg:items-center gap-3 sm:gap-4">
           <Link
@@ -1192,6 +1194,7 @@ export default function OSDetalhesPage() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* EXIT CHECKLIST MODAL */}
       {showExitChecklistModal && (
@@ -1393,8 +1396,8 @@ export default function OSDetalhesPage() {
 
       {/* PRINT WARRANTY TERM MODAL */}
       {showWarrantyPrint && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="apple-card bg-white p-6 max-w-4xl w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 modal-warranty-overlay">
+          <div className="apple-card bg-white p-6 max-w-4xl w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl modal-warranty-container">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 no-print">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#0071e3]" />
@@ -1405,23 +1408,34 @@ export default function OSDetalhesPage() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-slate-50 p-4 rounded-2xl border border-slate-100 print:bg-white print:p-0 print:border-none print:overflow-visible">
+            <div className="flex-1 overflow-y-auto bg-slate-50 p-4 rounded-2xl border border-slate-100 modal-warranty-scroll">
               <WarrantyTerm os={os} />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 no-print">
-              <button
-                onClick={() => setShowWarrantyPrint(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100 no-print">
+              <Link
+                href={`/print/warranty/${os.id}`}
+                target="_blank"
+                className="px-3.5 py-2 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-[#0071e3] rounded-full border border-blue-200 flex items-center gap-1.5 transition-colors"
               >
-                Fechar
-              </button>
-              <button
-                onClick={handlePrintWarranty}
-                className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm"
-              >
-                Imprimir Termo A4
-              </button>
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Abrir em Nova Aba (A4)</span>
+              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowWarrantyPrint(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-full"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={handlePrintWarranty}
+                  className="px-5 py-2 text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full shadow-sm flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Imprimir Termo A4</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

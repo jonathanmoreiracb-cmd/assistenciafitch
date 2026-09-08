@@ -48,17 +48,18 @@ body {
 
   /* Named & Fallback Page Sizes */
   @page thermal-page {
-    size: 80mm 50mm;
+    size: 80mm 50mm !important;
     margin: 0 !important;
   }
 
   @page a4-page {
-    size: A4 portrait;
-    margin: 8mm 10mm !important;
+    size: A4 portrait !important;
+    margin: 5mm 8mm !important;
   }
 
   @page {
-    margin: 0 !important;
+    size: A4 portrait;
+    margin: 5mm 8mm !important;
   }
 
   /* Force Body & HTML to clean white background with no scrollbars */
@@ -67,6 +68,8 @@ body {
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   body.printing-thermal-mode,
@@ -77,15 +80,20 @@ body {
     page: thermal-page !important;
   }
 
-  /* HIDE ALL PAGE CONTENT AND ALL MODAL BACKDROPS/CONTAINERS BY DEFAULT */
-  body * {
-    visibility: hidden !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border-color: transparent !important;
+  body.is-printing-warranty {
+    page: a4-page !important;
   }
 
-  .no-print, nav, header, footer, button, .print-hide, [role="dialog"] {
+  /* HIDE ALL NON-PRINT ELEMENTS COMPLETELY WITH DISPLAY NONE TO PREVENT EXTRA PAGES */
+  nav, header, footer, button, .no-print, .print-hide, main, #user-role-bar {
+    display: none !important;
+  }
+
+  body.is-printing-warranty main,
+  body.is-printing-warranty nav,
+  body.is-printing-warranty header,
+  body.is-printing-warranty footer,
+  body.is-printing-warranty #user-role-bar {
     display: none !important;
   }
 
@@ -145,7 +153,7 @@ body {
   }
 
   /* ==============================================================
-     2) A4 WARRANTY TERM PRINT MODE
+     2) A4 WARRANTY TERM PRINT MODE (EXACT 1 PAGE FIT)
      ============================================================== */
   body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term,
   body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term * {
@@ -154,7 +162,7 @@ body {
   }
 
   body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
@@ -164,6 +172,10 @@ body {
     background: #ffffff !important;
     color: #000000 !important;
     z-index: 99999999 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 

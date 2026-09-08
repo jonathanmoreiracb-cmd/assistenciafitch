@@ -27,53 +27,53 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
     : `${os.tipo_dispositivo} ${os.modelo}`;
 
   return (
-    <div className="a4-warranty-term bg-white text-slate-950 p-6 sm:p-8 max-w-[210mm] mx-auto text-xs font-sans leading-relaxed border-2 border-slate-900 shadow-md print:shadow-none print:border-none print:p-0 print:m-0">
+    <div className="a4-warranty-term bg-white text-slate-950 p-6 sm:p-8 max-w-[210mm] mx-auto text-xs font-sans leading-relaxed border-2 border-slate-900 shadow-md print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-full print:leading-tight print:text-[10.5px]">
       {/* Header */}
-      <div className="flex items-start justify-between border-b-2 border-slate-950 pb-4 mb-4">
-        <div className="flex items-center gap-3.5">
-          <div className="bg-white p-2 rounded-xl flex items-center shrink-0 border-2 border-slate-900">
+      <div className="flex items-start justify-between border-b-2 border-slate-950 pb-4 mb-4 print:pb-2 print:mb-2">
+        <div className="flex items-center gap-3.5 print:gap-2.5">
+          <div className="bg-white p-2 rounded-xl flex items-center shrink-0 border-2 border-slate-900 print:p-1">
             <img
               src="/logo.png"
               alt="Fitch Tecnologia"
-              className="h-10 w-auto object-contain"
+              className="h-10 w-auto object-contain print:h-8"
             />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-950 uppercase">
+            <h1 className="text-xl font-black tracking-tight text-slate-950 uppercase print:text-lg">
               FITCH TECNOLOGIA
             </h1>
-            <p className="text-slate-900 font-extrabold text-xs">
+            <p className="text-slate-900 font-extrabold text-xs print:text-[11px]">
               Assistência Técnica Especializada Apple & Android
             </p>
-            <p className="text-slate-700 font-medium text-[10px] mt-0.5">
+            <p className="text-slate-700 font-medium text-[10px] mt-0.5 print:text-[9px]">
               Manutenção de iPhone e Android
             </p>
-            <p className="text-slate-700 font-semibold text-[10px]">
+            <p className="text-slate-700 font-semibold text-[10px] print:text-[9px]">
               Contato: +55 (24) 99330-7474 | gerenciafitch@gmail.com
             </p>
           </div>
         </div>
 
         <div className="text-right flex flex-col items-end shrink-0">
-          <span className="text-sm font-mono font-black uppercase bg-white text-slate-950 px-3.5 py-1 rounded-md border-2 border-slate-950 mb-1">
+          <span className="text-sm font-mono font-black uppercase bg-white text-slate-950 px-3.5 py-1 rounded-md border-2 border-slate-950 mb-1 print:px-2.5 print:py-0.5 print:text-xs">
             ORDEM DE SERVIÇO Nº #{os.numero_os}
           </span>
-          <p className="text-[11px] font-bold text-slate-900">
+          <p className="text-[11px] font-bold text-slate-900 print:text-[10px]">
             Data de Entrada: <strong className="text-slate-950">{dataEntradaFormatted}</strong>
           </p>
-          <p className="text-[11px] font-black text-slate-950 mt-1 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-md">
+          <p className="text-[11px] font-black text-slate-950 mt-1 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-md print:text-[10px] print:mt-0.5">
             VENDEDOR: {os.vendedor_nome || 'Loja / Atendente'}
           </p>
-          <span className="text-[10px] font-black text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-300 mt-1 uppercase">
+          <span className="text-[10px] font-black text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-300 mt-1 uppercase print:text-[9px] print:mt-0.5">
             Serviço: {os.tipo_cobertura === 'Garantia da Loja' ? 'Garantia de Seminovo (180 dias)' : os.tipo_cobertura === 'Garantia Android' ? 'Garantia Android Novo (90 dias)' : os.tipo_cobertura === 'Revisão / Upgrade' ? 'Revisão / Trade-in (Estoque Loja)' : 'Assistência Particular'}
           </span>
         </div>
       </div>
 
       {/* Customer & Device Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border-2 border-slate-900">
-        <div className="space-y-1.5 text-xs">
-          <h3 className="font-extrabold uppercase text-[10px] text-slate-900 border-b-2 border-slate-900 pb-1 mb-1.5 tracking-wider">
+      <div className="grid grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border-2 border-slate-900 print:gap-2.5 print:mb-2 print:p-2.5 print:bg-white print:rounded-lg print:border-slate-950">
+        <div className="space-y-1.5 text-xs print:space-y-1 print:text-[10.5px]">
+          <h3 className="font-extrabold uppercase text-[10px] text-slate-900 border-b-2 border-slate-900 pb-1 mb-1.5 tracking-wider print:text-[9px] print:pb-0.5 print:mb-1">
             DADOS DO CLIENTE & ATENDIMENTO
           </h3>
           <p><strong className="text-slate-900">Cliente:</strong> <span className="font-black text-slate-950">{os.cliente?.nome || 'N/A'}</span></p>
@@ -85,24 +85,24 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           {os.cliente?.email && (
             <p><strong className="text-slate-900">E-mail:</strong> <span className="font-semibold text-slate-950">{os.cliente.email}</span></p>
           )}
-          <div className="pt-1.5 border-t border-slate-300 mt-1.5 flex items-center justify-between">
-            <span className="text-slate-900 font-extrabold uppercase text-[10px]">Vendedor Abertura:</span>
-            <span className="font-black text-slate-950 bg-white px-2.5 py-0.5 border border-slate-400 rounded-md">
+          <div className="pt-1.5 border-t border-slate-300 mt-1.5 flex items-center justify-between print:pt-1 print:mt-1">
+            <span className="text-slate-900 font-extrabold uppercase text-[10px] print:text-[9px]">Vendedor Abertura:</span>
+            <span className="font-black text-slate-950 bg-white px-2.5 py-0.5 border border-slate-400 rounded-md print:px-2 print:py-0">
               👤 {os.vendedor_nome || 'Atendente Loja'}
             </span>
           </div>
           {Number(os.desconto_avaliacao_tradein) > 0 && (
-            <div className="mt-1 flex items-center justify-between bg-indigo-50 p-1.5 rounded-md border border-indigo-300">
-              <span className="text-indigo-950 font-extrabold uppercase text-[10px]">Margem Trade-in (Desconto):</span>
-              <span className="font-mono font-black text-indigo-950 text-xs">
+            <div className="mt-1 flex items-center justify-between bg-indigo-50 p-1.5 rounded-md border border-indigo-300 print:bg-white print:p-1">
+              <span className="text-indigo-950 font-extrabold uppercase text-[10px] print:text-[9px]">Margem Trade-in (Desconto):</span>
+              <span className="font-mono font-black text-indigo-950 text-xs print:text-[10px]">
                 R$ {Number(os.desconto_avaliacao_tradein).toFixed(2)}
               </span>
             </div>
           )}
         </div>
 
-        <div className="space-y-1.5 text-xs">
-          <h3 className="font-extrabold uppercase text-[10px] text-slate-900 border-b-2 border-slate-900 pb-1 mb-1.5 tracking-wider">
+        <div className="space-y-1.5 text-xs print:space-y-1 print:text-[10.5px]">
+          <h3 className="font-extrabold uppercase text-[10px] text-slate-900 border-b-2 border-slate-900 pb-1 mb-1.5 tracking-wider print:text-[9px] print:pb-0.5 print:mb-1">
             DADOS DO DISPOSITIVO
           </h3>
           <p>
@@ -111,7 +111,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           <p><strong className="text-slate-900">IMEI / Serial:</strong> <span className="font-mono font-bold text-slate-950">{os.imei_ou_serial}</span></p>
           <p>
             <strong className="text-slate-900">Senha de Tela:</strong>{' '}
-            <span className="font-mono font-black text-slate-950 bg-white px-2 py-0.5 border border-slate-400 rounded-md">
+            <span className="font-mono font-black text-slate-950 bg-white px-2 py-0.5 border border-slate-400 rounded-md print:px-1.5 print:py-0">
               {os.senha_aparelho || 'SEM SENHA'}
             </span>
           </p>
@@ -120,7 +120,7 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
             <strong className="text-slate-950">{os.buscar_iphone_desativado ? 'SIM (Confirmado)' : 'NÃO'}</strong>
           </p>
           {os.aparelho_nao_liga && (
-            <p className="font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md inline-block text-[10px] mt-1">
+            <p className="font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md inline-block text-[10px] mt-1 print:bg-white print:text-[9px] print:mt-0.5">
               ⚡ Aparelho Desligado / Não Liga na Entrada
             </p>
           )}
@@ -128,69 +128,69 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
       </div>
 
       {/* Problem & Diagnosis */}
-      <div className="space-y-3 mb-4">
-        <div className="border-2 border-slate-900 p-3.5 rounded-xl bg-white">
-          <h4 className="font-extrabold text-[11px] text-slate-950 uppercase mb-1 border-b border-slate-200 pb-1">
+      <div className="space-y-3 mb-4 print:space-y-1.5 print:mb-2">
+        <div className="border-2 border-slate-900 p-3.5 rounded-xl bg-white print:p-2 print:rounded-lg print:border-slate-950">
+          <h4 className="font-extrabold text-[11px] text-slate-950 uppercase mb-1 border-b border-slate-200 pb-1 print:text-[9.5px] print:mb-0.5 print:pb-0.5">
             Defeito Reclamado pelo Cliente:
           </h4>
-          <p className="text-slate-950 font-semibold text-xs mt-1">{os.defeito_reclamado}</p>
+          <p className="text-slate-950 font-semibold text-xs mt-1 print:text-[10.5px] print:mt-0.5">{os.defeito_reclamado}</p>
         </div>
 
         {os.laudo_tecnico && (
-          <div className="border-2 border-blue-900 bg-blue-50/70 p-3.5 rounded-xl">
-            <h4 className="font-extrabold text-[11px] text-blue-950 uppercase mb-1 border-b border-blue-200 pb-1">
+          <div className="border-2 border-blue-900 bg-blue-50/70 p-3.5 rounded-xl print:p-2 print:rounded-lg print:bg-white print:border-slate-950">
+            <h4 className="font-extrabold text-[11px] text-blue-950 uppercase mb-1 border-b border-blue-200 pb-1 print:text-[9.5px] print:mb-0.5 print:pb-0.5">
               Laudo Técnico / Parecer de Entrada:
             </h4>
-            <p className="text-blue-950 font-medium text-xs mt-1">{os.laudo_tecnico}</p>
+            <p className="text-blue-950 font-medium text-xs mt-1 print:text-[10.5px] print:mt-0.5">{os.laudo_tecnico}</p>
           </div>
         )}
       </div>
 
       {/* Checklist Grid */}
-      <div className="mb-4 border-2 border-slate-900 p-3.5 rounded-xl bg-white">
-        <h4 className="font-extrabold text-[11px] text-slate-950 uppercase mb-2 border-b border-slate-200 pb-1">
+      <div className="mb-4 border-2 border-slate-900 p-3.5 rounded-xl bg-white print:mb-2 print:p-2 print:rounded-lg print:border-slate-950">
+        <h4 className="font-extrabold text-[11px] text-slate-950 uppercase mb-2 border-b border-slate-200 pb-1 print:text-[9.5px] print:mb-1 print:pb-0.5">
           Checklist de Entrada e Inspeção Física
         </h4>
-        <div className="grid grid-cols-3 gap-2.5 text-[10.5px]">
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+        <div className="grid grid-cols-3 gap-2.5 text-[10.5px] print:gap-1.5 print:text-[9.5px]">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">Face ID / Touch ID:</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.face_id}</strong>
           </div>
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">True Tone:</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.true_tone}</strong>
           </div>
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">Câmeras (Frontal/Traseira):</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.cameras}</strong>
           </div>
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">Microfones:</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.microfones}</strong>
           </div>
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">Alto-Falante:</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.alto_falante}</strong>
           </div>
-          <div className="flex justify-between border-b border-slate-300 pb-1">
+          <div className="flex justify-between border-b border-slate-300 pb-1 print:pb-0.5">
             <span className="font-semibold text-slate-800">Conector de Carga:</span>
             <strong className="uppercase font-black text-slate-950">{os.checklist_entrada.carregamento}</strong>
           </div>
         </div>
         {os.checklist_entrada.detalhes_esteticos && (
-          <p className="mt-2 text-[10.5px] text-slate-900 border-t border-slate-200 pt-1.5">
+          <p className="mt-2 text-[10.5px] text-slate-900 border-t border-slate-200 pt-1.5 print:mt-1 print:pt-1 print:text-[9.5px]">
             <strong>Detalhes Estéticos / Avarias:</strong> {os.checklist_entrada.detalhes_esteticos}
           </p>
         )}
       </div>
 
       {/* Financial Summary */}
-      <div className="flex justify-between items-center mb-5 bg-white text-slate-950 p-3.5 rounded-xl border-2 border-slate-950">
+      <div className="flex justify-between items-center mb-5 bg-white text-slate-950 p-3.5 rounded-xl border-2 border-slate-950 print:mb-2 print:p-2 print:rounded-lg">
         <div>
-          <p className="text-[10px] text-slate-900 uppercase font-black tracking-wider border-b border-slate-200 pb-0.5 mb-1">
+          <p className="text-[10px] text-slate-900 uppercase font-black tracking-wider border-b border-slate-200 pb-0.5 mb-1 print:text-[8.5px] print:mb-0.5">
             Resumo Financeiro & Condições
           </p>
-          <p className="text-xs text-slate-900 font-bold">
+          <p className="text-xs text-slate-900 font-bold print:text-[10px]">
             Vendedor: {os.vendedor_nome || 'Fitch Tecnologia'} | Garantia da Loja: {os.garantia_dias} dias
             {os.numero_venda_syscor && (
               <span className="ml-1 text-slate-950 font-black">
@@ -200,16 +200,16 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[10px] text-slate-700 block uppercase font-black tracking-wider">VALOR ESTIMADO / TOTAL O.S.</span>
-          <span className="text-2xl font-black font-mono text-slate-950">
+          <span className="text-[10px] text-slate-700 block uppercase font-black tracking-wider print:text-[8.5px]">VALOR ESTIMADO / TOTAL O.S.</span>
+          <span className="text-2xl font-black font-mono text-slate-950 print:text-xl">
             R$ {Number(os.valor_total).toFixed(2)}
           </span>
         </div>
       </div>
 
       {/* Terms & Warranty Rules */}
-      <div className="border-t-2 border-slate-900 pt-3 mb-5 text-[9px] text-slate-900 space-y-1 leading-relaxed">
-        <p className="font-black text-slate-950 text-[10px] uppercase">
+      <div className="border-t-2 border-slate-900 pt-3 mb-5 text-[9px] text-slate-900 space-y-1 leading-relaxed print:pt-1.5 print:mb-2 print:text-[8px] print:leading-snug print:space-y-0.5">
+        <p className="font-black text-slate-950 text-[10px] uppercase print:text-[8.5px]">
           TERMOS DE GARANTIA E RESPONSABILIDADE DA FITCH TECNOLOGIA:
         </p>
         <p>
@@ -227,25 +227,25 @@ export const WarrantyTerm: React.FC<WarrantyTermProps> = ({ os }) => {
       </div>
 
       {/* QR Code & Signature Section */}
-      <div className="grid grid-cols-3 gap-6 items-end pt-3 border-t-2 border-slate-900">
-        <div className="flex items-center gap-2.5">
-          <QRCodeSVG value={publicUrl} size={58} level="M" />
-          <div className="text-[8.5px] text-slate-900 leading-tight">
+      <div className="grid grid-cols-3 gap-6 items-end pt-3 border-t-2 border-slate-900 print:gap-4 print:pt-1.5">
+        <div className="flex items-center gap-2.5 print:gap-2">
+          <QRCodeSVG value={publicUrl} size={54} level="M" />
+          <div className="text-[8.5px] text-slate-900 leading-tight print:text-[8px]">
             <p className="font-black text-slate-950 uppercase">Consulta Online</p>
             <p>Escaneie o QR Code para acompanhar o status da O.S.</p>
           </div>
         </div>
 
         <div className="text-center">
-          <div className="border-b-2 border-slate-950 mb-1 h-7"></div>
-          <p className="font-extrabold text-[10px] text-slate-950">{os.vendedor_nome || 'Fitch Tecnologia'}</p>
-          <p className="text-[8px] text-slate-700 font-bold uppercase">Vendedor / Atendente Responsável</p>
+          <div className="border-b-2 border-slate-950 mb-1 h-6"></div>
+          <p className="font-extrabold text-[10px] text-slate-950 print:text-[9px]">{os.vendedor_nome || 'Fitch Tecnologia'}</p>
+          <p className="text-[8px] text-slate-700 font-bold uppercase print:text-[7.5px]">Vendedor / Atendente Responsável</p>
         </div>
 
         <div className="text-center">
-          <div className="border-b-2 border-slate-950 mb-1 h-7"></div>
-          <p className="font-extrabold text-[10px] text-slate-950">Assinatura do Cliente</p>
-          <p className="text-[8px] text-slate-700 font-bold">{os.cliente?.nome}</p>
+          <div className="border-b-2 border-slate-950 mb-1 h-6"></div>
+          <p className="font-extrabold text-[10px] text-slate-950 print:text-[9px]">Assinatura do Cliente</p>
+          <p className="text-[8px] text-slate-700 font-bold print:text-[7.5px]">{os.cliente?.nome}</p>
         </div>
       </div>
     </div>

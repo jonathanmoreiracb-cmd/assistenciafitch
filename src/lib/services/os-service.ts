@@ -456,13 +456,14 @@ export const OSService = {
   ): Promise<OrdemServico | null> {
     const supabase = createClient();
     const validUuid = sanitizeUuid(id);
+    const validVendedorId = sanitizeUuid(vendedorId);
 
     if (supabase && validUuid) {
       try {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from('ordens_servico')
           .update({
-            vendedor_id: vendedorId,
+            vendedor_id: validVendedorId,
             vendedor_nome: vendedorNome,
             updated_at: new Date().toISOString(),
           })
@@ -472,10 +473,39 @@ export const OSService = {
             cliente:clientes(*),
             pecas:os_itens_pecas(*)
           `)
-          .single();
+          .maybeSingle();
 
-        if (error) console.error('Supabase atualizarVendedorOS error:', error);
-        if (!error && data) return data as OrdemServico;
+        // If FK error or constraint occurs on vendedor_id, retry update with vendedor_nome only
+        if (error) {
+          console.warn('Supabase error with vendedor_id, retrying update with vendedor_nome only:', error);
+          const fallbackRes = await supabase
+            .from('ordens_servico')
+            .update({
+              vendedor_nome: vendedorNome,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', validUuid)
+            .select(`
+              *,
+              cliente:clientes(*),
+              pecas:os_itens_pecas(*)
+            `)
+            .maybeSingle();
+
+          data = fallbackRes.data;
+          error = fallbackRes.error;
+        }
+
+        if (!error && data) {
+          const idx = localOSStore.findIndex((o) => o.id === validUuid);
+          if (idx !== -1) {
+            localOSStore[idx].vendedor_id = validVendedorId;
+            localOSStore[idx].vendedor_nome = vendedorNome;
+            localOSStore[idx].updated_at = new Date().toISOString();
+            persistLocalState();
+          }
+          return data as OrdemServico;
+        }
       } catch (e) {
         console.error('Error updating seller in Supabase:', e);
       }

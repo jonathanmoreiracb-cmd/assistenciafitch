@@ -72,6 +72,55 @@ body {
     overflow: visible !important;
   }
 
+  /* Standard UI Elements to hide when printing */
+  nav, header, footer, button, .no-print, .print-hide, #user-role-bar {
+    display: none !important;
+  }
+
+  /* Hide background page content when printing modal */
+  main > div:not(.fixed),
+  main > section:not(.fixed),
+  main > form:not(.fixed) {
+    display: none !important;
+  }
+
+  /* Strip overlay/card styling from modal containers in print mode */
+  .fixed.backdrop-blur-xs,
+  .fixed.bg-black\/50,
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .apple-card.shadow-2xl,
+  .apple-card.shadow-2xl > div {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Hide modal header bar and modal action footer buttons when printing */
+  .fixed .border-b,
+  .fixed .border-t {
+    display: none !important;
+  }
+
+  /* ==============================================================
+     1) THERMAL LABEL PRINT MODE (80mm x 50mm)
+     ============================================================== */
   body.printing-thermal-mode,
   body.is-printing-thermal {
     width: 80mm !important;
@@ -80,26 +129,6 @@ body {
     page: thermal-page !important;
   }
 
-  body.is-printing-warranty {
-    page: a4-page !important;
-  }
-
-  /* HIDE ALL NON-PRINT ELEMENTS COMPLETELY WITH DISPLAY NONE TO PREVENT EXTRA PAGES */
-  nav, header, footer, button, .no-print, .print-hide, main, #user-role-bar {
-    display: none !important;
-  }
-
-  body.is-printing-warranty main,
-  body.is-printing-warranty nav,
-  body.is-printing-warranty header,
-  body.is-printing-warranty footer,
-  body.is-printing-warranty #user-role-bar {
-    display: none !important;
-  }
-
-  /* ==============================================================
-     1) THERMAL LABEL PRINT MODE (80mm x 50mm)
-     ============================================================== */
   body.printing-thermal-mode .printable-thermal-area,
   body.printing-thermal-mode .printable-thermal-area *,
   body.is-printing-thermal .printable-thermal-area,
@@ -155,14 +184,18 @@ body {
   /* ==============================================================
      2) A4 WARRANTY TERM PRINT MODE (EXACT 1 PAGE FIT)
      ============================================================== */
-  body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term,
-  body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term * {
+  body.is-printing-warranty {
+    page: a4-page !important;
+  }
+
+  .a4-warranty-term,
+  .a4-warranty-term * {
     visibility: visible !important;
     border-color: #000000 !important;
   }
 
-  body:not(.printing-thermal-mode):not(.is-printing-thermal) .a4-warranty-term {
-    position: absolute !important;
+  .a4-warranty-term {
+    position: relative !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;

@@ -465,9 +465,39 @@ export default function DashboardPage() {
 
                 {/* Mobile Quick Action Buttons */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                  <span className="text-[10px] text-slate-400">
-                    Vendedor: {os.vendedor_nome || 'Loja'}
-                  </span>
+                  {currentUser?.cargo === 'gerente' ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold">Vend:</span>
+                      <select
+                        value={os.vendedor_id || ''}
+                        onChange={async (e) => {
+                          const atendentes = AuthService.getAtendentes();
+                          const sel = atendentes.find((v) => v.id === e.target.value);
+                          if (sel) {
+                            const updated = await OSService.atualizarVendedorOS(os.id, sel.id, sel.nome);
+                            if (updated) {
+                              toast.success(`Vendedor da O.S. #${os.numero_os} alterado para ${sel.nome}!`);
+                              loadData();
+                            } else {
+                              toast.error('Erro ao alterar vendedor.');
+                            }
+                          }
+                        }}
+                        className="bg-white border border-slate-200 rounded-full px-2 py-0.5 text-[10px] text-slate-800 font-bold focus:outline-none cursor-pointer"
+                      >
+                        {!os.vendedor_id && <option value="">{os.vendedor_nome || 'Selecionar'}</option>}
+                        {AuthService.getAtendentes().map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-400">
+                      Vendedor: {os.vendedor_nome || 'Loja'}
+                    </span>
+                  )}
 
                   <div className="flex items-center gap-1">
                     <Link
@@ -585,7 +615,34 @@ export default function DashboardPage() {
                       </td>
 
                       <td className="py-3.5 px-3 text-slate-600">
-                        {os.vendedor_nome || 'Atendente'}
+                        {currentUser?.cargo === 'gerente' ? (
+                          <select
+                            value={os.vendedor_id || ''}
+                            onChange={async (e) => {
+                              const atendentes = AuthService.getAtendentes();
+                              const sel = atendentes.find((v) => v.id === e.target.value);
+                              if (sel) {
+                                const updated = await OSService.atualizarVendedorOS(os.id, sel.id, sel.nome);
+                                if (updated) {
+                                  toast.success(`Vendedor da O.S. #${os.numero_os} alterado para ${sel.nome}!`);
+                                  loadData();
+                                } else {
+                                  toast.error('Erro ao alterar vendedor.');
+                                }
+                              }
+                            }}
+                            className="bg-slate-100/90 border border-slate-200 rounded-full px-2.5 py-1 text-xs font-bold text-slate-900 focus:outline-none cursor-pointer hover:bg-slate-200/80 transition-colors"
+                          >
+                            {!os.vendedor_id && <option value="">{os.vendedor_nome || 'Selecionar Vendedor'}</option>}
+                            {AuthService.getAtendentes().map((v) => (
+                              <option key={v.id} value={v.id}>
+                                {v.nome}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          os.vendedor_nome || 'Atendente'
+                        )}
                       </td>
 
                       <td className="py-3.5 px-3">

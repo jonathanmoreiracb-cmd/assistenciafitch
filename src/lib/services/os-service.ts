@@ -449,6 +449,52 @@ export const OSService = {
     return null;
   },
 
+  async atualizarVendedorOS(
+    id: string,
+    vendedorId: string | null,
+    vendedorNome: string
+  ): Promise<OrdemServico | null> {
+    const supabase = createClient();
+    const validUuid = sanitizeUuid(id);
+
+    if (supabase && validUuid) {
+      try {
+        const { data, error } = await supabase
+          .from('ordens_servico')
+          .update({
+            vendedor_id: vendedorId,
+            vendedor_nome: vendedorNome,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', validUuid)
+          .select(`
+            *,
+            cliente:clientes(*),
+            pecas:os_itens_pecas(*)
+          `)
+          .single();
+
+        if (error) console.error('Supabase atualizarVendedorOS error:', error);
+        if (!error && data) return data as OrdemServico;
+      } catch (e) {
+        console.error('Error updating seller in Supabase:', e);
+      }
+    }
+
+    const index = localOSStore.findIndex(
+      (o) => o.id === id || o.numero_os.toString() === id
+    );
+    if (index !== -1) {
+      localOSStore[index].vendedor_id = vendedorId;
+      localOSStore[index].vendedor_nome = vendedorNome;
+      localOSStore[index].updated_at = new Date().toISOString();
+      persistLocalState();
+      return localOSStore[index];
+    }
+
+    return null;
+  },
+
   async darBaixaPagamentoSyscor(
     id: string,
     dados: { numero_venda_syscor: string; forma_pagamento: string }

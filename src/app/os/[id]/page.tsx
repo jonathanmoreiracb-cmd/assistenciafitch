@@ -60,6 +60,20 @@ export default function OSDetalhesPage() {
   const [currentUser, setCurrentUser] = useState<Usuario | null>(() => AuthService.getCurrentUser());
   const [activeImageZoom, setActiveImageZoom] = useState<string | null>(null);
 
+  const atendentesList = React.useMemo(() => {
+    const list = AuthService.getAtendentes();
+    if (os?.vendedor_nome && !list.some((v) => v.nome === os.vendedor_nome || v.id === os.vendedor_id)) {
+      list.unshift({
+        id: os.vendedor_id || 'vendedor-customizado',
+        nome: os.vendedor_nome,
+        email: '',
+        cargo: 'vendedor',
+        meta_mensal_os: 0,
+      });
+    }
+    return list;
+  }, [os?.vendedor_id, os?.vendedor_nome]);
+
   // Inventory parts for selection
   const [estoquePecas, setEstoquePecas] = useState<PecaEstoque[]>([]);
   const [selectedEstoqueId, setSelectedEstoqueId] = useState<string>('');
@@ -480,10 +494,39 @@ export default function OSDetalhesPage() {
             <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap pt-0.5">
               <span>Cliente: <strong className="text-slate-900">{os.cliente?.nome}</strong> ({os.cliente?.telefone})</span>
               <span>• Entrada: <strong className="text-slate-900">{new Date(os.data_entrada).toLocaleDateString('pt-BR')}</strong></span>
-              {os.vendedor_nome && (
-                <span className="bg-indigo-50 text-indigo-950 font-black px-3 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1">
-                  👤 Vendedor: {os.vendedor_nome}
-                </span>
+              {currentUser?.cargo === 'gerente' ? (
+                <div className="bg-indigo-50 text-indigo-950 font-black px-3 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1.5">
+                  <span className="shrink-0">👤 Vendedor:</span>
+                  <select
+                    value={os.vendedor_id || ''}
+                    onChange={async (e) => {
+                      const sel = atendentesList.find((v) => v.id === e.target.value);
+                      if (sel) {
+                        const updated = await OSService.atualizarVendedorOS(os.id, sel.id, sel.nome);
+                        if (updated) {
+                          setOs(updated);
+                          toast.success(`Vendedor alterado para ${sel.nome}!`);
+                        } else {
+                          toast.error('Erro ao alterar vendedor.');
+                        }
+                      }
+                    }}
+                    className="bg-transparent text-indigo-950 font-black text-xs focus:outline-none cursor-pointer border-b border-indigo-300"
+                  >
+                    {!os.vendedor_id && <option value="">Selecionar Vendedor</option>}
+                    {atendentesList.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                os.vendedor_nome && (
+                  <span className="bg-indigo-50 text-indigo-950 font-black px-3 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1">
+                    👤 Vendedor: {os.vendedor_nome}
+                  </span>
+                )
               )}
             </div>
           </div>

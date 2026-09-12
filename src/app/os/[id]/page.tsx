@@ -140,6 +140,7 @@ export default function OSDetalhesPage() {
   const [novaPecaCusto, setNovaPecaCusto] = useState('100.00');
   const [novaPecaPreco, setNovaPecaPreco] = useState('250.00');
   const [novaPecaQtd, setNovaPecaQtd] = useState('1');
+  const [novaPecaModo, setNovaPecaModo] = useState<'pago' | 'garantia'>('pago');
 
   // SP Logistics Modal State
   const [showSpModal, setShowSpModal] = useState(false);
@@ -254,6 +255,10 @@ export default function OSDetalhesPage() {
       if (data) {
         setOs(data);
         setLaudoInput(data.laudo_tecnico || '');
+        if (data.tipo_cobertura === 'Garantia da Loja') {
+          setNovaPecaModo('garantia');
+          setNovaPecaPreco('0.00');
+        }
         if (data.detalhes_terceirizado) {
           setSpForm(data.detalhes_terceirizado);
         }
@@ -285,12 +290,36 @@ export default function OSDetalhesPage() {
     setSelectedEstoqueId(id);
     const item = estoquePecas.find((p) => p.id === id);
     if (item) {
-      setNovaPecaDesc(item.descricao);
+      const isGarantia = novaPecaModo === 'garantia';
+      const cleanDesc = item.descricao.replace(/^\[GARANTIA LOJA\]\s*/i, '');
+      setNovaPecaDesc(isGarantia ? `[GARANTIA LOJA] ${cleanDesc}` : cleanDesc);
       setNovaPecaQualidade(item.tipo_qualidade);
       setNovaPecaCusto(item.custo_unitario.toString());
-      setNovaPecaPreco(item.preco_venda.toString());
+      setNovaPecaPreco(isGarantia ? '0.00' : item.preco_venda.toString());
       setMostrarCatalogoEstoque(false);
-      toast.success(`Peça "${item.descricao}" selecionada do estoque!`);
+      toast.success(
+        isGarantia
+          ? `Peça "${item.descricao}" selecionada como GARANTIA (R$ 0,00 p/ cliente)!`
+          : `Peça "${item.descricao}" selecionada do estoque!`
+      );
+    }
+  };
+
+  const handleToggleModoPeca = (modo: 'pago' | 'garantia') => {
+    setNovaPecaModo(modo);
+    if (modo === 'garantia') {
+      setNovaPecaPreco('0.00');
+      if (novaPecaDesc && !novaPecaDesc.toUpperCase().startsWith('[GARANTIA LOJA]')) {
+        setNovaPecaDesc(`[GARANTIA LOJA] ${novaPecaDesc.trim()}`);
+      }
+    } else {
+      const p = estoquePecas.find((item) => item.id === selectedEstoqueId);
+      if (p) {
+        setNovaPecaPreco(p.preco_venda.toString());
+      } else if (novaPecaPreco === '0.00' || novaPecaPreco === '0') {
+        setNovaPecaPreco('250.00');
+      }
+      setNovaPecaDesc((prev) => prev.replace(/^\[GARANTIA LOJA\]\s*/i, ''));
     }
   };
 
@@ -298,7 +327,19 @@ export default function OSDetalhesPage() {
     setSelectedEstoqueId('');
     setNovaPecaDesc('');
     setNovaPecaCusto('100.00');
-    setNovaPecaPreco('250.00');
+    setNovaPecaPreco(novaPecaModo === 'garantia' ? '0.00' : '250.00');
+  };
+
+  const handleAlternarTipoItem = async (pecaId: string) => {
+    try {
+      const updated = await OSService.alternarTipoItemPeca(osId, pecaId);
+      if (updated) {
+        setOs(updated);
+        toast.success('Tipo de cobrança da peça alterado com sucesso!');
+      }
+    } catch (e) {
+      toast.error('Erro ao alternar tipo da peça.');
+    }
   };
 
   // 1-Click Status Change handler
@@ -352,19 +393,32 @@ export default function OSDetalhesPage() {
       return;
     }
     try {
+      const precoFinal = novaPecaModo === 'garantia' ? 0 : (Number(novaPecaPreco) || 0);
+      let descFinal = novaPecaDesc.trim();
+      if (novaPecaModo === 'garantia' && !descFinal.toUpperCase().startsWith('[GARANTIA LOJA]')) {
+        descFinal = `[GARANTIA LOJA] ${descFinal}`;
+      }
+
       const updated = await OSService.adicionarItemPeca(osId, {
         peca_estoque_id: selectedEstoqueId || undefined,
-        descricao: novaPecaDesc,
+        descricao: descFinal,
         tipo_qualidade: novaPecaQualidade,
         custo: Number(novaPecaCusto) || 0,
-        preco_venda: Number(novaPecaPreco) || 0,
+        preco_venda: precoFinal,
         quantidade: Number(novaPecaQtd) || 1,
       });
       if (updated) {
         setOs(updated);
         setNovaPecaDesc('');
         setSelectedEstoqueId('');
-        toast.success('Peça adicionada ao orçamento!');
+        if (novaPecaModo === 'garantia') {
+          setNovaPecaPreco('0.00');
+        }
+        toast.success(
+          novaPecaModo === 'garantia'
+            ? '🛡️ Peça de Garantia adicionada! (R$ 0,00 ao cliente • Saída de estoque garantida)'
+            : 'Peça adicionada ao orçamento!'
+        );
       }
     } catch (e) {
       toast.error('Erro ao adicionar peça.');
@@ -689,7 +743,11 @@ export default function OSDetalhesPage() {
               className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-md transition-all hover:scale-[1.02]"
             >
               <CreditCard className="w-4 h-4" />
-              {os.numero_venda_syscor ? 'Atualizar Venda Syscor' : '🟢 Dar Baixa (Venda Syscor)'}
+              {os.numero_venda_syscor
+                ? 'Atualizar Venda Syscor'
+                : (os.tipo_cobertura === 'Garantia da Loja' || Number(os.valor_total) === 0)
+                  ? '🛡️ Concluir & Baixar Estoque (Garantia Loja)'
+                  : '🟢 Dar Baixa (Venda Syscor)'}
             </button>
 
             {!os.numero_venda_syscor && (
@@ -1222,11 +1280,55 @@ export default function OSDetalhesPage() {
               </div>
             </div>
 
-            {/* Form de Adicionar Peça / Orçamento com Rótulos Claros */}
+            {/* Form de Adicionar Peça / Orçamento com Rótulos Claros e Seletor Pago vs Garantia */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Adicionar Peça / Serviço ao Orçamento
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                <div>
+                  <span className="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider block">
+                    Adicionar Peça / Serviço ao Orçamento
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Defina se a peça é cobrada do cliente ou se é garantia/cortesia da loja.
+                  </span>
+                </div>
+
+                {/* Seletor de Modo: Serviço Pago vs Garantia Loja */}
+                <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-full text-xs font-bold shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleModoPeca('pago')}
+                    className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
+                      novaPecaModo === 'pago'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    💰 Serviço Pago
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleModoPeca('garantia')}
+                    className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
+                      novaPecaModo === 'garantia'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    🛡️ Garantia Loja (R$ 0)
+                  </button>
+                </div>
+              </div>
+
+              {/* Banner Explicativo quando em Modo Garantia */}
+              {novaPecaModo === 'garantia' && (
+                <div className="bg-amber-50 border border-amber-300/80 p-2.5 rounded-xl flex items-start gap-2 text-amber-900 text-[11px]">
+                  <span className="text-base leading-none">🛡️</span>
+                  <div className="leading-snug">
+                    <strong className="block text-amber-950 font-bold">Modo Garantia da Loja Ativado:</strong>
+                    O cliente não pagará por esta peça (<strong>Preço Venda = R$ 0,00</strong>). Ao finalizar a O.S., a baixa de 1 unidade no estoque será realizada normalmente e o custo de <strong>R$ {Number(novaPecaCusto || 0).toFixed(2)}</strong> será contabilizado como <em>Despesa de Garantia da Loja</em> nos relatórios financeiros.
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                 {/* Descrição */}
@@ -1263,7 +1365,7 @@ export default function OSDetalhesPage() {
                 {/* Custo da Peça (Pago pela loja) */}
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Custo Peça (R$)
+                    Custo Loja (R$)
                   </label>
                   <input
                     type="number"
@@ -1277,45 +1379,57 @@ export default function OSDetalhesPage() {
 
                 {/* Valor de Venda ao Cliente */}
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-emerald-700 mb-1">
-                    Preço Venda (R$)
+                  <label className={`block text-[11px] font-bold mb-1 ${novaPecaModo === 'garantia' ? 'text-amber-800' : 'text-emerald-700'}`}>
+                    {novaPecaModo === 'garantia' ? 'Preço Venda (Garantia)' : 'Preço Venda (R$)'}
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={novaPecaPreco}
-                    onChange={(e) => setNovaPecaPreco(e.target.value)}
-                    className="w-full bg-white border border-emerald-300 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                  />
+                  {novaPecaModo === 'garantia' ? (
+                    <div className="w-full bg-amber-100/70 border border-amber-300 rounded-full px-3 py-1.5 text-xs font-mono font-bold text-amber-900 flex items-center justify-between">
+                      <span>R$ 0,00</span>
+                      <span className="text-[9px] uppercase tracking-wider bg-amber-200/80 px-1.5 py-0.2 rounded font-sans">Sem Custo</span>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={novaPecaPreco}
+                      onChange={(e) => setNovaPecaPreco(e.target.value)}
+                      className="w-full bg-white border border-emerald-300 rounded-full px-3 py-1.5 text-xs text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
                 <span className="text-[10px] text-slate-500 italic">
-                  💡 <strong>Custo Peça:</strong> quanto a loja pagou na peça. <strong>Preço Venda:</strong> valor cobrado do cliente.
+                  💡 <strong>Custo Loja:</strong> despesa que a loja teve na peça. <strong>Preço Venda:</strong> valor cobrado do cliente (R$ 0,00 se garantia).
                 </span>
 
                 <button
                   type="button"
                   onClick={handleAddPeca}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-[1.02] shrink-0"
+                  className={`px-4 py-1.5 text-white rounded-full text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-[1.02] shrink-0 ${
+                    novaPecaModo === 'garantia'
+                      ? 'bg-amber-600 hover:bg-amber-500'
+                      : 'bg-emerald-600 hover:bg-emerald-500'
+                  }`}
                 >
-                  <Plus className="w-4 h-4" /> Adicionar Peça / Serviço
+                  <Plus className="w-4 h-4" />
+                  {novaPecaModo === 'garantia' ? 'Adicionar Peça em Garantia (R$ 0)' : 'Adicionar Peça ao Orçamento'}
                 </button>
               </div>
             </div>
 
-            {/* Table */}
+            {/* Table de Peças Utilizadas */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px]">
                     <th className="py-2 px-2">Peça / Serviço</th>
-                    <th className="py-2 px-2">Qualidade</th>
-                    <th className="py-2 px-2">Custo Peça</th>
-                    <th className="py-2 px-2">Preço de Venda</th>
-                    <th className="py-2 px-2 text-right">Ação</th>
+                    <th className="py-2 px-2">Tipo / Cobrança</th>
+                    <th className="py-2 px-2">Custo Loja</th>
+                    <th className="py-2 px-2">Preço Cobrado</th>
+                    <th className="py-2 px-2 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1326,30 +1440,76 @@ export default function OSDetalhesPage() {
                       </td>
                     </tr>
                   ) : (
-                    os.pecas.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50">
-                        <td className="py-2 px-2 font-semibold text-slate-900">{p.descricao}</td>
-                        <td className="py-2 px-2">
-                          <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-mono">
-                            {p.tipo_qualidade}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 font-mono text-slate-500">
-                          R$ {Number(p.custo).toFixed(2)}
-                        </td>
-                        <td className="py-2 px-2 font-mono font-bold text-slate-900">
-                          R$ {Number(p.preco_venda).toFixed(2)}
-                        </td>
-                        <td className="py-2 px-2 text-right">
-                          <button
-                            onClick={() => handleRemovePeca(p.id)}
-                            className="text-red-600 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    os.pecas.map((p) => {
+                      const ehGarantia =
+                        Number(p.preco_venda || 0) === 0 ||
+                        (p.descricao && p.descricao.toUpperCase().includes('[GARANTIA LOJA]'));
+
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-2.5 px-2">
+                            <div className="font-semibold text-slate-900">{p.descricao}</div>
+                            <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.2 rounded-full font-mono mt-0.5 inline-block">
+                              {p.tipo_qualidade}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-2">
+                            {ehGarantia ? (
+                              <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                                🛡️ Garantia Loja
+                              </span>
+                            ) : (
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                                💰 Serviço Pago
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2 font-mono text-slate-600 font-semibold">
+                            R$ {Number(p.custo).toFixed(2)}
+                          </td>
+                          <td className="py-2.5 px-2 font-mono whitespace-nowrap">
+                            {ehGarantia ? (
+                              <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                                R$ 0,00 (Garantia)
+                              </span>
+                            ) : (
+                              <span className="font-bold text-slate-900">
+                                R$ {Number(p.preco_venda).toFixed(2)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAlternarTipoItem(p.id)}
+                                title={
+                                  ehGarantia
+                                    ? 'Mudar para Serviço Pago (cobrar do cliente)'
+                                    : 'Mudar para Garantia da Loja (não cobrar do cliente)'
+                                }
+                                className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-all ${
+                                  ehGarantia
+                                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                                    : 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100'
+                                }`}
+                              >
+                                {ehGarantia ? '💰 Tornar Pago' : '🛡️ Tornar Garantia'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePeca(p.id)}
+                                className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors"
+                                title="Remover peça"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -1408,37 +1568,74 @@ export default function OSDetalhesPage() {
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-gradient-to-b from-white to-slate-50 p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
-              Resumo Financeiro
-            </h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-2">
-                <span>Vendedor Abertura:</span>
-                <span className="font-extrabold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Peças & Serviços (Peça + Serv):</span>
-                <span className="font-mono font-bold text-slate-900">R$ {Number(os.valor_pecas + os.valor_servico).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Desconto Especial:</span>
-                <span className="font-mono font-bold text-red-600">- R$ {Number(os.valor_desconto).toFixed(2)}</span>
-              </div>
-              {Number(os.desconto_avaliacao_tradein) > 0 && (
-                <div className="flex justify-between text-indigo-900 bg-indigo-50 p-2 rounded-xl border border-indigo-100">
-                  <span className="font-bold">Margem Trade-in:</span>
-                  <span className="font-mono font-black text-indigo-950">R$ {Number(os.desconto_avaliacao_tradein).toFixed(2)}</span>
+          {(() => {
+            const pecasGarantiaTotalCusto = (os.pecas || [])
+              .filter(
+                (p) =>
+                  Number(p.preco_venda || 0) === 0 ||
+                  (p.descricao && p.descricao.toUpperCase().includes('[GARANTIA LOJA]'))
+              )
+              .reduce((acc, p) => acc + (Number(p.custo || 0) * (p.quantidade || 1)), 0);
+
+            return (
+              <div className="bg-gradient-to-b from-white to-slate-50 p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+                  Resumo Financeiro
+                </h3>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-600 border-b border-slate-100 pb-2">
+                    <span>Vendedor Abertura:</span>
+                    <span className="font-extrabold text-slate-900">{os.vendedor_nome || 'Loja'}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Mão de Obra / Serviço:</span>
+                    <span className="font-mono font-bold text-slate-900">
+                      R$ {Number(os.valor_servico || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Peças Cobradas (Cliente):</span>
+                    <span className="font-mono font-bold text-emerald-700">
+                      R$ {Number(os.valor_pecas || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  {pecasGarantiaTotalCusto > 0 && (
+                    <div className="flex justify-between items-center text-amber-900 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                      <div>
+                        <span className="font-bold flex items-center gap-1">🛡️ Despesa Garantia Loja:</span>
+                        <span className="text-[10px] text-amber-700 block">Peças sem cobrança ao cliente</span>
+                      </div>
+                      <span className="font-mono font-black text-amber-950 text-xs">
+                        R$ {pecasGarantiaTotalCusto.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {Number(os.valor_desconto) > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Desconto Especial:</span>
+                      <span className="font-mono font-bold text-red-600">
+                        - R$ {Number(os.valor_desconto).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {Number(os.desconto_avaliacao_tradein) > 0 && (
+                    <div className="flex justify-between text-indigo-900 bg-indigo-50 p-2 rounded-xl border border-indigo-100">
+                      <span className="font-bold">Margem Trade-in:</span>
+                      <span className="font-mono font-black text-indigo-950">
+                        R$ {Number(os.desconto_avaliacao_tradein).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-extrabold text-slate-900">
+                    <span>TOTAL A COBRAR:</span>
+                    <span className="font-mono text-emerald-600 text-lg font-black bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                      R$ {Number(os.valor_total).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-extrabold text-slate-900">
-                <span>TOTAL O.S.:</span>
-                <span className="font-mono text-emerald-600 text-lg font-black bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                  R$ {Number(os.valor_total).toFixed(2)}
-                </span>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </div>
       </div>
@@ -1709,6 +1906,24 @@ export default function OSDetalhesPage() {
                 </p>
               </div>
 
+              {/* Opção Rápida para Garantia da Loja */}
+              <div className="bg-amber-50 border border-amber-200/90 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="text-[11px] text-amber-900 leading-tight">
+                  <span className="font-bold flex items-center gap-1">🛡️ É Serviço / Peça em Garantia da Loja?</span>
+                  <span className="text-[10px] text-amber-700 block mt-0.5">Sem cobrança no Syscor (R$ 0,00) e baixa automática das peças.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSyscorVendaInput('GARANTIA-LOJA');
+                    setSyscorFormaPagamento('Garantia da Loja');
+                  }}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-full shadow-xs shrink-0 transition-all hover:scale-[1.02]"
+                >
+                  ⚡ Preencher como Garantia
+                </button>
+              </div>
+
               <div>
                 <label className="block text-slate-700 font-bold mb-1">
                   Número da Venda no Syscor <span className="text-red-500">*</span>
@@ -1716,7 +1931,7 @@ export default function OSDetalhesPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: 10492 ou VD-884"
+                  placeholder="Ex: 10492 ou VD-884 ou GARANTIA-LOJA"
                   value={syscorVendaInput}
                   onChange={(e) => setSyscorVendaInput(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200/80 rounded-full px-3.5 py-2 text-slate-900 font-mono text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
@@ -1735,6 +1950,7 @@ export default function OSDetalhesPage() {
                   <option value="Cartão de Débito">Cartão de Débito</option>
                   <option value="Dinheiro">Dinheiro</option>
                   <option value="Link de Pagamento / Online">Link de Pagamento / Online</option>
+                  <option value="Garantia da Loja">Garantia da Loja (Sem Cobrança / R$ 0,00)</option>
                   <option value="Múltiplos Pagamentos (Syscor)">Múltiplos Pagamentos (Syscor)</option>
                 </select>
               </div>

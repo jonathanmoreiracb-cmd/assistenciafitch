@@ -29,6 +29,7 @@ export default function RelatoriosPage() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
   const [searchPeca, setSearchPeca] = useState('');
   const [filtroGarantia, setFiltroGarantia] = useState<'todas' | 'em_garantia' | 'expirada'>('todas');
+  const [filtroTipoCobranca, setFiltroTipoCobranca] = useState<'todos' | 'pagos' | 'garantia_loja'>('todos');
 
   const loadData = async () => {
     setLoading(true);
@@ -145,7 +146,11 @@ export default function RelatoriosPage() {
         const qtd = p.quantidade || 1;
         const custoTotalItem = Number(p.custo || 0) * qtd;
         const vendaTotalItem = Number(p.preco_venda || 0) * qtd;
-        const lucroTotalItem = vendaTotalItem - custoTotalItem;
+        const ehGarantia =
+          vendaTotalItem === 0 ||
+          (p.descricao && p.descricao.toUpperCase().includes('[GARANTIA LOJA]')) ||
+          o.tipo_cobertura === 'Garantia da Loja';
+        const lucroTotalItem = ehGarantia ? -custoTotalItem : vendaTotalItem - custoTotalItem;
 
         return {
           id: p.id,
@@ -161,6 +166,7 @@ export default function RelatoriosPage() {
           custo: custoTotalItem,
           venda: vendaTotalItem,
           lucro: lucroTotalItem,
+          ehGarantia,
           dataSaida: dataReferencia,
           diasGarantia,
           diasPassados,
@@ -172,9 +178,13 @@ export default function RelatoriosPage() {
     );
 
   const pecasFiltradas = pecasUtilizadas.filter((p) => {
-    // Filtro de Garantia
+    // Filtro de Garantia 90d
     if (filtroGarantia === 'em_garantia' && !p.emGarantia) return false;
     if (filtroGarantia === 'expirada' && p.emGarantia) return false;
+
+    // Filtro de Tipo de Cobrança (Pago vs Garantia da Loja)
+    if (filtroTipoCobranca === 'pagos' && p.ehGarantia) return false;
+    if (filtroTipoCobranca === 'garantia_loja' && !p.ehGarantia) return false;
 
     // Filtro de Busca texto
     if (!searchPeca.trim()) return true;
@@ -189,10 +199,16 @@ export default function RelatoriosPage() {
     );
   });
 
+  const pecasPagas = pecasUtilizadas.filter((p) => !p.ehGarantia);
+  const pecasGarantiaLoja = pecasUtilizadas.filter((p) => p.ehGarantia);
+
   const totalQtdPecas = pecasUtilizadas.reduce((sum, p) => sum + p.quantidade, 0);
-  const totalCustoPecas = pecasUtilizadas.reduce((sum, p) => sum + p.custo, 0);
-  const totalVendaPecas = pecasUtilizadas.reduce((sum, p) => sum + p.venda, 0);
-  const totalLucroPecas = totalVendaPecas - totalCustoPecas;
+  const totalCustoPecasPagas = pecasPagas.reduce((sum, p) => sum + p.custo, 0);
+  const totalVendaPecasPagas = pecasPagas.reduce((sum, p) => sum + p.venda, 0);
+  const totalLucroPecasPagas = totalVendaPecasPagas - totalCustoPecasPagas;
+
+  const totalCustoGarantiaLoja = pecasGarantiaLoja.reduce((sum, p) => sum + p.custo, 0);
+  const lucroLiquidoRealPecas = totalLucroPecasPagas - totalCustoGarantiaLoja;
 
   return (
     <div className="space-y-6 font-sans">
@@ -380,29 +396,46 @@ export default function RelatoriosPage() {
           </div>
 
           {/* Quick Metrics of Parts */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Peças Usadas</span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+            <div className="bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-xl">
+              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Total Peças</span>
               <span className="font-bold text-slate-900 font-mono text-sm">{totalQtdPecas} un</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">
+                {pecasPagas.length} pagas • {pecasGarantiaLoja.length} gar.
+              </span>
             </div>
-            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Custo Peças</span>
-              <span className="font-bold text-red-600 font-mono text-sm">R$ {totalCustoPecas.toFixed(2)}</span>
+            <div className="bg-blue-50/70 border border-blue-200/80 px-3 py-2 rounded-xl">
+              <span className="text-[10px] text-blue-800 uppercase block font-semibold">Venda Peças (Receita)</span>
+              <span className="font-bold text-blue-700 font-mono text-sm">R$ {totalVendaPecasPagas.toFixed(2)}</span>
+              <span className="text-[9px] text-blue-500 block mt-0.5">Cobrado de clientes</span>
             </div>
-            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Venda Peças</span>
-              <span className="font-bold text-blue-600 font-mono text-sm">R$ {totalVendaPecas.toFixed(2)}</span>
+            <div className="bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-xl">
+              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Custo Peças Pagas</span>
+              <span className="font-bold text-slate-700 font-mono text-sm">R$ {totalCustoPecasPagas.toFixed(2)}</span>
+              <span className="text-[9px] text-emerald-600 block mt-0.5 font-semibold">
+                +R$ {totalLucroPecasPagas.toFixed(2)} lucro
+              </span>
             </div>
-            <div className="bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl">
-              <span className="text-[10px] text-emerald-800 uppercase block font-semibold">Lucro Peças</span>
-              <span className="font-bold text-emerald-700 font-mono text-sm">R$ {totalLucroPecas.toFixed(2)}</span>
+            <div className="bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl">
+              <span className="text-[10px] text-amber-800 uppercase block font-semibold">Despesa Garantia Loja</span>
+              <span className="font-bold text-amber-700 font-mono text-sm">R$ {totalCustoGarantiaLoja.toFixed(2)}</span>
+              <span className="text-[9px] text-amber-600 block mt-0.5">
+                {pecasGarantiaLoja.length} peças s/ cobrança
+              </span>
+            </div>
+            <div className="bg-emerald-50 border border-emerald-200/80 px-3 py-2 rounded-xl">
+              <span className="text-[10px] text-emerald-800 uppercase block font-semibold">Lucro Líquido Peças</span>
+              <span className="font-bold text-emerald-700 font-mono text-sm">R$ {lucroLiquidoRealPecas.toFixed(2)}</span>
+              <span className="text-[9px] text-emerald-600 block mt-0.5">
+                Lucro Pagas - Desp. Gar.
+              </span>
             </div>
           </div>
         </div>
 
         {/* Filtros e Busca de Peças */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="relative w-full lg:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -413,38 +446,75 @@ export default function RelatoriosPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-full text-xs font-semibold self-start sm:self-auto">
-            <button
-              onClick={() => setFiltroGarantia('todas')}
-              className={`px-3 py-1 rounded-full transition-all ${
-                filtroGarantia === 'todas'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Todas ({pecasUtilizadas.length})
-            </button>
-            <button
-              onClick={() => setFiltroGarantia('em_garantia')}
-              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
-                filtroGarantia === 'em_garantia'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-emerald-700 hover:bg-emerald-50'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Em Garantia ({pecasUtilizadas.filter((p) => p.emGarantia).length})
-            </button>
-            <button
-              onClick={() => setFiltroGarantia('expirada')}
-              className={`px-3 py-1 rounded-full transition-all ${
-                filtroGarantia === 'expirada'
-                  ? 'bg-slate-700 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Garantia Encerrada ({pecasUtilizadas.filter((p) => !p.emGarantia).length})
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filtro de Tipo de Cobrança */}
+            <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-full text-xs font-semibold">
+              <button
+                onClick={() => setFiltroTipoCobranca('todos')}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  filtroTipoCobranca === 'todos'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Todas ({pecasUtilizadas.length})
+              </button>
+              <button
+                onClick={() => setFiltroTipoCobranca('pagos')}
+                className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+                  filtroTipoCobranca === 'pagos'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-emerald-700 hover:bg-emerald-50'
+                }`}
+              >
+                💰 Pagas ({pecasPagas.length})
+              </button>
+              <button
+                onClick={() => setFiltroTipoCobranca('garantia_loja')}
+                className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+                  filtroTipoCobranca === 'garantia_loja'
+                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                    : 'text-amber-800 hover:bg-amber-50'
+                }`}
+              >
+                🛡️ Garantia Loja ({pecasGarantiaLoja.length})
+              </button>
+            </div>
+
+            {/* Filtro de Prazo Garantia 90d */}
+            <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-full text-xs font-semibold">
+              <button
+                onClick={() => setFiltroGarantia('todas')}
+                className={`px-2.5 py-1 rounded-full transition-all ${
+                  filtroGarantia === 'todas'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Prazo: Todos
+              </button>
+              <button
+                onClick={() => setFiltroGarantia('em_garantia')}
+                className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
+                  filtroGarantia === 'em_garantia'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'text-emerald-800 hover:bg-emerald-50'
+                }`}
+              >
+                <ShieldCheck className="w-3 h-3" />
+                90d Ativo ({pecasUtilizadas.filter((p) => p.emGarantia).length})
+              </button>
+              <button
+                onClick={() => setFiltroGarantia('expirada')}
+                className={`px-2.5 py-1 rounded-full transition-all ${
+                  filtroGarantia === 'expirada'
+                    ? 'bg-slate-700 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Expiradas ({pecasUtilizadas.filter((p) => !p.emGarantia).length})
+              </button>
+            </div>
           </div>
         </div>
 
@@ -506,6 +576,15 @@ export default function RelatoriosPage() {
                       <td className="py-3 px-3">
                         <div className="font-bold text-slate-900">{p.pecaNome}</div>
                         <div className="flex items-center gap-1.5 mt-0.5">
+                          {p.ehGarantia ? (
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] px-2 py-0.2 rounded-full font-bold">
+                              🛡️ Garantia da Loja
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2 py-0.2 rounded-full font-bold">
+                              💰 Serviço Pago
+                            </span>
+                          )}
                           <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.2 rounded-full font-mono">
                             {p.qualidade}
                           </span>
@@ -516,14 +595,31 @@ export default function RelatoriosPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-right font-mono text-red-600 font-semibold whitespace-nowrap">
+                      <td className="py-3 px-3 text-right font-mono text-slate-600 font-semibold whitespace-nowrap">
                         R$ {Number(p.custo).toFixed(2)}
                       </td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-900 font-bold whitespace-nowrap">
-                        R$ {Number(p.venda).toFixed(2)}
+                      <td className="py-3 px-3 text-right font-mono whitespace-nowrap">
+                        {p.ehGarantia ? (
+                          <span className="text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[10px]">
+                            R$ 0,00 (Garantia)
+                          </span>
+                        ) : (
+                          <span className="text-slate-900 font-bold">
+                            R$ {Number(p.venda).toFixed(2)}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-3 px-3 text-right font-mono font-black text-emerald-600 whitespace-nowrap">
-                        + R$ {Number(p.lucro).toFixed(2)}
+                      <td className="py-3 px-3 text-right font-mono font-black whitespace-nowrap">
+                        {p.ehGarantia ? (
+                          <span className="text-amber-700 text-xs">
+                            - R$ {Number(p.custo).toFixed(2)}
+                            <span className="text-[9px] font-normal block text-amber-600">despesa loja</span>
+                          </span>
+                        ) : (
+                          <span className="text-emerald-600 text-xs">
+                            + R$ {Number(p.lucro).toFixed(2)}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-center whitespace-nowrap">
                         {p.emGarantia ? (

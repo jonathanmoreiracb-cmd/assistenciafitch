@@ -325,6 +325,10 @@ export default function EstoquePage() {
           quantidade: p.quantidade || 1,
           custo: Number(p.custo || 0) * (p.quantidade || 1),
           venda: Number(p.preco_venda || 0) * (p.quantidade || 1),
+          ehGarantia:
+            Number(p.preco_venda || 0) === 0 ||
+            (p.descricao && p.descricao.toUpperCase().includes('[GARANTIA LOJA]')) ||
+            o.tipo_cobertura === 'Garantia da Loja',
           dataSaida: dataReferencia,
           diasGarantia,
           diasPassados,
@@ -829,13 +833,13 @@ export default function EstoquePage() {
 
         <div className="apple-card p-4 sm:p-5">
           <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block">
-            Faturamento das Peças
+            Faturamento das Peças Pagas
           </span>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1 font-mono">
-            R$ {todasSaidasPecas.reduce((acc, s) => acc + s.venda, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          <p className="text-xl sm:text-2xl font-black text-emerald-700 mt-1 font-mono">
+            R$ {todasSaidasPecas.filter((s) => !s.ehGarantia).reduce((acc, s) => acc + s.venda, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <span className="text-[10px] text-slate-400">
-            Receita total gerada em peças
+          <span className="text-[10px] text-amber-700 block mt-0.5 font-semibold">
+            Despesa Garantias: R$ {todasSaidasPecas.filter((s) => s.ehGarantia).reduce((acc, s) => acc + s.custo, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </span>
         </div>
       </div>
@@ -945,6 +949,15 @@ export default function EstoquePage() {
                       <td className="py-3 px-3">
                         <div className="font-bold text-slate-900">{s.pecaNome}</div>
                         <div className="flex items-center gap-1.5 mt-0.5">
+                          {s.ehGarantia ? (
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] px-2 py-0.2 rounded-full font-bold">
+                              🛡️ Garantia Loja
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2 py-0.2 rounded-full font-bold">
+                              💰 Venda Paga
+                            </span>
+                          )}
                           <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.2 rounded-full font-mono">
                             {s.qualidade}
                           </span>
@@ -955,8 +968,16 @@ export default function EstoquePage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-900 font-bold whitespace-nowrap">
-                        R$ {Number(s.venda).toFixed(2)}
+                      <td className="py-3 px-3 text-right font-mono whitespace-nowrap">
+                        {s.ehGarantia ? (
+                          <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                            R$ 0,00 (Garantia)
+                          </span>
+                        ) : (
+                          <span className="text-slate-900 font-bold">
+                            R$ {Number(s.venda).toFixed(2)}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-center whitespace-nowrap">
                         {s.emGarantia ? (

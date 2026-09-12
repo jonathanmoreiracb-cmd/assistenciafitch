@@ -787,6 +787,101 @@ export const OSService = {
     return null;
   },
 
+  async alternarTipoItemPeca(
+    osId: string,
+    pecaId: string,
+    precoVendaRestaurar?: number
+  ): Promise<OrdemServico | null> {
+    const os = await this.getOrdemServicoById(osId);
+    if (!os || !os.pecas) return null;
+
+    const item = os.pecas.find((p) => p.id === pecaId);
+    if (!item) return null;
+
+    const ehGarantiaAtual = Number(item.preco_venda || 0) === 0;
+    const novoPreco = ehGarantiaAtual
+      ? (Number(precoVendaRestaurar) || (Number(item.custo) > 0 ? Number(item.custo) * 2 : 150))
+      : 0;
+
+    let novaDesc = item.descricao;
+    if (ehGarantiaAtual) {
+      novaDesc = novaDesc.replace(/^\[GARANTIA LOJA\]\s*/i, '').trim();
+    } else {
+      if (!novaDesc.toUpperCase().startsWith('[GARANTIA LOJA]')) {
+        novaDesc = `[GARANTIA LOJA] ${novaDesc}`.trim();
+      }
+    }
+
+    const supabase = createClient();
+    if (supabase && sanitizeUuid(osId)) {
+      try {
+        await supabase
+          .from('os_itens_pecas')
+          .update({
+            preco_venda: novoPreco,
+            descricao: novaDesc,
+          })
+          .eq('id', pecaId);
+
+        // Recalcular valor_pecas na OS se trigger não estiver ativa
+        const { data: itensDb } = await supabase
+          .from('os_itens_pecas')
+          .select('preco_venda, quantidade')
+          .eq('os_id', osId);
+
+        if (itensDb) {
+          const somaTotalPecas = itensDb.reduce(
+            (acc, it) => acc + (Number(it.preco_venda) * Number(it.quantidade || 1)),
+            0
+          );
+          const valorTotalNovo = Math.max(
+            0,
+            (Number(os.valor_servico) || 0) + somaTotalPecas - (Number(os.valor_desconto) || 0)
+          );
+          await supabase
+            .from('ordens_servico')
+            .update({
+              valor_pecas: somaTotalPecas,
+              valor_total: valorTotalNovo,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', osId);
+        }
+
+        return this.getOrdemServicoById(osId);
+      } catch (e) {
+        console.error('Erro ao alternar tipo da peca no Supabase:', e);
+      }
+    }
+
+    const index = localOSStore.findIndex((o) => o.id === osId);
+    if (index !== -1 && localOSStore[index].pecas) {
+      const pIdx = localOSStore[index].pecas.findIndex((p) => p.id === pecaId);
+      if (pIdx !== -1) {
+        localOSStore[index].pecas[pIdx] = {
+          ...localOSStore[index].pecas[pIdx],
+          preco_venda: novoPreco,
+          descricao: novaDesc,
+        };
+
+        const somaPecas = localOSStore[index].pecas.reduce(
+          (acc, p) => acc + (p.preco_venda * (p.quantidade || 1)),
+          0
+        );
+        localOSStore[index].valor_pecas = somaPecas;
+        localOSStore[index].valor_total = Math.max(
+          0,
+          (localOSStore[index].valor_servico || 0) + somaPecas - (localOSStore[index].valor_desconto || 0)
+        );
+
+        persistLocalState();
+        return localOSStore[index];
+      }
+    }
+
+    return null;
+  },
+
   // 3. METRICS
   async getDashboardMetrics(): Promise<DashboardMetrics> {
     const ordensAtivas = await this.getOrdensServicoAtivas();

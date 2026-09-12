@@ -32,6 +32,12 @@ import {
   History,
   Image as ImageIcon,
   ExternalLink,
+  Search,
+  Filter,
+  Check,
+  X,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { EstoqueService } from '@/lib/services/estoque-service';
@@ -75,9 +81,55 @@ export default function OSDetalhesPage() {
     return list;
   }, [os?.vendedor_id, os?.vendedor_nome]);
 
-  // Inventory parts for selection
+  // Inventory parts for selection & interactive smart picker
   const [estoquePecas, setEstoquePecas] = useState<PecaEstoque[]>([]);
   const [selectedEstoqueId, setSelectedEstoqueId] = useState<string>('');
+  const [estoqueSearchTerm, setEstoqueSearchTerm] = useState('');
+  const [estoqueCategoriaFiltro, setEstoqueCategoriaFiltro] = useState('Todas');
+  const [estoqueApenasDisponiveis, setEstoqueApenasDisponiveis] = useState(true);
+  const [estoqueFiltroModeloOS, setEstoqueFiltroModeloOS] = useState(false);
+  const [mostrarCatalogoEstoque, setMostrarCatalogoEstoque] = useState(false);
+
+  // Peças filtradas com busca inteligente
+  const pecasEstoqueFiltradas = React.useMemo(() => {
+    return estoquePecas.filter((p) => {
+      // 1. Filtro de Categoria
+      if (estoqueCategoriaFiltro !== 'Todas') {
+        const catPeca = (p.categoria || 'Bateria').toLowerCase();
+        if (catPeca !== estoqueCategoriaFiltro.toLowerCase()) return false;
+      }
+
+      // 2. Filtro de Apenas Disponíveis (Estoque > 0)
+      if (estoqueApenasDisponiveis && Number(p.quantidade_estoque) <= 0) {
+        return false;
+      }
+
+      // 3. Filtro inteligente do modelo da O.S.
+      if (estoqueFiltroModeloOS && os?.modelo) {
+        const mod = os.modelo.toLowerCase().trim();
+        const comp = (p.modelo_compativel || '').toLowerCase();
+        const desc = (p.descricao || '').toLowerCase();
+        const words = mod.split(/[\s-]+/).filter((w) => w.length > 2 && w !== 'apple');
+        const match = comp.includes(mod) || desc.includes(mod) || words.some((w) => comp.includes(w) || desc.includes(w));
+        if (!match) return false;
+      }
+
+      // 4. Busca por texto
+      if (estoqueSearchTerm.trim()) {
+        const q = estoqueSearchTerm.toLowerCase().trim();
+        return (
+          p.descricao.toLowerCase().includes(q) ||
+          p.modelo_compativel.toLowerCase().includes(q) ||
+          p.codigo_sku.toLowerCase().includes(q) ||
+          (p.categoria || '').toLowerCase().includes(q) ||
+          (p.localizacao_gaveta || '').toLowerCase().includes(q) ||
+          (p.fornecedor || '').toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [estoquePecas, estoqueCategoriaFiltro, estoqueApenasDisponiveis, estoqueFiltroModeloOS, estoqueSearchTerm, os?.modelo]);
 
   // Editable Technical Diagnosis
   const [laudoInput, setLaudoInput] = useState('');
@@ -237,7 +289,16 @@ export default function OSDetalhesPage() {
       setNovaPecaQualidade(item.tipo_qualidade);
       setNovaPecaCusto(item.custo_unitario.toString());
       setNovaPecaPreco(item.preco_venda.toString());
+      setMostrarCatalogoEstoque(false);
+      toast.success(`Peça "${item.descricao}" selecionada do estoque!`);
     }
+  };
+
+  const handleClearSelectedEstoquePeca = () => {
+    setSelectedEstoqueId('');
+    setNovaPecaDesc('');
+    setNovaPecaCusto('100.00');
+    setNovaPecaPreco('250.00');
   };
 
   // 1-Click Status Change handler
@@ -956,23 +1017,209 @@ export default function OSDetalhesPage() {
               )}
             </div>
 
-            {/* Inventory Picker */}
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-              <label className="block text-[10px] font-bold text-[#0071e3] uppercase">
-                Selecionar Peça do Estoque
-              </label>
-              <select
-                value={selectedEstoqueId}
-                onChange={(e) => handleSelectEstoquePeca(e.target.value)}
-                className="w-full bg-white border border-slate-200/80 rounded-full px-3 py-1.5 text-xs text-slate-900"
-              >
-                <option value="">-- Escolher do Estoque --</option>
-                {estoquePecas.map((est) => (
-                  <option key={est.id} value={est.id}>
-                    [{est.categoria || 'Peça'}] {est.descricao} ({est.codigo_sku}) {est.localizacao_gaveta ? `📍 ${est.localizacao_gaveta} ` : ''}{est.fornecedor ? `• 🏭 ${est.fornecedor} ` : ''}• Disp: {est.quantidade_estoque} un • R$ {Number(est.preco_venda).toFixed(2)}
-                  </option>
+            {/* Inventory Picker Inteligente com Busca e Filtros */}
+            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Boxes className="w-4 h-4 text-[#0071e3]" />
+                  <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+                    Buscar & Selecionar Peça do Estoque
+                  </span>
+                </div>
+
+                {/* Botão de Sugestão Inteligente para o Modelo da O.S. */}
+                {os?.modelo && (
+                  <button
+                    type="button"
+                    onClick={() => setEstoqueFiltroModeloOS(!estoqueFiltroModeloOS)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                      estoqueFiltroModeloOS
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white text-[#0071e3] border border-blue-200 hover:bg-blue-50'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Sugeridas para {os.modelo}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Se houver peça selecionada do estoque */}
+              {selectedEstoqueId && (
+                <div className="bg-emerald-50 border border-emerald-300 p-3 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                      ✓
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase block">
+                        Peça Vinculada do Estoque:
+                      </span>
+                      <p className="text-xs font-black text-emerald-950">
+                        {estoquePecas.find((p) => p.id === selectedEstoqueId)?.descricao} (
+                        {estoquePecas.find((p) => p.id === selectedEstoqueId)?.codigo_sku})
+                      </p>
+                      <span className="text-[10px] text-emerald-700">
+                        {estoquePecas.find((p) => p.id === selectedEstoqueId)?.localizacao_gaveta
+                          ? `📍 ${estoquePecas.find((p) => p.id === selectedEstoqueId)?.localizacao_gaveta} • `
+                          : ''}
+                        Disp: <strong>{estoquePecas.find((p) => p.id === selectedEstoqueId)?.quantidade_estoque} un</strong> • Venda: R$ {Number(estoquePecas.find((p) => p.id === selectedEstoqueId)?.preco_venda || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearSelectedEstoquePeca}
+                    className="text-[11px] font-bold text-red-600 hover:text-red-700 bg-white border border-red-200 px-3 py-1 rounded-full shadow-xs hover:bg-red-50 transition-colors shrink-0"
+                  >
+                    ✕ Desmarcar / Manual
+                  </button>
+                </div>
+              )}
+
+              {/* Barra de Busca e Filtro de Disponibilidade */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <div className="relative sm:col-span-8">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Digite modelo (ex: 13, 11), peça ou gaveta..."
+                    value={estoqueSearchTerm}
+                    onChange={(e) => setEstoqueSearchTerm(e.target.value)}
+                    className="w-full bg-white border border-slate-200/80 rounded-full pl-9 pr-8 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30"
+                  />
+                  {estoqueSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setEstoqueSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <div className="sm:col-span-4 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setEstoqueApenasDisponiveis(!estoqueApenasDisponiveis)}
+                    className={`w-full py-2 px-3 rounded-full text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                      estoqueApenasDisponiveis
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Check className={`w-3.5 h-3.5 ${estoqueApenasDisponiveis ? 'text-emerald-600' : 'text-slate-300'}`} />
+                    <span>Apenas Disponíveis (&gt;0)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Pílulas de Categorias */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                <span className="text-[10px] font-bold text-slate-400 uppercase mr-1 shrink-0">Categorias:</span>
+                {['Todas', 'Bateria', 'Tela', 'Tampa', 'Camera', 'Conector', 'Face ID', 'Outros'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setEstoqueCategoriaFiltro(cat)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all ${
+                      estoqueCategoriaFiltro === cat
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200/60 border border-slate-200/80'
+                    }`}
+                  >
+                    {cat}
+                  </button>
                 ))}
-              </select>
+              </div>
+
+              {/* Lista Visual de Peças Filtradas */}
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                <div className="text-[10px] font-semibold text-slate-400 flex items-center justify-between px-1">
+                  <span>{pecasEstoqueFiltradas.length} peças encontradas</span>
+                  {estoqueFiltroModeloOS && <span className="text-[#0071e3]">✨ Filtro de {os?.modelo} ativado</span>}
+                </div>
+
+                {pecasEstoqueFiltradas.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
+                    Nenhuma peça encontrada com estes filtros. Tente buscar por outro termo ou desmarque "Apenas Disponíveis".
+                  </div>
+                ) : (
+                  pecasEstoqueFiltradas.map((est) => {
+                    const isSelected = selectedEstoqueId === est.id;
+                    const qtd = Number(est.quantidade_estoque) || 0;
+                    return (
+                      <div
+                        key={est.id}
+                        onClick={() => handleSelectEstoquePeca(est.id)}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                          isSelected
+                            ? 'bg-emerald-50/80 border-emerald-400 ring-1 ring-emerald-400'
+                            : 'bg-white hover:bg-blue-50/40 border-slate-200/80 hover:border-blue-300'
+                        }`}
+                      >
+                        <div className="flex items-start sm:items-center gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono shrink-0">
+                            {est.categoria || 'Peça'}
+                          </span>
+                          <div>
+                            <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                              <span>{est.descricao}</span>
+                              <span className="text-[10px] font-mono text-slate-400">({est.codigo_sku})</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                              <span>📱 {est.modelo_compativel}</span>
+                              {est.localizacao_gaveta && (
+                                <span className="text-blue-600 font-medium">📍 {est.localizacao_gaveta}</span>
+                              )}
+                              {est.tipo_qualidade && (
+                                <span className="text-slate-400 font-mono">({est.tipo_qualidade})</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                          <div className="text-right">
+                            {qtd > 2 ? (
+                              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">
+                                {qtd} un disponíveis
+                              </span>
+                            ) : qtd > 0 ? (
+                              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">
+                                Só {qtd} un
+                              </span>
+                            ) : (
+                              <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">
+                                Esgotado (0)
+                              </span>
+                            )}
+                            <div className="font-mono font-bold text-xs text-slate-900 mt-0.5">
+                              R$ {Number(est.preco_venda).toFixed(2)}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectEstoquePeca(est.id);
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-xs'
+                            }`}
+                          >
+                            {isSelected ? '✓ Selecionada' : '+ Selecionar'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             {/* Form de Adicionar Peça / Orçamento com Rótulos Claros */}

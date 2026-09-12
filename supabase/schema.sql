@@ -235,3 +235,25 @@ CREATE POLICY "Permitir tudo pecas" ON os_itens_pecas FOR ALL USING (true) WITH 
 
 DROP POLICY IF EXISTS "Permitir tudo estoque" ON estoque_pecas;
 CREATE POLICY "Permitir tudo estoque" ON estoque_pecas FOR ALL USING (true) WITH CHECK (true);
+
+-- Permissões globais para tabelas
+GRANT ALL ON estoque_pecas TO anon, authenticated, service_role;
+GRANT ALL ON ordens_servico TO anon, authenticated, service_role;
+GRANT ALL ON os_itens_pecas TO anon, authenticated, service_role;
+GRANT ALL ON clientes TO anon, authenticated, service_role;
+GRANT ALL ON usuarios TO anon, authenticated, service_role;
+
+-- ================================================================
+-- SCRIPT DE ATUALIZAÇÃO / REPARO DO ESTOQUE (Executar no SQL Editor)
+-- Copie e cole no painel do Supabase se o estoque não sincronizar:
+-- ================================================================
+-- ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Bateria';
+-- ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS marca TEXT DEFAULT 'Apple';
+-- ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS estoque_minimo INT DEFAULT 3;
+-- ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS localizacao_gaveta TEXT DEFAULT 'Bancada';
+-- ALTER TABLE estoque_pecas ADD COLUMN IF NOT EXISTS fornecedor TEXT DEFAULT 'China Parts';
+-- ALTER TABLE estoque_pecas ENABLE ROW LEVEL SECURITY;
+-- DROP POLICY IF EXISTS "Permitir tudo estoque" ON estoque_pecas;
+-- CREATE POLICY "Permitir tudo estoque" ON estoque_pecas FOR ALL USING (true) WITH CHECK (true);
+-- GRANT ALL ON estoque_pecas TO anon, authenticated, service_role;
+

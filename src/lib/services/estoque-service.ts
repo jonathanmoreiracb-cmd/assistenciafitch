@@ -53,13 +53,39 @@ export const EstoqueService = {
 
           localEstoque = [...localOnly, ...mapped];
           persistLocalEstoque();
+
+          // Se houver peças pendentes salvas apenas localmente (est-), sincroniza automaticamente com o Supabase
+          if (localOnly.length > 0) {
+            this.syncPendingLocalPecas(localOnly);
+          }
+
           return localEstoque;
         }
       } catch (e) {
-        console.error(e);
+        console.error('[EstoqueService] Erro ao buscar peças:', e);
       }
     }
     return localEstoque;
+  },
+
+  async syncPendingLocalPecas(pendingList: PecaEstoque[]) {
+    const supabase = createClient();
+    if (!supabase || !pendingList || pendingList.length === 0) return;
+
+    for (const pending of pendingList) {
+      try {
+        const { id, created_at, ...dadosSemId } = pending;
+        const synced = await this.cadastrarPeca(dadosSemId);
+        if (synced && !synced.id.startsWith('est-')) {
+          // Remove o item temporario local substituindo pelo real do Supabase
+          localEstoque = localEstoque.filter((p) => p.id !== pending.id);
+          persistLocalEstoque();
+          console.log(`[EstoqueService] Peça pendente "${pending.descricao}" sincronizada com sucesso na nuvem.`);
+        }
+      } catch (e) {
+        console.warn('[EstoqueService] Falha ao sincronizar peça pendente:', e);
+      }
+    }
   },
 
   async cadastrarPeca(
@@ -76,84 +102,113 @@ export const EstoqueService = {
       cleanSku = `${cleanSku}-${Math.floor(Math.random() * 90 + 10)}`;
     }
 
-    const payload: any = {
-      ...peca,
+    const payloadFull: any = {
+      descricao: (peca.descricao || '').trim(),
       codigo_sku: cleanSku,
+      tipo_qualidade: peca.tipo_qualidade || 'Original',
+      modelo_compativel: (peca.modelo_compativel || '').trim(),
       categoria: peca.categoria || 'Bateria',
       marca: peca.marca || 'Apple',
       estoque_minimo: peca.estoque_minimo !== undefined ? Number(peca.estoque_minimo) : 3,
       localizacao_gaveta: peca.localizacao_gaveta || 'Bancada',
       fornecedor: peca.fornecedor || 'China Parts',
+      quantidade_estoque: Number(peca.quantidade_estoque) || 0,
+      custo_unitario: Number(peca.custo_unitario) || 0,
+      preco_venda: Number(peca.preco_venda) || 0,
     };
 
     const supabase = createClient();
     if (supabase) {
-      try {
-        const { data, error } = await supabase.from('estoque_pecas').insert([payload]).select().single();
-        if (!error && data) {
-          const novaPeca = { ...(data as PecaEstoque), ...payload };
-          localEstoque.unshift(novaPeca);
-          persistLocalEstoque();
-          return novaPeca;
-        }
+      // Tentativas progressivas de inserção: da mais completa até o esquema mínimo garantido
+      const payloadsToTry = [
+        // 1. Completo com todas as colunas
+        { ...payloadFull },
+        // 2. Sem fornecedor
+        {
+          descricao: payloadFull.descricao,
+          codigo_sku: payloadFull.codigo_sku,
+          tipo_qualidade: payloadFull.tipo_qualidade,
+          modelo_compativel: payloadFull.modelo_compativel,
+          categoria: payloadFull.categoria,
+          marca: payloadFull.marca,
+          localizacao_gaveta: payloadFull.localizacao_gaveta,
+          estoque_minimo: payloadFull.estoque_minimo,
+          quantidade_estoque: payloadFull.quantidade_estoque,
+          custo_unitario: payloadFull.custo_unitario,
+          preco_venda: payloadFull.preco_venda,
+        },
+        // 3. Sem localizacao_gaveta, estoque_minimo, marca
+        {
+          descricao: payloadFull.descricao,
+          codigo_sku: payloadFull.codigo_sku,
+          tipo_qualidade: payloadFull.tipo_qualidade,
+          modelo_compativel: payloadFull.modelo_compativel,
+          categoria: payloadFull.categoria,
+          quantidade_estoque: payloadFull.quantidade_estoque,
+          custo_unitario: payloadFull.custo_unitario,
+          preco_venda: payloadFull.preco_venda,
+        },
+        // 4. Esquema original mínimo garantido (funciona mesmo se colunas novas ainda não foram criadas no Supabase)
+        {
+          descricao: payloadFull.descricao,
+          codigo_sku: payloadFull.codigo_sku,
+          tipo_qualidade: payloadFull.tipo_qualidade,
+          modelo_compativel: payloadFull.modelo_compativel,
+          quantidade_estoque: payloadFull.quantidade_estoque,
+          custo_unitario: payloadFull.custo_unitario,
+          preco_venda: payloadFull.preco_venda,
+        },
+      ];
 
-        // Retry fallback se colunas adicionais falharem no Supabase DB
-        if (error) {
-          const payloadBase = {
-            descricao: payload.descricao,
-            codigo_sku: payload.codigo_sku,
-            tipo_qualidade: payload.tipo_qualidade,
-            modelo_compativel: payload.modelo_compativel,
-            categoria: payload.categoria,
-            marca: payload.marca,
-            localizacao_gaveta: payload.localizacao_gaveta,
-            estoque_minimo: payload.estoque_minimo,
-            quantidade_estoque: payload.quantidade_estoque,
-            custo_unitario: payload.custo_unitario,
-            preco_venda: payload.preco_venda,
-          };
-          let { data: retryData, error: retryErr } = await supabase
+      for (let attempt = 0; attempt < payloadsToTry.length; attempt++) {
+        let currentPayload = { ...payloadsToTry[attempt] };
+        try {
+          let { data, error } = await supabase
             .from('estoque_pecas')
-            .insert([payloadBase])
+            .insert([currentPayload])
             .select()
             .single();
 
-          if (retryErr) {
-            // Se falhar devido a colunas ausentes no schema remoto, garante a insercao dos campos base com categoria
-            const payloadCore = {
-              descricao: payload.descricao,
-              codigo_sku: payload.codigo_sku,
-              tipo_qualidade: payload.tipo_qualidade,
-              modelo_compativel: payload.modelo_compativel,
-              categoria: payload.categoria,
-              quantidade_estoque: payload.quantidade_estoque,
-              custo_unitario: payload.custo_unitario,
-              preco_venda: payload.preco_venda,
-            };
-            const { data: coreData, error: coreErr } = await supabase
+          // Se der erro de chave única duplicada (SKU já existe no banco remoto - código 23505)
+          if (error && (error.code === '23505' || error.message?.toLowerCase().includes('sku') || error.message?.toLowerCase().includes('duplicate key'))) {
+            const uniqueSku = `${cleanSku}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+            currentPayload.codigo_sku = uniqueSku;
+            payloadFull.codigo_sku = uniqueSku;
+            const retryRes = await supabase
               .from('estoque_pecas')
-              .insert([payloadCore])
+              .insert([currentPayload])
               .select()
               .single();
-            retryData = coreData;
-            retryErr = coreErr;
+            data = retryRes.data;
+            error = retryRes.error;
           }
 
-          if (!retryErr && retryData) {
-            const novaPeca = { ...(retryData as PecaEstoque), ...payload };
-            localEstoque.unshift(novaPeca);
+          if (!error && data) {
+            const novaPeca: PecaEstoque = {
+              ...(data as PecaEstoque),
+              ...payloadFull,
+              id: data.id,
+              created_at: data.created_at || new Date().toISOString(),
+            };
+            // Adiciona no topo do estoque local
+            localEstoque = [novaPeca, ...localEstoque.filter((p) => p.id !== novaPeca.id && p.codigo_sku !== novaPeca.codigo_sku)];
             persistLocalEstoque();
+            console.log(`[EstoqueService] Peça inserida com sucesso no Supabase na tentativa ${attempt + 1}:`, novaPeca.id);
             return novaPeca;
+          } else if (error) {
+            console.warn(`[EstoqueService] Tentativa ${attempt + 1} falhou no Supabase:`, error.message);
           }
+        } catch (err) {
+          console.error(`[EstoqueService] Exceção na tentativa ${attempt + 1}:`, err);
         }
-      } catch (e) {
-        console.error(e);
       }
     }
 
+    // Fallback de emergência local se o Supabase estiver indisponível
+    console.warn('[EstoqueService] Gravando localmente após falha de inserção no Supabase.');
     const nova: PecaEstoque = {
       id: `est-${Date.now()}`,
-      ...payload,
+      ...payloadFull,
       created_at: new Date().toISOString(),
     };
     localEstoque.unshift(nova);
@@ -266,23 +321,49 @@ export const EstoqueService = {
 
   async atualizarPeca(id: string, dados: Partial<PecaEstoque>): Promise<PecaEstoque | null> {
     const supabase = createClient();
-    if (supabase) {
+    if (supabase && !id.startsWith('est-')) {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('estoque_pecas')
           .update(dados)
           .eq('id', id)
           .select()
           .single();
-        if (data) {
+        if (!error && data) {
           const updated = { ...(data as PecaEstoque), ...dados };
           const idx = localEstoque.findIndex((p) => p.id === id);
           if (idx !== -1) localEstoque[idx] = updated;
           persistLocalEstoque();
           return updated;
         }
+
+        // Se falhou por colunas extras inexistentes no Supabase, tenta atualizar colunas base
+        if (error) {
+          const dadosBase: any = { ...dados };
+          delete dadosBase.fornecedor;
+          delete dadosBase.localizacao_gaveta;
+          delete dadosBase.estoque_minimo;
+          delete dadosBase.marca;
+          delete dadosBase.categoria;
+
+          if (Object.keys(dadosBase).length > 0) {
+            const retryRes = await supabase
+              .from('estoque_pecas')
+              .update(dadosBase)
+              .eq('id', id)
+              .select()
+              .single();
+            if (!retryRes.error && retryRes.data) {
+              const updated = { ...(retryRes.data as PecaEstoque), ...dados };
+              const idx = localEstoque.findIndex((p) => p.id === id);
+              if (idx !== -1) localEstoque[idx] = updated;
+              persistLocalEstoque();
+              return updated;
+            }
+          }
+        }
       } catch (e) {
-        console.error(e);
+        console.error('[EstoqueService] Erro ao atualizar peça:', e);
       }
     }
 

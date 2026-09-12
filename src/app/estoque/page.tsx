@@ -173,7 +173,7 @@ export default function EstoquePage() {
         });
         toast.success('Peça atualizada no estoque!');
       } else {
-        await EstoqueService.cadastrarPeca({
+        const nova = await EstoqueService.cadastrarPeca({
           descricao: formNew.descricao,
           codigo_sku: formNew.codigo_sku ? formNew.codigo_sku.toUpperCase() : '',
           tipo_qualidade: formNew.tipo_qualidade,
@@ -187,7 +187,11 @@ export default function EstoquePage() {
           custo_unitario: Number(formNew.custo_unitario) || 0,
           preco_venda: Number(formNew.preco_venda) || 0,
         });
-        toast.success('Peça cadastrada no estoque com sucesso!');
+        if (nova && nova.id.startsWith('est-')) {
+          toast.warning('Peça salva nesta máquina, mas aguardando sincronização com a nuvem.');
+        } else {
+          toast.success('Peça cadastrada e sincronizada na nuvem com sucesso!');
+        }
       }
       setShowNewModal(false);
       setEditingPeca(null);

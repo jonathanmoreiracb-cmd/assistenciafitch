@@ -11,6 +11,10 @@ import {
   Award,
   Users,
   ShieldAlert,
+  Package,
+  ShieldCheck,
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import { OSService } from '@/lib/services/os-service';
 import { AuthService } from '@/lib/services/auth-service';
@@ -23,6 +27,8 @@ export default function RelatoriosPage() {
   const [periodo, setPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'todos'>('mes');
   const [loading, setLoading] = useState(true);
   const [ordens, setOrdens] = useState<OrdemServico[]>([]);
+  const [searchPeca, setSearchPeca] = useState('');
+  const [filtroGarantia, setFiltroGarantia] = useState<'todas' | 'em_garantia' | 'expirada'>('todas');
 
   const loadData = async () => {
     setLoading(true);
@@ -122,6 +128,71 @@ export default function RelatoriosPage() {
       comissao_estimada: calcComissao.comissaoTotal,
     };
   });
+
+  // Extração e consolidação das peças que saíram nas O.S. filtradas
+  const pecasUtilizadas = ordensFiltradas
+    .filter((o) => o.status !== 'cancelado')
+    .flatMap((o) =>
+      (o.pecas || []).map((p) => {
+        const dataReferencia = o.data_conclusao || o.data_baixa || o.data_entrada;
+        const diasGarantia = o.garantia_dias || 90;
+        const diasPassados = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(dataReferencia).getTime()) / (1000 * 60 * 60 * 24))
+        );
+        const diasRestantes = Math.max(0, diasGarantia - diasPassados);
+        const emGarantia = diasPassados <= diasGarantia;
+        const qtd = p.quantidade || 1;
+        const custoTotalItem = Number(p.custo || 0) * qtd;
+        const vendaTotalItem = Number(p.preco_venda || 0) * qtd;
+        const lucroTotalItem = vendaTotalItem - custoTotalItem;
+
+        return {
+          id: p.id,
+          osId: o.id,
+          numeroOs: o.numero_os,
+          clienteNome: o.cliente?.nome || 'Cliente Balcão',
+          clienteTelefone: o.cliente?.telefone || '',
+          aparelho: `${o.tipo_dispositivo} ${o.modelo}`,
+          imei: o.imei_ou_serial,
+          pecaNome: p.descricao,
+          qualidade: p.tipo_qualidade,
+          quantidade: qtd,
+          custo: custoTotalItem,
+          venda: vendaTotalItem,
+          lucro: lucroTotalItem,
+          dataSaida: dataReferencia,
+          diasGarantia,
+          diasPassados,
+          diasRestantes,
+          emGarantia,
+          syscorVenda: o.numero_venda_syscor,
+        };
+      })
+    );
+
+  const pecasFiltradas = pecasUtilizadas.filter((p) => {
+    // Filtro de Garantia
+    if (filtroGarantia === 'em_garantia' && !p.emGarantia) return false;
+    if (filtroGarantia === 'expirada' && p.emGarantia) return false;
+
+    // Filtro de Busca texto
+    if (!searchPeca.trim()) return true;
+    const q = searchPeca.toLowerCase().trim();
+    return (
+      p.pecaNome.toLowerCase().includes(q) ||
+      p.aparelho.toLowerCase().includes(q) ||
+      p.imei.toLowerCase().includes(q) ||
+      p.clienteNome.toLowerCase().includes(q) ||
+      p.numeroOs.toString().includes(q) ||
+      (p.syscorVenda && p.syscorVenda.toLowerCase().includes(q))
+    );
+  });
+
+  const totalQtdPecas = pecasUtilizadas.reduce((sum, p) => sum + p.quantidade, 0);
+  const totalCustoPecas = pecasUtilizadas.reduce((sum, p) => sum + p.custo, 0);
+  const totalVendaPecas = pecasUtilizadas.reduce((sum, p) => sum + p.venda, 0);
+  const totalLucroPecas = totalVendaPecas - totalCustoPecas;
 
   return (
     <div className="space-y-6 font-sans">
@@ -292,6 +363,194 @@ export default function RelatoriosPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* SEÇÃO: HISTÓRICO DE PEÇAS UTILIZADAS, CUSTO X LUCRO & GARANTIA */}
+      <div className="apple-card p-6 space-y-5">
+        <div className="border-b border-slate-100 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-bold text-[#1d1d1f] flex items-center gap-2">
+              <Package className="w-5 h-5 text-indigo-600" />
+              Histórico de Peças Utilizadas & Garantias (90 dias)
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Rastreabilidade de cada peça que saiu do estoque nas Ordens de Serviço, com cálculo de Custo x Venda x Lucro e prazo de garantia.
+            </p>
+          </div>
+
+          {/* Quick Metrics of Parts */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Peças Usadas</span>
+              <span className="font-bold text-slate-900 font-mono text-sm">{totalQtdPecas} un</span>
+            </div>
+            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Custo Peças</span>
+              <span className="font-bold text-red-600 font-mono text-sm">R$ {totalCustoPecas.toFixed(2)}</span>
+            </div>
+            <div className="bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+              <span className="text-[10px] text-slate-500 uppercase block font-semibold">Venda Peças</span>
+              <span className="font-bold text-blue-600 font-mono text-sm">R$ {totalVendaPecas.toFixed(2)}</span>
+            </div>
+            <div className="bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl">
+              <span className="text-[10px] text-emerald-800 uppercase block font-semibold">Lucro Peças</span>
+              <span className="font-bold text-emerald-700 font-mono text-sm">R$ {totalLucroPecas.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros e Busca de Peças */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar por peça, modelo, O.S. ou cliente..."
+              value={searchPeca}
+              onChange={(e) => setSearchPeca(e.target.value)}
+              className="w-full bg-slate-100/80 border border-slate-200/80 rounded-full pl-9 pr-3.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-full text-xs font-semibold self-start sm:self-auto">
+            <button
+              onClick={() => setFiltroGarantia('todas')}
+              className={`px-3 py-1 rounded-full transition-all ${
+                filtroGarantia === 'todas'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Todas ({pecasUtilizadas.length})
+            </button>
+            <button
+              onClick={() => setFiltroGarantia('em_garantia')}
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+                filtroGarantia === 'em_garantia'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Em Garantia ({pecasUtilizadas.filter((p) => p.emGarantia).length})
+            </button>
+            <button
+              onClick={() => setFiltroGarantia('expirada')}
+              className={`px-3 py-1 rounded-full transition-all ${
+                filtroGarantia === 'expirada'
+                  ? 'bg-slate-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Garantia Encerrada ({pecasUtilizadas.filter((p) => !p.emGarantia).length})
+            </button>
+          </div>
+        </div>
+
+        {/* Tabela Detalhada */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase text-[10px] bg-slate-50/50">
+                <th className="py-2.5 px-3">Data Saída</th>
+                <th className="py-2.5 px-3">O.S. / Cliente</th>
+                <th className="py-2.5 px-3">Aparelho / IMEI</th>
+                <th className="py-2.5 px-3">Peça Utilizada</th>
+                <th className="py-2.5 px-3 text-right">Custo Loja</th>
+                <th className="py-2.5 px-3 text-right">Preço Venda</th>
+                <th className="py-2.5 px-3 text-right">Lucro Líquido</th>
+                <th className="py-2.5 px-3 text-center">Garantia (90d)</th>
+                <th className="py-2.5 px-3 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-sans">
+              {pecasFiltradas.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center text-slate-400">
+                    Nenhuma peça utilizada encontrada para este período ou filtro.
+                  </td>
+                </tr>
+              ) : (
+                pecasFiltradas.map((p) => {
+                  const dataFormatada = p.dataSaida
+                    ? new Date(p.dataSaida).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })
+                    : 'N/A';
+
+                  return (
+                    <tr key={`${p.osId}-${p.id}`} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">
+                        {dataFormatada}
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>O.S. #{p.numeroOs}</span>
+                          {p.syscorVenda && (
+                            <span className="text-[9px] font-mono bg-blue-50 text-[#0071e3] border border-blue-200 px-1.5 py-0.2 rounded">
+                              Syscor #{p.syscorVenda}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate max-w-[140px]">
+                          {p.clienteNome}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-slate-900">{p.aparelho}</div>
+                        <div className="text-[10px] font-mono text-slate-400">{p.imei}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-slate-900">{p.pecaNome}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.2 rounded-full font-mono">
+                            {p.qualidade}
+                          </span>
+                          {p.quantidade > 1 && (
+                            <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                              {p.quantidade}x
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono text-red-600 font-semibold whitespace-nowrap">
+                        R$ {Number(p.custo).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono text-slate-900 font-bold whitespace-nowrap">
+                        R$ {Number(p.venda).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono font-black text-emerald-600 whitespace-nowrap">
+                        + R$ {Number(p.lucro).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        {p.emGarantia ? (
+                          <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            Garantia ({p.diasRestantes}d)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-medium px-2.5 py-0.5 rounded-full">
+                            Expirada ({p.diasPassados}d)
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => router.push(`/os/${p.osId}`)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0071e3] hover:underline"
+                        >
+                          Ver O.S. <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

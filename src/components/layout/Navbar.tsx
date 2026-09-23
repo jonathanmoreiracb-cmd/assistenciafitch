@@ -163,7 +163,7 @@ export const Navbar: React.FC = () => {
             {/* User Badge & Logout */}
             <div className="flex items-center gap-1 pl-2 border-l border-slate-200">
               <span className="text-xs font-semibold text-slate-700">
-                {currentUser?.nome || 'Jonathan Moreira'}
+                {currentUser?.nome || 'Jonathan Claudino'}
               </span>
 
               <button

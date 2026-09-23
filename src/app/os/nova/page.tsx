@@ -35,32 +35,14 @@ export default function NovaOSPage() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
 
-  const currentUser = AuthService.getCurrentUser();
-  const vendedores = AuthService.getVendedores();
+  const [vendedoresList, setVendedoresList] = useState<Usuario[]>(() => AuthService.getVendedores());
+  const [vendedorSelecionado, setVendedorSelecionado] = useState<Usuario | null>(null);
 
-  const optionsVendedores = React.useMemo(() => {
-    const list = [...vendedores];
-    if (currentUser && !list.some((v) => v.id === currentUser.id)) {
-      list.unshift(currentUser);
-    }
-    return list;
-  }, [vendedores, currentUser]);
-
-  const [vendedorSelecionado, setVendedorSelecionado] = useState<Usuario>(() => {
-    if (currentUser) {
-      const foundInList = optionsVendedores.find((v) => v.id === currentUser.id);
-      if (foundInList) return foundInList;
-      return currentUser;
-    }
-    return optionsVendedores[0] || {
-      id: '11111111-1111-1111-1111-111111111111',
-      nome: 'Jonathan Moreira',
-      email: 'jonathan@fitch.com',
-      cargo: 'gerente',
-      meta_mensal_os: 0,
-      percentual_comissao: 0,
-    };
-  });
+  React.useEffect(() => {
+    AuthService.getUsuariosAsync().then(() => {
+      setVendedoresList(AuthService.getVendedores());
+    });
+  }, []);
 
   // Step 1 State: Customer
   const [searchCliQuery, setSearchCliQuery] = useState('');
@@ -144,6 +126,12 @@ export default function NovaOSPage() {
   };
 
   const handleSalvarOS = async () => {
+    if (!vendedorSelecionado) {
+      toast.error('Por favor, selecione quem é o vendedor/atendente responsável no Passo 1.');
+      setStep(1);
+      return;
+    }
+
     if (!modelo || !imeiOuSerial || !defeitoReclamado) {
       toast.error('Preencha os campos obrigatórios do aparelho e defeito.');
       return;
@@ -220,16 +208,22 @@ export default function NovaOSPage() {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <span className="text-xs font-semibold text-slate-500">Vendedor:</span>
           <select
-            value={vendedorSelecionado.id}
+            value={vendedorSelecionado?.id || ''}
             onChange={(e) => {
-              const v = optionsVendedores.find((v) => v.id === e.target.value);
-              if (v) setVendedorSelecionado(v);
+              const v = vendedoresList.find((item) => item.id === e.target.value);
+              setVendedorSelecionado(v || null);
+              if (v) toast.success(`Vendedor(a) ${v.nome} selecionado(a)!`);
             }}
-            className="bg-slate-100 border border-slate-200 rounded-full px-3 py-1 text-xs text-[#0071e3] font-bold focus:outline-none"
+            className={`border rounded-full px-3 py-1.5 text-xs font-bold focus:outline-none transition-all ${
+              !vendedorSelecionado
+                ? 'bg-amber-50 border-amber-300 text-amber-800 ring-2 ring-amber-300/40 animate-pulse'
+                : 'bg-slate-100 border-slate-200 text-[#0071e3]'
+            }`}
           >
-            {optionsVendedores.map((v) => (
+            <option value="">-- Selecione o Vendedor * --</option>
+            {vendedoresList.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.nome}
+                {v.nome} ({v.cargo === 'gerente' ? 'Gerente' : 'Vendedor'})
               </option>
             ))}
           </select>
@@ -248,7 +242,15 @@ export default function NovaOSPage() {
         </button>
 
         <button
-          onClick={() => (selectedCliente || isNovoCliente ? setStep(2) : null)}
+          onClick={() => {
+            if (!vendedorSelecionado) {
+              toast.error('Selecione o vendedor responsável no Passo 1 antes de avançar.');
+              setStep(1);
+              return;
+            }
+            if (selectedCliente || isNovoCliente) setStep(2);
+            else toast.error('Selecione ou informe os dados do cliente primeiro.');
+          }}
           className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 2 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
@@ -257,7 +259,15 @@ export default function NovaOSPage() {
         </button>
 
         <button
-          onClick={() => (selectedCliente || isNovoCliente ? setStep(3) : null)}
+          onClick={() => {
+            if (!vendedorSelecionado) {
+              toast.error('Selecione o vendedor responsável no Passo 1 antes de avançar.');
+              setStep(1);
+              return;
+            }
+            if (selectedCliente || isNovoCliente) setStep(3);
+            else toast.error('Selecione ou informe os dados do cliente primeiro.');
+          }}
           className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 3 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
@@ -266,7 +276,15 @@ export default function NovaOSPage() {
         </button>
 
         <button
-          onClick={() => (selectedCliente || isNovoCliente ? setStep(4) : null)}
+          onClick={() => {
+            if (!vendedorSelecionado) {
+              toast.error('Selecione o vendedor responsável no Passo 1 antes de avançar.');
+              setStep(1);
+              return;
+            }
+            if (selectedCliente || isNovoCliente) setStep(4);
+            else toast.error('Selecione ou informe os dados do cliente primeiro.');
+          }}
           className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 4 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
           }`}
@@ -279,7 +297,7 @@ export default function NovaOSPage() {
       {step === 1 && (
         <div className="apple-card p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-base font-bold text-[#1d1d1f]">Passo 1: Cliente</h3>
+            <h3 className="text-base font-bold text-[#1d1d1f]">Passo 1: Identificação & Cliente</h3>
             <button
               type="button"
               onClick={() => {
@@ -290,6 +308,72 @@ export default function NovaOSPage() {
             >
               {isNovoCliente ? 'Buscar Cliente Existente' : '+ Novo Cliente'}
             </button>
+          </div>
+
+          {/* SELETOR OBRIGATÓRIO DE VENDEDOR / ATENDENTE */}
+          <div
+            className={`p-4 rounded-2xl border transition-all ${
+              !vendedorSelecionado
+                ? 'bg-amber-50/90 border-amber-300 ring-2 ring-amber-200/50 shadow-sm'
+                : 'bg-blue-50/40 border-blue-200/80'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <UserCheck
+                  className={`w-4 h-4 ${
+                    !vendedorSelecionado ? 'text-amber-600' : 'text-[#0071e3]'
+                  }`}
+                />
+                <h4 className="text-xs font-bold text-slate-900">
+                  Vendedor / Atendente Responsável <span className="text-red-500">*</span>
+                </h4>
+              </div>
+              {!vendedorSelecionado ? (
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900 w-fit animate-pulse">
+                  ⚠️ Obrigatório Selecionar
+                </span>
+              ) : (
+                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-full flex items-center gap-1 w-fit">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  Atendente: <strong className="ml-0.5">{vendedorSelecionado.nome}</strong>
+                </span>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-600 mb-3">
+              Quem está abrindo esta O.S.? Clique no seu nome abaixo para garantir que o atendimento e comissão fiquem registrados para você:
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {vendedoresList.map((v) => {
+                const isSelected = vendedorSelecionado?.id === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      setVendedorSelecionado(v);
+                      toast.success(`Vendedor(a) ${v.nome} selecionado(a)!`);
+                    }}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between gap-1.5 text-left ${
+                      isSelected
+                        ? 'bg-[#0071e3] text-white shadow-sm ring-2 ring-[#0071e3]/30 scale-[1.02]'
+                        : 'bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="truncate">{v.nome}</span>
+                    {isSelected ? (
+                      <CheckCircle className="w-3.5 h-3.5 text-white shrink-0" />
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                        {v.cargo === 'gerente' ? 'Ger.' : 'Vend.'}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {!isNovoCliente ? (
@@ -450,6 +534,10 @@ export default function NovaOSPage() {
           <div className="flex justify-end pt-4 border-t border-slate-100">
             <button
               onClick={() => {
+                if (!vendedorSelecionado) {
+                  toast.error('Por favor, selecione quem é o vendedor/atendente responsável no início da tela!');
+                  return;
+                }
                 if (selectedCliente) {
                   setStep(2);
                 } else if (isNovoCliente) {
@@ -869,6 +957,36 @@ export default function NovaOSPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* VENDEDOR RESUMO ANTES DE SALVAR */}
+            <div className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+              !vendedorSelecionado
+                ? 'bg-amber-50 border-amber-300'
+                : 'bg-slate-50 border-slate-200/80'
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  !vendedorSelecionado ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-[#0071e3]'
+                }`}>
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Vendedor(a) Responsável
+                  </span>
+                  <span className="text-xs font-bold text-slate-900">
+                    {vendedorSelecionado ? vendedorSelecionado.nome : '⚠️ Nenhum vendedor selecionado'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-xs text-[#0071e3] font-bold hover:underline px-3 py-1 bg-white border border-slate-200 rounded-full"
+              >
+                {vendedorSelecionado ? 'Alterar' : 'Selecionar no Passo 1'}
+              </button>
             </div>
           </div>
 

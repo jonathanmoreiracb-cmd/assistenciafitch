@@ -373,7 +373,7 @@ export default function AdminPage() {
             Central de Administração Fitch Tecnologia
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Logado como <strong className="text-slate-900">{currentUser?.nome || 'Jonathan Moreira'}</strong> (Gerente Principal)
+            Logado como <strong className="text-slate-900">{currentUser?.nome || 'Jonathan Claudino'}</strong> (Gerente Principal)
           </p>
         </div>
 

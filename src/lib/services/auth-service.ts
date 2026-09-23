@@ -14,7 +14,7 @@ function generateUUID(): string {
 
 export const GERENTE_DEFAULT: Usuario = {
   id: '11111111-1111-1111-1111-111111111111',
-  nome: 'Jonathan Moreira',
+  nome: 'Jonathan Claudino',
   email: 'jonathan@fitch.com',
   senha: 'tcjk7788',
   cargo: 'gerente',

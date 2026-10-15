@@ -66,7 +66,8 @@ export default function NovaOSPage() {
   const [senhaAparelho, setSenhaAparelho] = useState('');
   const [buscarIphoneDesativado, setBuscarIphoneDesativado] = useState(false);
   const [aparelhoNaoLiga, setAparelhoNaoLiga] = useState(false);
-  const [tipoCobertura, setTipoCobertura] = useState<TipoCobertura>('Particular');
+  // Sem valor padrão: o vendedor precisa escolher conscientemente o tipo de serviço
+  const [tipoCobertura, setTipoCobertura] = useState<TipoCobertura | null>(null);
 
   // Step 3 State: Checklist & Photos
   const [checklist, setChecklist] = useState<ChecklistEntrada>({
@@ -125,10 +126,25 @@ export default function NovaOSPage() {
     }
   };
 
+  const exigirTipoServico = (): boolean => {
+    if (tipoCobertura) return true;
+    toast.error('Selecione o TIPO DE SERVIÇO (Particular, Garantia Seminovo, Garantia Android ou Revisão).');
+    setStep(2);
+    setTimeout(() => {
+      document.getElementById('tipo-servico-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+    return false;
+  };
+
   const handleSalvarOS = async () => {
     if (!vendedorSelecionado) {
       toast.error('Por favor, selecione quem é o vendedor/atendente responsável no Passo 1.');
       setStep(1);
+      return;
+    }
+
+    if (!tipoCobertura) {
+      exigirTipoServico();
       return;
     }
 
@@ -265,8 +281,11 @@ export default function NovaOSPage() {
               setStep(1);
               return;
             }
-            if (selectedCliente || isNovoCliente) setStep(3);
-            else toast.error('Selecione ou informe os dados do cliente primeiro.');
+            if (!(selectedCliente || isNovoCliente)) {
+              toast.error('Selecione ou informe os dados do cliente primeiro.');
+              return;
+            }
+            if (exigirTipoServico()) setStep(3);
           }}
           className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 3 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
@@ -282,8 +301,11 @@ export default function NovaOSPage() {
               setStep(1);
               return;
             }
-            if (selectedCliente || isNovoCliente) setStep(4);
-            else toast.error('Selecione ou informe os dados do cliente primeiro.');
+            if (!(selectedCliente || isNovoCliente)) {
+              toast.error('Selecione ou informe os dados do cliente primeiro.');
+              return;
+            }
+            if (exigirTipoServico()) setStep(4);
           }}
           className={`flex-1 min-w-[90px] py-2 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1 ${
             step === 4 ? 'bg-[#0071e3] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'
@@ -591,10 +613,29 @@ export default function NovaOSPage() {
             </label>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Tipo de Serviço / Origem da Demanda *
-            </label>
+          <div
+            id="tipo-servico-section"
+            className={`p-4 rounded-2xl border space-y-2 transition-all ${
+              tipoCobertura
+                ? 'bg-slate-50 border-slate-200/80'
+                : 'bg-amber-50/80 border-2 border-amber-400 ring-4 ring-amber-300/30'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Tipo de Serviço / Origem da Demanda *
+              </label>
+              {!tipoCobertura && (
+                <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full animate-pulse self-start">
+                  ⚠️ Obrigatório — escolha uma opção
+                </span>
+              )}
+            </div>
+            {!tipoCobertura && (
+              <p className="text-[11px] text-amber-900">
+                Pergunte ao cliente: <strong>comprou o aparelho na loja?</strong> Se sim, é garantia (R$ 0,00). Se não, é Assistência Particular.
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Option 1: Assistência Particular */}
               <button
@@ -603,7 +644,7 @@ export default function NovaOSPage() {
                 className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Particular'
                     ? 'bg-white border-[#0071e3] ring-2 ring-[#0071e3]/20 text-slate-900 shadow-sm'
-                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-[#0071e3]/50 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -629,7 +670,7 @@ export default function NovaOSPage() {
                 className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Garantia da Loja'
                     ? 'bg-white border-amber-500 ring-2 ring-amber-500/20 text-amber-900 shadow-sm'
-                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -655,7 +696,7 @@ export default function NovaOSPage() {
                 className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Garantia Android'
                     ? 'bg-white border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-900 shadow-sm'
-                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -681,7 +722,7 @@ export default function NovaOSPage() {
                 className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
                   tipoCobertura === 'Revisão / Upgrade'
                     ? 'bg-white border-indigo-500 ring-2 ring-indigo-500/20 text-indigo-900 shadow-sm'
-                    : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -794,6 +835,7 @@ export default function NovaOSPage() {
             </button>
             <button
               onClick={() => {
+                if (!exigirTipoServico()) return;
                 if (modelo && imeiOuSerial) {
                   setStep(3);
                 } else {
@@ -957,6 +999,37 @@ export default function NovaOSPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* TIPO DE SERVIÇO RESUMO ANTES DE SALVAR */}
+            <div className={`p-3.5 rounded-2xl border-2 flex items-center justify-between transition-all ${
+              !tipoCobertura
+                ? 'bg-amber-50 border-amber-300'
+                : tipoCobertura === 'Particular'
+                ? 'bg-blue-50/60 border-[#0071e3]/40'
+                : tipoCobertura === 'Revisão / Upgrade'
+                ? 'bg-indigo-50/60 border-indigo-300'
+                : 'bg-amber-50/60 border-amber-300'
+            }`}>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Confira o Tipo de Serviço
+                </span>
+                <span className="text-sm font-extrabold text-slate-900">
+                  {!tipoCobertura && '⚠️ Nenhum tipo selecionado'}
+                  {tipoCobertura === 'Particular' && '🛠️ Assistência Particular (cliente paga)'}
+                  {tipoCobertura === 'Garantia da Loja' && '🛡️ Garantia Seminovo 180d (R$ 0,00)'}
+                  {tipoCobertura === 'Garantia Android' && '📱 Garantia Android 90d (R$ 0,00)'}
+                  {tipoCobertura === 'Revisão / Upgrade' && '🔄 Revisão / Trade-in (estoque loja)'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => exigirTipoServico() && setStep(2)}
+                className="text-xs text-[#0071e3] font-bold hover:underline px-3 py-1 bg-white border border-slate-200 rounded-full"
+              >
+                {tipoCobertura ? 'Alterar' : 'Selecionar'}
+              </button>
             </div>
 
             {/* VENDEDOR RESUMO ANTES DE SALVAR */}

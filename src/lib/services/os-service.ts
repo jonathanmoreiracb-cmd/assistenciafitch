@@ -27,6 +27,27 @@ function generateUuid(): string {
   });
 }
 
+// Colunas leves para LISTAGENS (sem `fotos_entrada`, que guarda fotos em base64 e
+// chegava a ~100MB, estourando o statement timeout do Supabase e deixando o sistema lento).
+const OS_LIST_BASE_COLUMNS = [
+  'id', 'numero_os', 'cliente_id', 'vendedor_id', 'vendedor_nome', 'tecnico_id', 'tecnico_nome',
+  'tipo_dispositivo', 'modelo', 'cor', 'imei_ou_serial', 'senha_aparelho', 'buscar_iphone_desativado',
+  'aparelho_nao_liga', 'defeito_reclamado', 'laudo_tecnico', 'checklist_entrada', 'checklist_saida',
+  'status', 'tipo_cobertura', 'localizacao_atual', 'detalhes_terceirizado', 'data_entrada',
+  'previsao_entrega', 'data_conclusao', 'valor_servico', 'valor_pecas', 'valor_desconto',
+  'desconto_avaliacao_tradein', 'valor_total', 'garantia_dias', 'forma_pagamento',
+  'created_at', 'updated_at',
+].join(',');
+// Colunas que existem no schema.sql mas podem ainda não ter sido criadas no banco
+const OS_LIST_OPTIONAL_COLUMNS = 'numero_venda_syscor,data_baixa,motivo_encerramento,baixa_estoque_realizada';
+const OS_LIST_RELATIONS = 'cliente:clientes(*),pecas:os_itens_pecas(*)';
+let optionalColumnsAvailable = true;
+
+function isMissingColumnError(error: any): boolean {
+  const msg = String(error?.message || '');
+  return error?.code === '42703' || error?.code === 'PGRST204' || msg.includes('column') || msg.includes('schema cache');
+}
+
 // In-Memory Fallback State when Supabase is disconnected
 let localClientesStore: Cliente[] = [];
 let localOSStore: OrdemServico[] = [];
@@ -180,31 +201,32 @@ export const OSService = {
 
     const supabase = createClient();
     if (supabase) {
-      try {
-        let query = supabase
-          .from('ordens_servico')
-          .select(`
-            *,
-            cliente:clientes(*),
-            pecas:os_itens_pecas(*)
-          `);
-
+      const runQuery = (withOptional: boolean) => {
+        const cols = withOptional
+          ? `${OS_LIST_BASE_COLUMNS},${OS_LIST_OPTIONAL_COLUMNS},${OS_LIST_RELATIONS}`
+          : `${OS_LIST_BASE_COLUMNS},${OS_LIST_RELATIONS}`;
+        let query = supabase.from('ordens_servico').select(cols);
         if (apenasAtivas) {
           query = query.not('status', 'in', '("entregue","cancelado")');
         } else if (apenasEncerradas) {
           query = query.in('status', ['entregue', 'cancelado']);
         }
+        return query.order('numero_os', { ascending: false });
+      };
 
-        const { data, error } = await query.order('numero_os', { ascending: false });
-
-        if (error) {
-          console.error('Supabase getOrdensServico error:', error);
-        } else if (data) {
-          return data as OrdemServico[];
-        }
-      } catch (e) {
-        console.error(e);
+      let { data, error } = await runQuery(optionalColumnsAvailable);
+      if (error && optionalColumnsAvailable && isMissingColumnError(error)) {
+        optionalColumnsAvailable = false;
+        ({ data, error } = await runQuery(false));
       }
+
+      if (error) {
+        console.error('Supabase getOrdensServico error:', error);
+        // Não usar cache local desatualizado quando o Supabase está configurado:
+        // isso fazia relatórios/dashboard mostrarem dados antigos (ex: mês atual zerado).
+        throw new Error(error.message || 'Erro ao carregar ordens de serviço');
+      }
+      return (data || []) as unknown as OrdemServico[];
     }
 
     if (apenasAtivas) {
@@ -572,6 +594,27 @@ export const OSService = {
 
         if (error) console.error('Supabase darBaixaPagamentoSyscor error:', error);
         if (!error && data) return data as OrdemServico;
+
+        // Banco ainda sem as colunas novas: salva ao menos status/pagamento/data
+        if (error && isMissingColumnError(error)) {
+          const { data: retryData, error: retryErr } = await supabase
+            .from('ordens_servico')
+            .update({
+              status: payload.status,
+              forma_pagamento: payload.forma_pagamento,
+              data_conclusao: payload.data_conclusao,
+              updated_at: payload.updated_at,
+            })
+            .eq('id', id)
+            .select(`
+              *,
+              cliente:clientes(*),
+              pecas:os_itens_pecas(*)
+            `)
+            .single();
+          if (retryErr) console.error('Supabase darBaixaPagamentoSyscor retry error:', retryErr);
+          if (!retryErr && retryData) return { ...(retryData as OrdemServico), ...payload };
+        }
       } catch (e) {
         console.error(e);
       }
@@ -618,6 +661,25 @@ export const OSService = {
 
         if (error) console.error('Supabase encerrarSemCobranca error:', error);
         if (!error && data) return data as OrdemServico;
+
+        if (error && isMissingColumnError(error)) {
+          const { data: retryData, error: retryErr } = await supabase
+            .from('ordens_servico')
+            .update({
+              status: payload.status,
+              data_conclusao: payload.data_conclusao,
+              updated_at: payload.updated_at,
+            })
+            .eq('id', id)
+            .select(`
+              *,
+              cliente:clientes(*),
+              pecas:os_itens_pecas(*)
+            `)
+            .single();
+          if (retryErr) console.error('Supabase encerrarSemCobranca retry error:', retryErr);
+          if (!retryErr && retryData) return { ...(retryData as OrdemServico), ...payload };
+        }
       } catch (e) {
         console.error(e);
       }
@@ -883,8 +945,8 @@ export const OSService = {
   },
 
   // 3. METRICS
-  async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const ordensAtivas = await this.getOrdensServicoAtivas();
+  async getDashboardMetrics(ordensAtivasPrecarregadas?: OrdemServico[]): Promise<DashboardMetrics> {
+    const ordensAtivas = ordensAtivasPrecarregadas ?? (await this.getOrdensServicoAtivas());
 
     const totalAtivas = ordensAtivas.length;
     const prontosEntrega = ordensAtivas.filter((o) => o.status === 'pronto_para_retirada').length;
@@ -902,7 +964,7 @@ export const OSService = {
           .from('ordens_servico')
           .select('valor_total')
           .in('status', ['pronto_para_retirada', 'entregue'])
-          .gte('created_at', primeiroDiaMes);
+          .gte('data_conclusao', primeiroDiaMes);
 
         if (data) {
           faturamentoMes = data.reduce((acc: number, item: any) => acc + Number(item.valor_total || 0), 0);

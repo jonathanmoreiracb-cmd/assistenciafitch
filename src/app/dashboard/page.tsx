@@ -78,14 +78,19 @@ export default function DashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const promises: [Promise<DashboardMetrics>, Promise<OrdemServico[]>, Promise<OrdemServico[]>?] = [
-        OSService.getDashboardMetrics(),
-        OSService.getOrdensServicoAtivas(),
-      ];
-      if (hasLoadedEncerradas) {
-        promises.push(OSService.getOrdensServicoEncerradas());
-      }
-      const [m, listAtivas, listEncerradas] = await Promise.all(promises);
+      // Busca as O.S. ativas uma única vez e reaproveita para as métricas
+      const ativasPromise = OSService.getOrdensServicoAtivas();
+      const metricsPromise: Promise<DashboardMetrics> = ativasPromise.then((ativas) =>
+        OSService.getDashboardMetrics(ativas)
+      );
+      const encerradasPromise: Promise<OrdemServico[] | null> = hasLoadedEncerradas
+        ? OSService.getOrdensServicoEncerradas()
+        : Promise.resolve(null);
+      const [m, listAtivas, listEncerradas] = await Promise.all([
+        metricsPromise,
+        ativasPromise,
+        encerradasPromise,
+      ]);
       setMetrics(m);
       setOrdens(listAtivas);
       if (listEncerradas) {

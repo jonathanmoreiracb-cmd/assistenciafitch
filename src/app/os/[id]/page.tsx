@@ -49,6 +49,7 @@ import {
   OrdemServico,
   PecaEstoque,
   StatusOS,
+  TipoCobertura,
   TipoQualidadePeca,
   Usuario,
 } from '@/types';
@@ -64,6 +65,7 @@ export default function OSDetalhesPage() {
 
   const [os, setOs] = useState<OrdemServico | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alterandoTipo, setAlterandoTipo] = useState(false);
   const [currentUser, setCurrentUser] = useState<Usuario | null>(() => AuthService.getCurrentUser());
   const [activeImageZoom, setActiveImageZoom] = useState<string | null>(null);
 
@@ -585,26 +587,82 @@ export default function OSDetalhesPage() {
                 {os.tipo_dispositivo} {os.modelo} ({os.cor})
               </span>
 
-              {/* Tipo de Cobertura Badge */}
-              {os.tipo_cobertura === 'Particular' && (
-                <span className="text-xs font-bold bg-blue-50 text-[#0071e3] border border-blue-200 px-3 py-1 rounded-full">
-                  🛠️ Assistência Particular
-                </span>
-              )}
-              {os.tipo_cobertura === 'Garantia da Loja' && (
-                <span className="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 rounded-full">
-                  🛡️ Garantia de Seminovo (180 Dias)
-                </span>
-              )}
-              {os.tipo_cobertura === 'Garantia Android' && (
-                <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full">
-                  📱 Garantia Android Novo (90 Dias)
-                </span>
-              )}
-              {os.tipo_cobertura === 'Revisão / Upgrade' && (
-                <span className="text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-300 px-3 py-1 rounded-full">
-                  🔄 Revisão / Trade-in
-                </span>
+              {/* Tipo de Cobertura: gerente pode corrigir, demais só visualizam */}
+              {currentUser?.cargo === 'gerente' ? (
+                <div
+                  className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1 ${
+                    os.tipo_cobertura === 'Particular'
+                      ? 'bg-blue-50 text-[#0071e3] border-blue-200'
+                      : os.tipo_cobertura === 'Garantia da Loja'
+                      ? 'bg-amber-50 text-amber-800 border-amber-300'
+                      : os.tipo_cobertura === 'Garantia Android'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : 'bg-indigo-50 text-indigo-900 border-indigo-300'
+                  }`}
+                  title="Somente o gerente pode corrigir o tipo de serviço"
+                >
+                  <select
+                    value={os.tipo_cobertura}
+                    disabled={alterandoTipo}
+                    onChange={async (e) => {
+                      const novoTipo = e.target.value as TipoCobertura;
+                      if (novoTipo === os.tipo_cobertura) return;
+                      const ehGarantia = novoTipo === 'Garantia da Loja' || novoTipo === 'Garantia Android';
+                      const msg = ehGarantia
+                        ? `Alterar O.S. #${os.numero_os} para "${novoTipo}"?\n\nO valor do serviço e o desconto serão zerados (garantia = R$ 0,00 pro cliente). Peças já lançadas não são alteradas.`
+                        : `Alterar O.S. #${os.numero_os} para "${novoTipo === 'Particular' ? 'Assistência Particular' : novoTipo}"?\n\nLembre de lançar/conferir o valor cobrado do cliente.`;
+                      if (!window.confirm(msg)) return;
+                      setAlterandoTipo(true);
+                      try {
+                        const updated = await OSService.atualizarTipoCoberturaOS(os.id, novoTipo);
+                        if (updated) {
+                          setOs(updated);
+                          if (ehGarantia) {
+                            setNovaPecaModo('garantia');
+                            setNovaPecaPreco('0.00');
+                          }
+                          toast.success('Tipo de serviço corrigido!');
+                        } else {
+                          toast.error('Erro ao alterar tipo de serviço.');
+                        }
+                      } catch (err: any) {
+                        toast.error(`Erro ao alterar tipo de serviço: ${err?.message || ''}`);
+                      } finally {
+                        setAlterandoTipo(false);
+                      }
+                    }}
+                    className="bg-transparent font-bold text-xs focus:outline-none cursor-pointer disabled:opacity-50"
+                  >
+                    <option value="Particular">🛠️ Assistência Particular</option>
+                    <option value="Garantia da Loja">🛡️ Garantia de Seminovo (180 Dias)</option>
+                    <option value="Garantia Android">📱 Garantia Android Novo (90 Dias)</option>
+                    <option value="Revisão / Upgrade">🔄 Revisão / Trade-in</option>
+                  </select>
+                  <span className="text-[10px] opacity-70">✏️</span>
+                </div>
+              ) : (
+                <>
+                  {os.tipo_cobertura === 'Particular' && (
+                    <span className="text-xs font-bold bg-blue-50 text-[#0071e3] border border-blue-200 px-3 py-1 rounded-full">
+                      🛠️ Assistência Particular
+                    </span>
+                  )}
+                  {os.tipo_cobertura === 'Garantia da Loja' && (
+                    <span className="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 rounded-full">
+                      🛡️ Garantia de Seminovo (180 Dias)
+                    </span>
+                  )}
+                  {os.tipo_cobertura === 'Garantia Android' && (
+                    <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full">
+                      📱 Garantia Android Novo (90 Dias)
+                    </span>
+                  )}
+                  {os.tipo_cobertura === 'Revisão / Upgrade' && (
+                    <span className="text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-300 px-3 py-1 rounded-full">
+                      🔄 Revisão / Trade-in
+                    </span>
+                  )}
+                </>
               )}
             </div>
 

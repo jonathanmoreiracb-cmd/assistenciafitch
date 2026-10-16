@@ -8,6 +8,7 @@ import {
   LocalizacaoDispositivo,
   OrdemServico,
   StatusOS,
+  TipoCobertura,
 } from '@/types';
 
 function sanitizeUuid(id: any): string | null {
@@ -468,6 +469,52 @@ export const OSService = {
       return localOSStore[index];
     }
 
+    return null;
+  },
+
+  async atualizarTipoCoberturaOS(id: string, novoTipo: TipoCobertura): Promise<OrdemServico | null> {
+    const os = await this.getOrdemServicoById(id);
+    if (!os) return null;
+
+    const ehGarantia = novoTipo === 'Garantia da Loja' || novoTipo === 'Garantia Android';
+    const valorServico = ehGarantia ? 0 : Number(os.valor_servico) || 0;
+    const valorDesconto = ehGarantia ? 0 : Number(os.valor_desconto) || 0;
+    const valorPecas = Number(os.valor_pecas) || 0;
+    const payload: any = {
+      tipo_cobertura: novoTipo,
+      garantia_dias: novoTipo === 'Garantia da Loja' ? 180 : 90,
+      valor_servico: valorServico,
+      valor_desconto: valorDesconto,
+      valor_total: Math.max(0, valorServico + valorPecas - valorDesconto),
+      updated_at: new Date().toISOString(),
+    };
+
+    const supabase = createClient();
+    const validUuid = sanitizeUuid(os.id);
+    if (supabase && validUuid) {
+      const { data, error } = await supabase
+        .from('ordens_servico')
+        .update(payload)
+        .eq('id', validUuid)
+        .select(`
+          *,
+          cliente:clientes(*),
+          pecas:os_itens_pecas(*)
+        `)
+        .single();
+      if (error) {
+        console.error('Supabase atualizarTipoCoberturaOS error:', error);
+        throw new Error(error.message);
+      }
+      return data as OrdemServico;
+    }
+
+    const index = localOSStore.findIndex((o) => o.id === os.id);
+    if (index !== -1) {
+      localOSStore[index] = { ...localOSStore[index], ...payload };
+      persistLocalState();
+      return localOSStore[index];
+    }
     return null;
   },
 
